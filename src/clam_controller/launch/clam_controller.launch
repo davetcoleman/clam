@@ -1,0 +1,38 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <!-- Start the Dynamixel motor manager to control all clam servos -->
+    <node name="dynamixel_manager" pkg="dynamixel_hardware_interface" type="controller_manager" output="screen" >
+        <!-- Load all the servo properties -->
+        <rosparam file="$(find clam_controller)/config/dynamixel_ports.yaml" command="load"/>
+    </node>
+    
+    <!-- Load joint controller configuration from YAML file to parameter server -->
+    <rosparam file="$(find clam_controller)/config/clam_controller_configuration.yaml" command="load"/>
+
+    <!-- Start all ClamArm joint controllers -->
+    <node name="clam_controller_spawner_ttl" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
+          args="--manager=clam_motor_manager
+                --port=port_ttl
+                shoulder_pan_controller
+                gripper_roll_controller
+                l_gripper_aft_controller"
+          output="screen"/>
+
+    <node name="clam_controller_spawner_rs485" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
+          args="--manager=clam_motor_manager
+                --port=port_rs485
+                shoulder_pitch_controller
+                elbow_roll_controller
+		elbow_pitch_controller
+                wrist_roll_controller
+                wrist_pitch_controller"
+          output="screen"/>
+
+    <!-- Start arm trajectory action controller. *Not sure what multi_joint_dummy_port implies... -->
+    <rosparam file="$(find clam_controller)/config/clam_trajectory_controller.yaml" command="load"/>
+    <node name="arm_trajectory_controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
+          args="--manager=clam_motor_manager                                                                                                        --port=multi_joint_dummy_port                                                                                                       clam_arm_controller"
+          output="screen"/>
+
+</launch>

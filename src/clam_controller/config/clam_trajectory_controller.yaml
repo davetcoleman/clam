@@ -1,0 +1,34 @@
+clam_arm_controller:
+    type: dynamixel_hardware_interface/JointTrajectoryActionController
+    dependencies:
+        - shoulder_pan_controller
+        - gripper_roll_controller
+#        - l_gripper_aft_controller
+        - shoulder_pitch_controller
+        - elbow_roll_controller
+        - elbow_pitch_controller
+        - wrist_roll_controller
+        - wrist_pitch_controller
+    joint_trajectory_action_node:
+        min_velocity: 0.1
+        constraints:
+            goal_time: 0.25
+            shoulder_pan_joint:
+                goal: 0.045
+            gripper_roll_joint:
+                goal: 0.045
+#            l_gripper_aft_joint:
+#                goal: 0.045
+            shoulder_pitch_joint:
+                goal: 0.045
+            elbow_roll_joint:
+                goal: 0.045
+            elbow_pitch_joint:
+                goal: 0.045
+            wrist_roll_joint:
+                goal: 0.045
+            wrist_pitch_joint:
+                goal: 0.045
+
+
+
