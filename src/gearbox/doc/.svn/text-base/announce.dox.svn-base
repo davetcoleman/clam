@@ -1,0 +1,66 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_announce Project Announcement
+  
+Much of the FOSS efforts in robotics have revolved around building 
+software frameworks. Player, Orocos, Carmen, Orca, and others are all 
+results of these efforts: all looking for a way (the "best" way?) to 
+build a complete robotic system.
+
+Despite all the efforts, the community has not yet come to a conclusion 
+on the best way to design a robot software framework, or even if there 
+is a "best" way (i.e. it probably depends on specific  requirements). 
+Whatever decisions you make regarding frameworks, it would be wise to 
+minimise your risk by disassociating your algorithms/drivers as much as 
+possible from framework code. In other words, keep your 
+algorithms/drivers in a form which does not tie it to a particular 
+framework. These ideas are not new and many agree that it makes perfect 
+sense. So what's new?
+
+GearBox is a brand-new project which puts this approach into practice. 
+It is a collection of peer-reviewed independent libraries aiming to 
+provide functional robot software. There is no framework linking the 
+libraries together (although some libraries may depend on others). It 
+doesn't aim to replace any frameworks. Rather, the vision is that the 
+current and future robotic frameworks will compete with each other in 
+how well they can integrate GearBox libraries into complete and diverse 
+robotic systems.
+
+Libraries can be submitted by anyone and are peer-reviewed before being 
+accepted into the collection. They must meet certain criteria, detailed 
+on the website. The review process is conducted on a public mailing 
+list; anyone is welcome to provide comments on submitted libraries. 
+Libraries accepted into GearBox remain the ultimate responsibility of 
+the library developer; we won't try to steal your library from you.
+
+GearBox is still an infant project. It currently only has one accepted 
+library, a Hokuyo URG laser scanner driver based on the urglaser driver 
+from Player (the review of this library is available in the mailing list 
+archives). A SICK laser scanner driver has been submitted by the Orca 
+project for peer review and will be going through the review process 
+shortly. While we have developed a project principles and outlined the 
+project goals, including the submissions process, we are still and 
+always will welcome any comments on improving these.
+
+What GearBox needs now is more libraries. Hardware drivers and software 
+algorithms are both equally welcome. The more libraries GearBox gains, 
+the greater the benefits to the wider robotics community. So check out 
+the project page, and if you have software you think would be beneficial 
+to the robotics community, submit it for review.
+
+
+The GearBox Developers
+
+08-Feb-2008
+
+*/

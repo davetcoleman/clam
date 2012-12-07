@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test
+END
+mathtest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test/mathtest.cpp
+END
+trivialtracertest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test/trivialtracertest.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test/CMakeLists.txt
+END
+trivialstatustest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test/trivialstatustest.cpp
+END
+tokenisetest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxutilacfr/test/tokenisetest.cpp
+END

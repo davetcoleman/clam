@@ -1,0 +1,34 @@
+/*!
+
+@ingroup gbx_libs
+@ingroup gbx_examples
+@ingroup gbx_c
+@ingroup gbx_win
+@ingroup gbx_linux
+@defgroup gbx_library_basicexample libbasicexample
+@brief A build-system example of setting up a library with no dependencies.
+
+@par General notes
+
+All double's and int's are initialized to zero.
+
+For a full list of functions and classes see @ref basicexample.
+
+Header file:
+@verbatim
+#include <basicexample/basicexample.h>
+@endverbatim
+
+@par Responsible Developer
+Alex Makarenko
+  
+*/
+
+/*!
+@namespace basicexample
+@brief Namespace for the basic build system example.
+
+This namespace is part of a library serving as a basic build system example.
+
+@see @ref gbx_library_basicexample 
+*/

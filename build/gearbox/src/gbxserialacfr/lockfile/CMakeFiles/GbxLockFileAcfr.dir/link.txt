@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -O2 -g   -shared -Wl,-soname,libGbxLockFileAcfr.so.1.0.0 -o /home/dave/ros/clam/devel/lib/libGbxLockFileAcfr.so.1.0.0 CMakeFiles/GbxLockFileAcfr.dir/lockfile.o -Wl,-rpath,::::::::::::::::::::::::::::::::::::::::: 

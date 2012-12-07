@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/gbxnovatelutilacfr/test
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/gbxnovatelutilacfr/test/CMakeLists.txt
+END
+crc32test.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/gbxnovatelutilacfr/test/crc32test.cpp
+END

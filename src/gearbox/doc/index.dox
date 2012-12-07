@@ -1,0 +1,57 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+
+// here we can easily add software categories later
+// e.g. a Pioneer driver could classify itself as belonging to both gbx_sensors and gbx_actuators
+/*!
+
+@defgroup gbx_libs Libraries
+@defgroup gbx_utils Utilities
+@defgroup gbx_examples Examples
+
+@defgroup gbx_hardware Hardware Drivers
+@defgroup gbx_algorithms Algorithms
+
+@defgroup gbx_cpp C++
+@defgroup gbx_c C
+
+@defgroup gbx_linux Linux
+@defgroup gbx_win Windows
+*/
+
+// without this gap between two doxygen definitions, the last group does not get
+// populated properly for some reason.
+
+/*!
+@mainpage GearBox: Peer-Reviewed Open-Source Libraries for Robotics
+
+
+@section gbx_doc_index_more_info Where to start
+
+- Read general information about the project: @ref gbx_doc_overview
+- See how the project operates: @ref gbx_doc_principles
+- Get set up: @ref gbx_doc_getting
+- Browse through the <strong><a href="modules.html" style="text-decoration:none">currently available software</a></strong><br>
+
+Note: The documentation on this web page matches the latest release. A web page is also <a href="http://gearbox.sourceforge.net/head">generated every 30 min</a> from the latest SVN version.
+
+@section gbx_doc_index_news News
+
+- 05-Nov-10 Release 10.11. Major revision of the hokuyo_aist library, with a new API and support for new laser scanners. (@ref gbx_doc_history_1011)
+- 18-Nov-09 Release 9.11. Several bug fixes in the libraries, build system cleanup to be packaged for Fedora. (@ref gbx_doc_history_911)
+- 10-Jul-09 Release 9.07. Several bug fixes in the libraries, and the new ability for the flexiport library's UDP port type to handle broadcast data. (@ref gbx_doc_history_907)
+- 18-Feb-09 Release 9.02. One new driver and a few updates in other libraries. (@ref gbx_doc_history_902)
+- 25-Jul-08 Release 8.07. Includes 5 new libraries and a re-write of the Hokuyo driver. (@ref gbx_doc_history_807)
+- 21-Apr-08 First release, version 1.0 (@ref gbx_doc_history_100)
+- 18-Mar-08 Accepted ACFR's implementation of SICK laser driver and the serial library used by it.
+- 08-Feb-08 Accepted the first library: a driver for the URG laser.
+- 01-Feb-08 Project created. @ref gbx_doc_announce "A half-page announcement".
+*/

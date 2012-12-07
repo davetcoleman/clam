@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/cmake/internal
+END
+config-version.cmake.in
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/cmake/internal/config-version.cmake.in
+END
+Setup.cmake
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/cmake/internal/Setup.cmake
+END
+gearbox-config-internal.cmake
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/cmake/internal/gearbox-config-internal.cmake
+END
+config-external.cmake.in
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/cmake/internal/config-external.cmake.in
+END

@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr
+END
+hw_review.dox
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/hw_review.dox
+END
+driver.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/driver.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/CMakeLists.txt
+END
+driver.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/driver.h
+END
+novatel.dox
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxnovatelacfr/novatel.dox
+END

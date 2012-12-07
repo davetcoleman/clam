@@ -1,0 +1,83 @@
+/*
+ * GearBox Project: Components for robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This copy of GearBox is licensed to you under the terms described in the
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_installdebian Installing GearBox on Debian Linux
+
+@note Reviewed for release 9.02
+
+These are detailed instructions for installing GearBox on Debian Linux. They are known to work for a system using Debian \b Testing distribution. These instructions should also be applicable to Ubuntu/Kubuntu 6.10 (Edgy). See @ref gbx_doc_getting for general guidelines.
+
+@section gbx_doc_installdebian_cmake CMake
+
+Minimum version required 2.4-patch 4 (latest tested: 2.6-patch 3).
+
+@verbatim
+# apt-get install cmake
+@endverbatim
+
+@section gbx_doc_installdebian_gearbox GearBox
+
+@par Basic
+
+Build and install GearBox distribution.
+
+- Download @ref gbx_doc_getting_download "GearBox source" archive and un-tar it.
+@verbatim
+$ tar -xzf gearbox-x.x.x.tar.gz
+$ cd gearbox
+@endverbatim
+- Configure (note the dot after cmake). The default installation directory is  @c /usr/local. (See below on how to customize this).
+@verbatim
+$ cmake .
+@endverbatim
+- Compile, and install.
+@verbatim
+$ make
+# make install
+# ldconfig
+@endverbatim
+
+The resultant installation tree is as follows:
+@verbatim
+[INSTALL-DIR]
+    include
+        gearbox
+            mylib
+                mylib.h
+            yourlib
+                yourlib.h
+    lib
+        gearbox
+            libmylib.so
+            libyourlib.so
+@endverbatim
+
+@par Installation Directory
+
+The default installation directory is @c /usr/local. There are two options for specifying a custom install directory:
+- Option 1. With @c cmake. This variable is stored in CMake cache so you don't have to set this variable every time: only the first time you run cmake and when you want to change it. For example:
+@verbatim
+$ cmake -DGEARBOX_INSTALL=$HOME/gearbox .
+@endverbatim
+or
+@verbatim
+$ cmake -DGEARBOX_INSTALL=/opt/gearbox-[VERSION] .
+@endverbatim
+- Option 2. If you've changed your mind about the installation directory, you can change it at any time using @c ccmake tool.
+@verbatim
+$ ccmake .
+@endverbatim
+Scroll down to @c GEARBOX_INSTALL variable, hit ENTER to edit and type in the new installation directory. When finished, hit ENTER again, then type "c" for [c]onfigure and "g" for [g]enerate. From now on, the new installation dir will be used.
+
+That's it! We are done.
+
+*/

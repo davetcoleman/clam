@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python
+END
+tcpport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/tcpport.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/CMakeLists.txt
+END
+flexiport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/flexiport.cpp
+END
+logwriterport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/logwriterport.cpp
+END
+port.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/port.cpp
+END
+serialport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/serialport.cpp
+END
+timeout.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/timeout.cpp
+END
+logreaderport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/python/logreaderport.cpp
+END

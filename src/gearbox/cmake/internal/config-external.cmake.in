@@ -1,0 +1,35 @@
+# Find resources installed by Gearbox.
+# To be used by external CMake projects.
+#
+
+set( GEARBOX_FOUND 1 )
+
+# this is the installed location of <package>-config.cmake file
+get_filename_component( _found_dir "${CMAKE_CURRENT_LIST_FILE}" PATH )
+
+# load all exported Gearbox targets
+include( ${_found_dir}/gearbox-targets.cmake )
+
+# assume that gearbox-config.cmake was installed into
+# <install-root>/lib/gearbox/
+set( _install_dir "${_found_dir}/../../" )
+
+get_filename_component(
+    GEARBOX_INCLUDE_DIR
+    "${_install_dir}/@GBX_INCLUDE_INSTALL_SUFFIX@"
+    ABSOLUTE )
+
+get_filename_component(
+    GEARBOX_CMAKE_DIR
+    "${_install_dir}/@GBX_CMAKE_INSTALL_SUFFIX@"
+    ABSOLUTE )
+# this is where the use-file can be found
+set( GEARBOX_USE_FILE "${GEARBOX_CMAKE_DIR}/gearbox-use-file.cmake" )
+
+get_filename_component(
+    GEARBOX_LINK_DIR
+    "${_install_dir}/@GBX_LIB_INSTALL_SUFFIX@"
+    ABSOLUTE )
+
+set( _found_dir )
+set( _install_dir )

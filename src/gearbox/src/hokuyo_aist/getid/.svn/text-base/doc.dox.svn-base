@@ -1,0 +1,37 @@
+/*!
+
+@ingroup gbx_libs
+@ingroup gbx_hardware
+@ingroup gbx_cpp
+@defgroup gbx_library_hokuyo_aist libhokuyo_aist
+@brief Utility to get the serial number of an Hokuyo laser scanner driver.
+
+This code is a stripped down version of the hokuyo_aist_example that just connects to the device, prints out its serial number, and closes the device.
+
+It is useful to write udev scripts to create permanent symlinks to your lasers, in the case you have more than one laser. 
+Acutally iy would be easier if the serial number were provided by hardware as a udev attribute, but it is not. So, this small soft must be called to find the serial number, in order to discriminate between various laser scanners.
+
+The file 96-hokuyo.rules should be copied to /etc/udev/rules.d, and then the udev deamon should be restarted with:
+
+sudo /etc/init.d/udev stop
+sudo /etc/init.d/udev start
+
+Attention: use stop and start instead of only restart. It appears that the restart script does not reload the rules. You should see a message about reloading hardware drivers when the start command is issued.
+
+Afterwards when a hokuyo is plugged, the device /dev/ttyACM* will be generated as before, but besides that a symbolic link called hokuyo_XXXXXX will be generated, where XXXXX is the laser serial number.
+
+@par Responsible Developer
+  Luiz Mirisola
+
+@par License
+  LGPL
+
+@par Dependencies
+  @ref Flexiport
+
+@par Known issues
+  - When the user plugs the hokuyo, the udev rules call this program, that will connect to the laser. This process is quite slow.
+  - When the rule fires, there is no /dev/ttyACM* yet. Therefore, the %N tag in the rule returns the name of a temporary device in order that the software may connect to the laser. This solves the chicken-egg problem.
+
+*/
+

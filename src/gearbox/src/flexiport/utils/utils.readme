@@ -1,0 +1,32 @@
+Building
+--------
+
+The utilities can be built by making a directory (anywhere on your system where
+you have write permissions will do), changing to that directory and executing
+CMake with the utilities source directory as an argument. For example, if you
+have installed GearBox into /usr/local, you could do the following:
+
+$ cd ~
+$ mkdir flexiport_utils
+$ cd flexiport_utils
+$ ccmake /usr/local/share/gearbox/flexiport/utils/
+
+PortToPort
+----------
+
+PortToPort is a simple utility to forward data between two flexiport devices.
+It was mainly written with the idea of forwarding data from a local hardware
+serial or USB port to a TCP port, which is connected to another TCP port on a
+remote computer. If the TCP port on the remote computer is also a flexiport
+device, this allows for transparently changing between using a local hardware
+device and a remote hardware device in that program (in most cases).
+
+Options must be given for both the left and right ports. For example:
+
+porttoport -l type=serial,device=/dev/ttyACM0,timeout=0.1 -r type=tcp,listen,timeout=0.1 
+
+Another TCP port can then connect to the right port (which is waiting for one
+to do so) and communicate with the hardware device connected to the serial
+port.
+
+Execute "porttoport -h" for a list of all available options.

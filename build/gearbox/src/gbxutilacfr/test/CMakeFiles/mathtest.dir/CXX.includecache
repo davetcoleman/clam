@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/mathdefs.h
+assert.h
+-
+cmath
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/test/mathtest.cpp
+iostream
+-
+gbxutilacfr/mathdefs.h
+-
+iomanip
+-
+assert.h
+-
+

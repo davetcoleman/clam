@@ -1,0 +1,129 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Michael Moser
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@page gbxnovatelacfr_hw_reviews Hardware Reviews for GbxNovatelAcfr
+
+These tests were done to qualify the driver for acceptance according to the principles of project operation (@ref gbx_doc_principles_operation_lifecycle_accept).
+The original versions (and following discussions) can be found in the archives for the devel <a href="http://sourceforge.net/mail/?group_id=216468">mailing list</a>.
+
+@section gbxnovatelacfr_hw_reviews_michael Novatel ProPak V3 (OEMV) receiver with Honeywell HG1700AG62 IMU (Michael Moser)
+
+@par Setup:
+
+- Hardware:
+    - Novatel ProPak V3 (OEMV) receiver
+    - Honeywell HG1700AG62 IMU
+
+- Software:
+    - gbxnovatelacfrtest, built as per example.readme.
+
+
+@par Tests:
+
+- Hooked up receiver and ran test program with different parameters (-m 
+ins/gps -v):
+Enables the expected messages, prints out message-types/contents 
+(depending on -v)
+
+- Set baudrate too low (9600 for -m gps, 38400 for ins):
+Fails as expected in Config.isValid() (with appropriate message).
+
+- BestGpsPos:
+Roughly checked lat/lon (google-earth, marker on  our lab), heightAMSL 
+(~30m sounds right for our lab), sigmas look ok (~2m lat/lon, double 
+that for height), GpsWeekNr 1487 sounds right (~28 years * 52), 
+timestamps are consistent with report-frequency, number of observations 
+is sensible (6-10).
+
+- BestGpsVel:
+Same as pos, speed hor/vert is zero as expected, heading meaningless as 
+expected
+
+- RawImu:
+    - Accelerations: verified values and signs by aligning different axis with 
+    gravity (checked 0, 1g, -1g for all axis)
+    - Gyros: verified values and signs by turning 180deg, and integrating 
+    program output manually (done for all axis)
+
+
+@par Roughly verified:
+
+- InsPva status: goes through the expected cycle (inactive, aligning, 
+need to perform maneuvers)
+- BestGpsVel/Pos: status/solutionStatus/solutionType
+
+
+@par Not Tested:
+
+- InsOffset_, vehicleBodyRotation_, setImuOrientation_, InsPva (signs, 
+values), BestGpsVel (signs, values): These guys are not testable in a 
+bench-top setup
+
+
+
+
+
+@section gbxnovatelacfr_hw_reviews_alen Novatel Pro-Pak-G2 plus receiver (Alen Alempijevic)
+
+@par Setup:
+
+- Hardware:
+    - Novatel Pro-Pak-G2 plus receiver
+    - assorted cables (RS232 connection)
+    - GPS antenna
+    - 12V power supply
+
+- Software:
+    - gbxnovatelacfrtest, built as per example.readme.
+
+@par Tests:
+
+- All tests performed with Novatel GPS unit, no IMU unit connected on 
+moving vehicle
+
+- Antenna cable disconnected from GPS receiver:
+Driver displays [Antenna power status: Powered; Antenna open flag: Open; 
+Antenna shorted flag: OK], terminates after 10 seconds
+
+- Started driver with antenna disconnected, connected antenna as soon as 
+possible:
+Driver displays [Antenna power status: Powered; Antenna open flag: Open; 
+Antenna shorted flag: OK], termination occurs after 10 seconds without 
+reflecting the status, possible insufficient time to detect hardware 
+change..
+
+- Connected driver at different baud rates (19200, 38400, 57600, 115200)
+Driver displays BestGpsPos data, no error messages and  terminates after 
+10 seconds
+
+- Connected driver at 9600 baud rates
+Driver displays error message and terminates
+The combined data-rate of the messages/message rates you configured 
+exceeds the configured baud rate 28800 / 9600
+Invalid configuration!
+
+@par Roughly verified:
+
+- Temperature (ambient, rising during parking under sunlight).
+- Position reported: drove the vehicle with GPS mounted and position 
+reflect the vehicle motion
+- Velocity reported: drove the vehicle with GPS mounted and recorded 
+velocity readings appeared to reflect the vehicle motion
+
+@par Not Tested:
+
+- Connecting the IMU and getting the integrated solution
+
+@par Questions:
+
+- SBAS and RTK
+Is there a way to select these as configuration parameters on command line?
+*/

@@ -1,0 +1,1 @@
+/usr/bin/c++   -O2 -g    CMakeFiles/hokuyo_aist_example.dir/example.o  -o /home/dave/ros/clam/devel/lib/gearbox/hokuyo_aist_example -rdynamic /home/dave/ros/clam/devel/lib/libhokuyo_aist.so.2.0.0 /home/dave/ros/clam/devel/lib/libflexiport.so.1.0.0 -lrt -Wl,-rpath,/home/dave/ros/clam/devel/lib:::::::::::: 

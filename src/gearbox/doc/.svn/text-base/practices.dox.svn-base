@@ -1,0 +1,83 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_practices Guide to Common Practices
+
+Project rules are described in @ref gbx_doc_principles_operation "Principles of Project Operation". Questions may still arise on how to apply these rules in practice. We'll update these notes as the project matures and we figure out what works well and what doesn't.
+
+Notes on common life cycle 'events':
+- @ref gbx_doc_practices_submit
+- @ref gbx_doc_practices_review
+- @ref gbx_doc_practices_maintain
+- @ref gbx_doc_practices_retire
+
+@section gbx_doc_practices_submit Submission
+
+Send an email to the @e gearbox-devel mailing list describing the code you would like to submit. The more information the better but keep in mind that only 3 criteria will be used to make the acceptance decision at this point. The code must be
+- relevant to robotics (therefore you should describe what the code is supposed to do)
+- choose an open-source license
+- state the copyright owner
+
+Other information you may want to include:
+- A brief history of the code. E.g. was it written for a particular project? has it been used much?
+- Implementation overview. E.g. programming language, OS requirements, main dependencies.
+- Possible hardware requirements.
+
+@par Common Scenarios
+
+- I'd like to submit a mapping algorithm which depends on ACE, Boost, 
+Qt, Xerces, and all of Gnome
+    - accept for review.
+
+- I'd like to submit a laser driver which is implemented as 167 files in 
+23 directories
+    - accept for review as a single directory with 23 subdirectories.
+
+- I'd like to submit a tracing library which could be useful in robotics 
+    - reject because not specific to robotics and other similar ones exist.
+
+- I'd like to submit a sonar driver with a tracing library and a serial 
+library which the driver uses 
+    - accept for review as a single directory  with 2 subdirectories on the grounds that the general usefulness of the 
+utility libs by themselves is not obvious.
+
+- I'd like to submit a Pioneer driver which uses the same serial library 
+as my earlier sonar driver
+    - accept for review, if accepted promote the  serial library to the top level of 'src' (reward multiple submissions).
+
+- I'd like to submit yet another SICK laser driver which uses the 
+tracing library supplied with the sonar driver above 
+    - accept for review, if  accepted work with the sonar driver developer in promoting the tracing library to the top level of 'src'.
+
+- I'd like to submit a patch which swaps ACE threads for boost threads in the sonar driver above 
+    - as with all other patches, defer the decision to the copyright holder, i.e. the original developer.
+
+- I'd like to submit an ACE-threaded behavior-based architecture 
+    - Borderline submission due to potentially overly-broad scope and
+framework aspects. Discuss on the mailing list regarding the scope of
+the library and query the submitter for more information on their
+intentions for the library before choosing to accept for submission or
+reject.
+
+@section gbx_doc_practices_review Review and Acceptance
+
+TBD
+
+@section gbx_doc_practices_maintain Maintanence
+
+TBD
+
+@section gbx_doc_practices_retire Retirement
+
+TBD
+
+*/

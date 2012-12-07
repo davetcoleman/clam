@@ -1,0 +1,31 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_contributors Contributors
+
+@par Project maintainers
+
+- <a href="http://staff.aist.go.jp/geoffrey.biggs/">Geoffrey Biggs</a>
+- <a href="http://www.cas.edu.au/content.php/232.html?personid=66">Alex Makarenko</a>
+
+@par Current contributors
+
+- <a href="http://www.cas.edu.au/content.php/232.html?personid=9">Alex Brooks</a>
+- <a href="http://www.cas.edu.au/content.php/232.html?personid=45">Tobias Kaupp</a>
+- <a href="http://www.cas.edu.au/content.php/232.html?personid=65">Ian Mahon</a>
+- Richard Mattes
+- <a href="http://www.cas.edu.au/content.php/232.html?personid=69">Michael Moser</a>
+- John Yamokoski
+
+@par Past contributors
+
+*/

@@ -1,0 +1,226 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+TEMPLATE
+@section gbx_doc_history_head Changes in SVN since Last Release
+@par Project wide
+@par New libraries
+@par Updated libraries
+@par Retired libraries
+
+/*!
+
+@page gbx_doc_history Changes since Last Release and To-Do List
+
+Developers: as you make substantial changes in the code (add features, fix bugs, etc.), add an item in the section on changes. When the next version is released, this list will be copied into the release notes.
+
+@section gbx_doc_history_todo To-Do List for Next Release
+
+None.
+
+@section gbx_doc_history_head Changes in SVN since Last Release
+
+@par Project wide
+
+@par New libraries
+
+@par Updated libraries
+
+@par Retired libraries
+
+@section gbx_doc_history_1011 Changes in Release 10.11
+
+@par Project wide
+
+- Build system
+  - GBX_REQUIRE_LIB macro now uses a direct check for target existence.
+  - new GBX_ADD_HEADER_ONLY_LIBRARY macro for handling dependencies on header-only libraries.
+
+@par New libraries
+
+@par Updated libraries
+
+- libGbxUtilAcfr
+  - Status class:
+    - functions for changing the state, initialising(), working(), finalising(), no longer
+    change the message. A separate call to one of the health-related function is needed if a change is
+    required.
+    - Renamed health SubsystemFault to SubsystemCritical, and function fault() to critical().
+    - defined enums for component state and health.
+    - added a function to access the component status.
+    - removed functions to specify "infrastructure state" which is now expected to be an optional subsystem.
+
+- libhokuyo_aist:
+  - Added a useful utility to get a laser's ID and use that to create nodes in /dev. Thanks to Luiz Mirisola.
+  - New version 2.0 API for hokuyo_aist.
+  - New, easier-to-use exceptions hierarchy.
+  - Added support for new lasers to hokuyo_aist, including new UXM-30LX-E.
+  - Added support for new SCIP 2.2 commands and multi-echo data.
+  - Added algorithm to calibrate the laser's clock against system time (including communications delay), providing considerably more accurate time stamps in laser data.
+  - Laser model detection and reporting.
+  - Significant improvements in data reading efficiency. CPU usage has been cut considerably. Reading a URG-04LX (10Hz refresh rate) has dropped from 2%-3% usage down to somewhere between 0% and 1%. Reading a UTM-30LX (40Hz refresh rate) has dropped from 13% down to 1%. Tests were on an Intel Q6600 with no system load. No statistically significant change in the time to read on an unloaded CPU was observed.
+
+@par Retired libraries
+
+@section gbx_doc_history_911 Changes in Release 9.11
+
+@par Project wide
+
+- build system
+  - added new variable GBX_DISABLE_ALL for the cases where only a few targets need to be built.
+  - cleaned up install directory definitions, all done in one place now.
+  - clean up to be packaged for Fedora.
+
+@par Updated libraries
+
+- libGbxSmartBatteryAcfr (tobi)
+  - Oceanserver class now has its own thread which reads continuously from the hardware
+
+- libGbxNovatelAcfr:
+  - Bugfix: matched GPS status/solution enums to Novatel's internal types, there were gaps due to reserved values before.
+  Note: this will create mismatches with old log-files (not data, status/solution-type only)! (MichaelM, patch by Ian Mahon)
+
+- libhokuyo_aist
+  - Bugfix: Errors in the way intensity data is retrieved have been fixed. (gbiggs, bug report by martimorta)
+  - New feature: The example now has an option, -i, to get intensity data.
+
+- libflexiport
+  - Bugfix: Don't redeclare timespec if it already has been on Windows. (gbiggs)
+
+- libGbxUtilAcfr
+  - class History: API simplified and is rewritten for periodic storage of history (more suitable for
+    computers which can be powered off abruptly.
+
+@section gbx_doc_history_907 Changes in Release 9.07
+
+@par Updated libraries
+
+-libGbxSmartBatteryAcfr (tobi)
+  - improved robustness by encapsulating data of the oceanserversystem class and implementing access/set and check-for-empty functions
+  - improved healthcheck functions
+  - bug fix related to initialisation
+  - improved exception and error handling
+  - added a raw data record to the oceanserversystem data record useful for debugging
+
+- libflexiport
+  - The UDP port type now properly supports sending and receiving broadcast packets on all operating systems.
+    (GeoffB)
+
+- libGbxIceUtilAcfr:
+  - Changed names in buffer.h to make it more intuitive, fixed comments (AlexB).
+  - Timer class: added constructor with non-zero elapsed time (alexm)
+  - Thread class: now derives from gbxutilacfr::Stoppable. No changes in user code are requried. (alexm)
+  - Function checkedSleep() is defined in terms of the new light interface class gbxutilacfr::Stoppable.
+    No changes in user code are required. (alexm)
+  - Implemented store::peek() (AlexB)
+
+- libGbxUtilAcfr:
+  - Status class: removed SubsystemStalled from the list of health types for a subsystem. The stall condition
+    now needs to be defined as part of the state of the monitor. (alexm)
+  - Added SubHealth class: a delegator which has access to health function of one subsystem. (alexm)
+  - Added Stoppable class: a light interface class representing stoppable activities. (alexm)
+
+- libhokuyo_aist
+  - New known-to-work models. The full list is now: URG-04LX, UBG-04LX, UHG-08LX and UTM-30LX. As usual, other
+    models that conform to the protocol should also work. (GeoffB)
+  - Improvements to the SCIP protocol version checks, giving faster and more reliable startups. (GeoffB)
+  - Implemented a workaround for a bug in the UTM-30LX firmware. (GeoffB)
+  - Better baud rate support. (GeoffB)
+
+@par Project Wide
+
+- Build system
+  - Added a hook in the CMake setup to allow building Gearbox as part of a bigger "super-project". Default behavior is not modified. (tobie,alexm)
+  - Changed format style of CMake files. Standard functions are low-case. Custom macros are upper case. "Local" variables are low-case. "Global"
+    and cache variables are upper-case. (alexm)
+  - Added 4 advanced CMake variables to let user control what gets installed and what not. All are set to TRUE by default.
+    To disable installation, set a variable to FALSE on the command line: 'cmake -DGBX_INSTALL_HEADERS=false'. The
+    variables are:
+    - GBX_INSTALL_HEADERS
+    - GBX_INSTALL_SHARED_FILES
+    - GBX_INSTALL_EXAMPLES
+    - GBX_INSTALL_PKGCONFIGS
+  - New versioning scheme for libraries. Each individual library has its own so version, which can be incremented
+    independently of other libraries at the project as a whole. This allows users to check the API version of the
+    library they are interested in, improving dependency checks for users of Gearbox.
+
+@section gbx_doc_history_902 Changes in Release 9.02
+
+@par New libraries
+
+- libGbxNovatelAcfr
+  - ACFR driver for a Novatel(SPAN) system. This is the implementation used by Sydney-Berkeley DGC'07 team.
+    (Michael M)
+
+@par Updated libraries
+
+- libGbxSickAcfr
+  - A bit more careful when dealing with chunks of buffer that can't be parsed, should be a bit more robust (AlexB).
+
+- libGbxUtilAcfr
+  - Changed interface for Tracer:
+    - when querying verbosity, default destination argument is 'ToAny' (AlexB).
+    - moved trace type and destination enums out of the class into the namespace (alexm)
+    - added optional 'localOnly' parameter to all Tracer output function, i.e. info(), warn(), error(), debug().
+      This is to allow the use of Tracer for tracing network problems (otherwise a trace of a network problem will
+      lead to another trace, etc) (alexm)
+  - Changed implementation of TrivialTracer to allow multiple levels of tracing verbosity (AlexB).
+  - Changed interface for Status:
+     - status of subsystems is described in two orthogonal dimensions: state and health. (alexm)
+     - added infrastructure state to the component status and functions to set it. (alexm)
+     - added message() which only changes the human-readable message (alexm)
+
+@section gbx_doc_history_807 Changes in Release 8.07
+
+@par Project wide
+
+- Build system
+    - cmake files updated for cmake 2.6
+
+- Compiler
+    - compiles cleanly under gcc43
+
+@par New libraries
+
+- libGbxGarminAcfr
+- libGbxUtilAcfr
+- libGbxNovatelAcfr
+- flexiport
+- libGbxSmartBatteryAcfr
+- hokuyo_aist
+
+@par Updated libraries
+
+- libGbxSickAcfr
+  - using 'size_t' instead of 'uint' to improve compatibility.
+
+@par Retired libraries
+
+- urg_nz
+
+@section gbx_doc_history_100 Changes in Release 1.0.0
+
+@par Project wide
+
+- First release.
+
+@par New libraries
+
+- liburg_nz
+    - moved from the Player project
+
+- libGbxSerialAcfr
+    - moved from the Orca project
+
+- libGbxSickAcfr
+    - moved from the Orca project
+
+
+*/

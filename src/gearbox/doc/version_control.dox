@@ -1,0 +1,28 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_version_control Version Control
+
+@note Reviewed for release 0.0.1.
+
+GearBox uses <a href="http://en.wikipedia.org/wiki/Subversion_(software)">Subversion (SVN)</a> for version control of the source code.
+
+To use SVN in Debian, install this package:
+@verbatim
+# apt-get install subversion
+@endverbatim
+
+- a 15 min SVN course for current CVS users: <a href="http://svnbook.red-bean.com/en/1.4/svn.forcvs.html">a well-written summary of what's diffferent in SVN compared to CVS</a>
+
+- A good introduction and a general reference: <a href="http://svnbook.red-bean.com/">The official book on SVN</a> (available in HTML and PDF).
+
+*/

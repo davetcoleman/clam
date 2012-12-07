@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr
+END
+nmeasentence.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/nmeasentence.h
+END
+driver.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/driver.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/CMakeLists.txt
+END
+doc.dox
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/doc.dox
+END
+nmeamessages.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/nmeamessages.h
+END
+driver.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/driver.h
+END
+nmeasentence.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/nmeasentence.cpp
+END
+nmeamessages.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxgarminacfr/nmeamessages.cpp
+END

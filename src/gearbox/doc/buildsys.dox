@@ -1,0 +1,249 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_buildsys Tutorial for the GearBox Build System
+
+The term <a href="http://en.wikipedia.org/wiki/Build_system">build system</a> refers the software and procedures responsible for compiling, installing, and distributing source code. GearBox uses <a href="http://www.cmake.org">CMake</a> to handle its build system.
+CMake is a cross-platform tool, designed as a replacement for autotools.
+
+Contents:
+- @ref gbx_doc_buildsys_basics
+- @ref gbx_doc_buildsys_example
+- @ref gbx_doc_buildsys_lines
+- @ref gbx_doc_buildsys_varlist
+
+@section gbx_doc_buildsys_basics Basics
+
+Builds are controlled by a set of files called 'CMakeLists.txt'.  There
+is approximately one in each directory, and builds descend recursively through the source tree.
+
+An individual developer only needs to be concerned with writing CMakeLists.txt files in the directory containing his or her library code and below.
+
+@section gbx_doc_buildsys_example Example
+
+Here's an example of a CMakeLists.txt file to builid a library. We'll go through it line by line.
+
+@verbatim
+SET ( lib_name GbxAdvanced )
+GBX_ADD_LICENSE( GPL )
+
+SET ( build TRUE )
+
+# Check for human input
+GBX_REQUIRE_OPTION( build LIB ${lib_name} ON )
+
+# Check arbitrary variables
+GBX_REQUIRE_VAR( build LIB ${lib_name} GBX_OS_LINUX "only Linux OS is supported" )
+
+# Check local targets (libraries or executables)
+SET( dep_libs basic )
+GBX_REQUIRE_TARGETS( build LIB ${lib_name} ${dep_libs} )
+
+IF ( build )
+
+    INCLUDE( ${GBX_CMAKE_DIR}/UseBasicRules.cmake )
+
+    FILE( GLOB hdrs *.h )
+    FILE( GLOB srcs *.cpp )
+
+    GBX_ADD_LIBRARY( ${lib_name} DEFAULT ${srcs} )
+    TARGET_LINK_LIBRARIES( ${lib_name} ${dep_libs} )
+
+    GBX_ADD_HEADERS( gbxadvanced ${hdrs} )
+
+ENDIF ( build )
+@endverbatim
+
+@section gbx_doc_buildsys_lines Line-by-Line
+
+@verbatim
+SET ( lib_name GbxAdvanced )
+@endverbatim
+All variables in CMake contain text. Assignment is done with SET function. (The C++ equivalent of this line: <code>string lib_name = "GbxAdvanced"</code>).
+    - You can get more information on this and all other CMake commands.
+@verbatim
+$ cmake --help-command SET
+@endverbatim
+
+Notice the GearBox convention for naming CMake variables:
+- All "local" variables created in this CMakeLists.txt are in low case, e.g. @c lib_name.
+- All "global" variables created somewhere else are in upper case.
+- All custom "global" variables created by GearBox start with "GBX_", e.g. @c GBX_CMAKE_DIR.
+- Note that the standard CMake variables are also in upper case and some start with "CMAKE_", e.g. @c CMAKE_INSTALL_PREFIX and some don't, e.g. @c PROJECT_NAME.
+
+@verbatim
+GBX_ADD_LICENSE( GPL )
+@endverbatim
+This macro adds license information about this library to the global list which will be dumped into the @c LICENSE file at the top level of the distribution (check out what it looks like). This is a custom GearBox macro as indicated by the "GBX_" prefix. Any text can be put into this macro, e.g. "LGPL (with written permission from the original authors)".
+
+@verbatim
+SET ( build TRUE )
+@endverbatim
+This and the following few lines determine whether we are going to build this library or not. We start with the assumption that we will and then check a few requirements sequentially. We define a variable called @c build and set it to TRUE, i.e. "this library will be built". Failure to meet any one of the requirements will assign FALSE to this "cumulative variable".
+
+@verbatim
+# Check for human input
+GBX_REQUIRE_OPTION( build LIB ${lib_name} ON )
+@endverbatim
+Any text following "#" is a comment. Use them to explain uncommon usage.
+
+This GearBox macro checks for user input into the build process. It is actually a shortcut which does several things:
+- Defines a CMake cache variable called @c ENABLE_LIB_GBXADVANCED which can be used a user-controlled switch for turning compilation of this library ON and OFF. You will see this option when you run the @c ccmake tool. The option variable is defined the very first time CMake is run, and it is assigned the specified default value (ON in this case).
+- Every time CMake runs, it checks the current value of the @c ENABLE_LIB_GBXADVANCED variable. If the user has configured it to OFF, then the value of @c build variable will become OFF (aka FALSE).
+- If it is decided that the library will not be built due to user input, a corresponding entry will be added to a global list and the name of the library will be printed out at the end of the CMake process under the "Will NOT build..." heading.
+
+Notice that to evaluate the variable you have to inclose it in braces and add a dollar sign, i.e. @c ${lib_name}. Without this, CMake would just treat it as text. (Similar to the UNIX shells).
+
+This macro is quite flexible. You can specify custom names for the option variables and provide a custom description.
+    - Here's the complete signature.
+@verbatim
+GBX_REQUIRE_OPTION( cumulative_var [EXE | LIB] module_name default_option_value [option_name] [option_description] )
+@endverbatim
+The last two parameters are optional and have sensible defaults. Nothing else in the build depends on these variables so it's safe to specify them.
+
+It is sometimes useful to disable compilation of all targets and then selectively enable a few. To do this set GBX_DISABLE_ALL to ON. In this case, all default compilation settings for all targets are set to OFF. It is still possible to individually enable targets with e.g. ENABLE_LIB_GBXADVANCED=ON. For GBX_DISABLE_ALL to take effect, make sure you clear CMake cache first, by deleting CMakeCache.txt file.
+
+@verbatim
+GBX_REQUIRE_VAR( build LIB ${lib_name} GBX_OS_LINUX "only Linux OS is supported" )
+@endverbatim
+Next comes another "REQUIRE_" macro. This one checks that an arbitrary variable, in this case @c GBX_OS_LINUX, evaluates to TRUE. Examples of usage are: check that the OS is supported, the compiler version is acceptable, that dependencies are found, versions of required libraries are new enough, etc.
+
+    - This is the most common macro. Typically, several of these macros check variables one after another. The complete signature:
+@verbatim
+GBX_REQUIRE_VAR ( cumulative_var [EXE | LIB] module_name test_var reason )
+@endverbatim
+    - If you want to require that a variable evaluates to FALSE, just invert it and evaluate:
+@verbatim
+SET( not_os_win NOT GBX_OS_WIN )
+GBX_REQUIRE_VAR( build LIB ${lib_name} not_os_win "anything but Windows is supported" )
+@endverbatim
+
+@verbatim
+SET( dep_libs basic )
+GBX_REQUIRE_TARGETS( build LIB ${lib_name} ${dep_libs} )
+@endverbatim
+The last of the "REQUIRE_" macros: very useful if you link to other libraries in GearBox. Important: this one is for working with @e internal libraries only. You have to make sure that the required libraries are going to be built because they may be disabled for the same reasons as this one, i.e. user configuration, unsupported OS, lack of prerequisites. Notice that @c dep_libs can contain a list of libraries separated by a space. In this case we only have one called "basic". In order to reduce the amount of typing required we will reuse this variable later when it comes to actually linking.
+
+    - The complete signature of this macro and a related "singular" version:
+@verbatim
+GBX_REQUIRE_TARGETS( cumulative_var [EXE | LIB] module_name TARGET0 [TARGET1 TARGET2 ...] )
+GBX_REQUIRE_TARGET( cumulative_var [EXE | LIB] module_name TARGET [reason] )
+@endverbatim
+
+@verbatim
+IF ( build )
+@endverbatim
+Ok, we've checked everything. Now @c build variable can tell us to build or not to build.
+
+A note on slightly funky CMake syntax: notice that in the IF statement and in other places with a boolean context, CMake accepts both the variable name, i.e. @c build, and it's evaluation, i.e. @c ${build}. We find that more consistent results are obtained with the variable names.
+
+@verbatim
+    INCLUDE( ${GBX_CMAKE_DIR}/UseBasicRules.cmake )
+@endverbatim
+Commonly used CMake scripts are stored in a one directory @c [GEARBOX-SRC]/cmake. For convenience, this path is stored in the special variable @c GBX_CMAKE_DIR. The @c INCLUDE command literally pastes the contents of the referenced scripts right here in the middle of our file. So you can take a look at that script to see what it does. Importantly, it adds @c -Wall compiler definition.
+
+@verbatim
+    FILE( GLOB hdrs *.h )
+    FILE( GLOB srcs *.cpp )
+@endverbatim
+Search for file in the current directory which fit the specified pattern and assign the list to the variables @c hdrs and @c srcs.
+    - Instead of searching you can just list the files you need.
+@verbatim
+SET( srcs util.cpp )
+@endverbatim
+
+@verbatim
+    GBX_ADD_LIBRARY( ${lib_name} DEFAULT ${srcs} )
+    TARGET_LINK_LIBRARIES( ${lib_name} ${dep_libs} )
+@endverbatim
+
+
+@c GBX_ADD_LIBRARY is a custom GearBox macro. It does several things:
+- Actually defines a library target (with a standard command @c ADD_LIBRARY ). In Linux, this will produce @c libGbxAdvanced.so or @c libGbxAdvanced.a
+- Specifies library type. Valid options are SHARED, STATIC, or DEFAULT (the prefered option). DEFAULT is resolved to the user-specified variable GBX_DEFAULT_LIB_TYPE (which initially is set to SHARED).
+- Specifies standard installation directory: @c [PREFIX]/lib/gearbox/
+- Adds the name of the library to the global list of libraries which will be built (for feedback).
+
+@c TARGET_LINK_LIBRARIES is a standard CMake command. It specifies that our library is to be linked to our dependencies.
+
+Now you can see why we bothered with defining variables. These commands are generic and can be easily used for other libraries.
+
+@verbatim
+    GBX_ADD_HEADERS( gbxadvanced ${hdrs} )
+@endverbatim
+This custom macro doesn't save much space but prevents easily-made mistakes. It specifies destination for header files to be
+@c [PREFIX]/include/gearbox/gbxadvanced. With the custom macro only the module subdirectory needs to be specified.
+
+@verbatim
+ENDIF ( build )
+@endverbatim
+Don't forget to close the IF structure. Notice that CMake is quite strict with @c IF statements: the signature of the closing @c ENDIF must be identical.
+
+@section gbx_doc_buildsys_varlist A comprehensive list of CMake variables defined by GearBox
+
+Build system configuration:
+@verbatim
+GBX_DEFAULT_LIB_TYPE    # Valid options {SHARED, STATIC}. Defaults to SHARED.
+@endverbatim
+
+Project description:
+@verbatim
+GBX_PROJECT_VERSION_MAJOR
+GBX_PROJECT_VERSION_MINOR
+GBX_PROJECT_VERSION_PATCH
+GBX_PROJECT_VERSION         (=MAJOR.MINOR.PATCH)
+GBX_PROJECT_NAME_LOWER      (e.g. 'gearbox' )
+GBX_PROJECT_NAME_UPPER      (e.g. 'GEARBOX' )
+GBX_PROJECT_NAME_CAP        (e.g. 'Gearbox' )
+@endverbatim
+
+OS variables: evaluate to TRUE when running on the corresponding OS, otherwise to FALSE. We define our own because the standard CMake ones are inconsistently named and the one for Linux is not defined.
+@verbatim
+GBX_OS_LINUX
+GBX_OS_MAC
+GBX_OS_QNX
+GBX_OS_WIN
+@endverbatim
+
+Under Linux, an additional variable if defined
+@verbatim
+GBX_PROC_64BIT
+@endverbatim
+
+Source and binary directories can be distinguished as so
+@verbatim
+GBX_PROJECT_BINARY_DIR
+GBX_PROJECT_SOURCE_DIR
+@endverbatim
+
+Install directories can be referenced with absolute paths
+@verbatim
+GBX_BIN_INSTALL_DIR
+GBX_CMAKE_INSTALL_DIR
+GBX_CMAKE_PKGCONFIG_INSTALL_DIR
+GBX_INCLUDE_INSTALL_DIR
+GBX_LIB_INSTALL_DIR
+GBX_PKGCONFIG_INSTALL_DIR
+GBX_SHARE_INSTALL_DIR
+@endverbatim
+.. or path relative to the install directory
+@verbatim
+GBX_BIN_INSTALL_SUFFIX
+GBX_CMAKE_INSTALL_SUFFIX
+GBX_CMAKEPKGCONFIG_INSTALL_SUFFIX
+GBX_INCLUDE_INSTALL_SUFFIX
+GBX_LIB_INSTALL_SUFFIX
+GBX_PKGCONFIG_INSTALL_SUFFIX
+GBX_SHARE_INSTALL_SUFFIX
+@endverbatim
+
+*/

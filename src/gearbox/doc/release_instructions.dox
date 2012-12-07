@@ -1,0 +1,57 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_release Release Instructions
+
+@note Reviewed for release 9.11.
+
+@section gbx_doc_release_release Release
+
+-# On any machine
+  - Make sure the distributions compile cleanly and the tests don't fail.
+-# On a machine that doesn't build regularly:
+  -# Blow away old installation.
+  -# Check out clean copy.
+  -# Modify the project version in the top-level CMakeLists.txt file (remember to change + to 0 in the patch value).
+  -# Modify the 'news' section in the 'index.dox' file.
+  -# (Possibly) delete retired directory.
+  -# Update LICENSE information by running cmake with GBX_BUILD_LICENSE=ON.
+  -# Shunt everything down in 'doc/history.dox'.
+  -# Delete any temporary files created by an editor.
+  -# Check in those changes.
+  -# Tag the distributions, eg with:
+@verbatim
+$ svn copy https://gearbox.svn.sf.net/svnroot/gearbox/gearbox/trunk https://gearbox.svn.sf.net/svnroot/gearbox/gearbox/tags/RELEASE_9.02 -m 'Tagging release 9.02'
+@endverbatim
+  -# Export a copy of the tag, e.g. with:
+@verbatim
+$ svn export https://gearbox.svn.sf.net/svnroot/gearbox/gearbox/tags/RELEASE_9.02 gearbox-9.02
+@endverbatim
+  -# Create tarball from this exported directory, named eg. 'gearbox-9.02.tar.gz'
+  -# Now the tar-ball is ready to roll. But first test that the original untars and builds cleanly.
+  -# Copy the tar-ball to a machine with external access.
+-# Create a new distro through the sourceforge web interface
+  - Login a project administrator
+  - Click on the 'Edit' link
+  - Click on "'Project Admin' -> 'File Manager'"
+  - Click on the gear icon next to 'gearbox' directory -> New Folder
+  - Name it with the new version name, e.g. 9.02
+  - Click on the gear icon next to the new folder -> Uploads Here
+  - Click on the 'Upload File' link above the directory listing, select the tar archive, wait for upload.
+-# Update the web page
+  - change temporatily the last line of the script to say [USERNAME],gearbox@shell.sourceforge.net
+  - Use the script: <distro>/doc/rebuild_docco.sh
+-# Move on to the next development cycle
+  - Increment the version numbers (eg '9.02.0' -> '9.02.+') in the top-level CMakeLists.txt files.
+  - Copy template headings into doc/history.dox
+
+*/

@@ -1,0 +1,33 @@
+/*!
+
+@ingroup gbx_libs
+@ingroup gbx_examples
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@defgroup gbx_library_gbxadvancedexample libGbxAdvancedExample
+@brief A build-system example of setting up a library with an internal dependency.
+
+@par General notes
+
+All double's and int's are initialized to zero.
+
+For a full list of functions and classes see @ref gbxadvancedexample.
+
+Header file:
+@verbatim
+#include <gbxadvancedexample/gbxadvancedexample.h>
+@endverbatim
+
+@par Responsible Developer
+Alex Makarenko
+  
+*/
+
+/*!
+@namespace gbxadvancedexample
+@brief Namespace for the advanced build system example.
+
+This namespace is part of a library serving as an advanced build system example.
+
+@see @ref gbx_library_gbxadvancedexample 
+*/

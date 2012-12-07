@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test/CMakeLists.txt
+END
+example.cmake.in
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test/example.cmake.in
+END
+serialechotest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test/serialechotest.cpp
+END
+example.readme
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test/example.readme
+END
+serialloopbacktest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxserialacfr/test/serialloopbacktest.cpp
+END

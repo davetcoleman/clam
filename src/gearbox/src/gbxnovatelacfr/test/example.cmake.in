@@ -1,0 +1,12 @@
+CMAKE_MINIMUM_REQUIRED (VERSION 2.4)
+
+PROJECT( gbxnovatelacfr_example )
+
+INCLUDE_DIRECTORIES( @CMAKE_INSTALL_PREFIX@/include/gearbox )
+
+ADD_EXECUTABLE( gbxnovatelacfrtest test.cpp )
+TARGET_LINK_LIBRARIES( gbxnovatelacfrtest GbxNovatelAcfr )
+SET_TARGET_PROPERTIES( gbxnovatelacfrtest PROPERTIES
+                       LINK_FLAGS "-L@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       INSTALL_RPATH "${INSTALL_RPATH};@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       BUILD_WITH_INSTALL_RPATH TRUE )

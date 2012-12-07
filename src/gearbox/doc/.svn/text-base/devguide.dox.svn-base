@@ -1,0 +1,25 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_devguide Developer's Guide
+
+@section gbx_doc_devguide_code Writing Code
+  
+- @ref gbx_doc_buildsys
+
+@section gbx_doc_devguide_process Procedures for Running the Project
+
+- @ref gbx_doc_principles
+- @ref gbx_doc_practices
+- @ref gbx_doc_release
+
+*/

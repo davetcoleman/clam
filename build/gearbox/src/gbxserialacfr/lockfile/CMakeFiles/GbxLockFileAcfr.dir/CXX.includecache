@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dave/ros/clam/src/gearbox/src/gbxserialacfr/lockfile/lockfile.cpp
+lockfile.h
+/home/dave/ros/clam/src/gearbox/src/gbxserialacfr/lockfile/lockfile.h
+cstring
+-
+cstdlib
+-
+iostream
+-
+signal.h
+-
+sys/types.h
+-
+errno.h
+-
+sstream
+-
+libgen.h
+-
+stdio.h
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxserialacfr/lockfile/lockfile.h
+exception
+-
+string
+-
+

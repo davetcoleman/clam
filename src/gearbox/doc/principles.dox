@@ -1,0 +1,179 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_principles Principles of Project Operation
+  
+We hope that this project will attract a diverse group of developers. If this happens we think that a clear set of written down rules would help to avoid misunderstandings.
+
+The rules on the pages are brief. We also maintain a page with @ref gbx_doc_practices "more practical instructions and a guide to common practices".
+
+@section gbx_doc_principles_toc Table of contents
+
+- @ref gbx_doc_principles_tools
+- @ref gbx_doc_principles_operation
+    - @ref gbx_doc_principles_operation_lifecycle
+        - @ref gbx_doc_principles_operation_lifecycle_submit
+        - @ref gbx_doc_principles_operation_lifecycle_accept
+        - @ref gbx_doc_principles_operation_lifecycle_warn
+        - @ref gbx_doc_principles_operation_lifecycle_disable
+        - @ref gbx_doc_principles_operation_lifecycle_retire
+    - @ref gbx_doc_principles_operation_release
+    - @ref gbx_doc_principles_operation_ownership
+- @ref gbx_doc_principles_freedoms
+- @ref gbx_doc_principles_style
+
+@section gbx_doc_principles_tools 1. Tools
+
+@par Build system
+
+CMake
+
+@par Revision control system
+
+Subversion
+
+@par Unit test system
+
+CTest
+
+@par Documentation
+
+Doxygen
+
+@par Hosting service
+
+SourceForge
+
+@par Bug Tracking
+
+Trac
+
+@section gbx_doc_principles_operation 2. Project Operation
+
+@subsection gbx_doc_principles_operation_lifecycle 2.1 Source code life cycle
+
+@image html gbx_src_life_cycle.png
+
+@subsection gbx_doc_principles_operation_lifecycle_submit 2.1.1 Criteria for submission
+
+@par Relevance
+
+Any reusable software related to robotics. Emphasis is placed on
+algorithm and driver implementations. Integration frameworks are
+generally discouraged. Relevance of a particular library is determined
+through mailing list discussion.
+
+@par License
+
+Must specify @b an open source license.
+
+@par Copyright
+
+Must specify ownership.
+
+@subsection gbx_doc_principles_operation_lifecycle_accept 2.1.2 Criteria for acceptance
+
+@par Documentation
+
+Sufficient to be useful, depends on the complexity of
+software, determined by peer review (at least 1 reviewer) and a public
+discussion on the mailing list.
+
+@par Tests and sample code
+
+Sufficient to be useful, depends on software, determined by peer review.
+
+@par Programming style
+
+Must name a known style, or describe a style (see @ref gbx_doc_principles_style "Appendix A"), and adhere to it.
+
+@par Compilation
+
+Must compile without warnings (with -Wall) on all
+supported platforms with all supported compilers.
+
+@par Operation
+
+Libraries must operate (within reason) as described by the
+documentation. Reviewers of hardware drivers are encouraged to have
+access to hardware where feasible.
+
+@subsection gbx_doc_principles_operation_lifecycle_warn 2.1.3 Criteria for a warning
+
+Failure of any in @ref gbx_doc_principles_operation_lifecycle_accept.
+
+@subsection gbx_doc_principles_operation_lifecycle_disable 2.1.4 Criteria for disabling
+
+@par Compilation
+
+Fails to compile on any one of the supported
+platforms/complilers (as specified by the library developer) or does not
+gracefully handle one of the platforms/compilers specified as supported
+by Gearbox but not supported by that library - will be disabled
+immediatly in SVN and in any following releases until fixed
+
+@subsection gbx_doc_principles_operation_lifecycle_retire 2.1.5 Criteria for retirement
+
+@par Compilation
+
+Fails for 2 months since disabling to compile on any one
+of the supported platforms/complilers (as specified by the library
+developer) or does not gracefully handle one of the platforms/compilers
+specified as supported by Gearbox but not supported by that library -
+will be moved to graveyard at the end of the 2nd month.
+
+@par Other
+
+Failure of any @ref gbx_doc_principles_operation_lifecycle_accept for 3 months after warning.
+
+@subsection gbx_doc_principles_operation_release 2.2 Release of source code
+
+Regular frequent releases every 1.5-3 months.
+
+@subsection gbx_doc_principles_operation_ownership 2.3 Ownership of source code
+
+Copyright belongs to authors and major contributors. The copyright is recorded in a comment block at the top of every source file. It is up to the current copyright holders to distinguish between "major" and "minor" contributions.
+
+@section gbx_doc_principles_freedoms 3. Freedoms
+
+Aside from complying with Sec.2, the designer of every module within the
+project is not constrained in any way. We specifically mention several
+important freedoms:
+- OS, compiler, programming language. New contributor's responsibility
+is to make sure that the new addition does not break the existing code.
+- code design, e.g. whether or not to use C++ exceptions.
+- dependencies
+- data types used by libraries.
+
+@section gbx_doc_principles_style Appendix A. Programming Style Description.
+
+In the case of not using a well-known, named style, contributors must
+describe the programming style in sufficient detail for others to be
+able to adhere to it (assuming, of course, that others are also capable
+of looking at the code for details). An example of what is necessary for
+C++ is given below.
+
+@par Naming conventions
+
+- variables, member variables, classes, structs, namespaces
+- functions, member functions
+- \#defines, enums
+- filenames
+- API usage style
+
+@par Units and coordinate systems
+
+If applicable (needless to say that the units and CS's of the API must be documented separately, this applies to
+the code itself.)
+
+
+*/

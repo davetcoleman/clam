@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dave/ros/clam/src/gearbox/src/gbxnovatelacfr/gbxnovatelutilacfr/crc32.h
+cstddef
+-
+stdint.h
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxnovatelacfr/gbxnovatelutilacfr/test/crc32test.cpp
+iostream
+-
+sstream
+-
+stdlib.h
+-
+stdint.h
+-
+math.h
+-
+sys/time.h
+-
+time.h
+-
+string.h
+-
+stdio.h
+-
+gbxnovatelacfr/gbxnovatelutilacfr/crc32.h
+-
+

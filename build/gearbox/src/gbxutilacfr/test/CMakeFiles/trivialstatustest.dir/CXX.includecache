@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/exceptions.h
+exception
+-
+string
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/status.h
+string
+-
+vector
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/test/trivialstatustest.cpp
+iostream
+-
+cstdlib
+-
+gbxutilacfr/trivialtracer.h
+-
+gbxutilacfr/trivialstatus.h
+-
+gbxutilacfr/exceptions.h
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/tracer.h
+string
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/trivialstatus.h
+gbxutilacfr/status.h
+-
+gbxutilacfr/tracer.h
+-
+
+/home/dave/ros/clam/src/gearbox/src/gbxutilacfr/trivialtracer.h
+gbxutilacfr/tracer.h
+-
+

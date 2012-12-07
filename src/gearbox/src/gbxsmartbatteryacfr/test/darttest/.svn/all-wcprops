@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsmartbatteryacfr/test/darttest
+END
+checksumtest.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsmartbatteryacfr/test/darttest/checksumtest.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsmartbatteryacfr/test/darttest/CMakeLists.txt
+END

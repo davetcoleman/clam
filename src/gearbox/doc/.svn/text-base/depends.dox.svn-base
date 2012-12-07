@@ -1,0 +1,19 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_depends Installing some of GearBox's optional dependencies
+
+@note Reviewed for release 0.0.2.
+
+Insert information as common dependencies appear.
+
+*/

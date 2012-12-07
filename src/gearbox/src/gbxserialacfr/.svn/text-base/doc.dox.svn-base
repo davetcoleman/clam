@@ -1,0 +1,67 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Alex Brooks, Mathew Ridley
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_hardware
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@defgroup gbx_library_gbxserialacfr libGbxSerialAcfr
+@brief Simple serial port interface
+
+@par General notes
+
+C++ class wrapping a serial port. For a full list of functions and classes see @ref gbxserialacfr.
+
+@par Header file
+
+@verbatim
+#include <gbxserialacfr/serial.h>
+@endverbatim
+
+@par Example
+  See:
+    - test/serialechotest.cpp
+    - test/serialloopbacktest.cpp
+
+@par Other serial libraries
+
+  - http://libserial.sourceforge.net (GPL)
+  - http://qextserialport.sourceforge.net (requires Qt)
+
+@par Tested On
+
+  - rs232 only (ie not rs422)
+  - Not tested at 500k baud
+  - For USB-to-serial devices, tested on FTDI-based devices only
+
+@par Style
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_style.html
+
+@par Copyright
+  Alex Brooks, Mathew Ridley
+
+@par Responsible Developer
+  Alex Brooks
+
+@par License
+  LGPL
+
+*/
+
+/*!
+@brief Simple serial port interface
+@namespace gbxserialacfr
+
+This namespace is part of a library which contains C++ class for wrapping a serial port.
+
+@see @ref gbx_library_gbxserialacfr
+
+*/

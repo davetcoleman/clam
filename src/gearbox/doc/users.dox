@@ -1,0 +1,27 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_users Users
+
+Please let us know if you use GearBox and would like to be listed here.
+
+@par Frameworks
+
+- <a href="http://orca-robotics.sf.net">Orca</a>
+- <a href="http://playerstage.sf.net">Player</a>
+- <a href="http://www.is.aist.go.jp/rt/OpenRTM-aist/">OpenRTM-aist</a>
+
+@par Projects
+
+- <a href="http://www.cas.edu.au/content.php/397.html">CAS Marine Robotic Systems</a>
+
+*/

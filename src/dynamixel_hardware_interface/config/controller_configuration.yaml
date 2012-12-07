@@ -1,0 +1,65 @@
+pan_controller:
+    type: dynamixel_hardware_interface/JointPositionController
+    joint: pan_joint
+    max_velocity: 3.2
+    motors:
+        - id: 4
+          init: 512
+          min: 0
+          max: 1023
+          compliance_margin: 2
+          compliance_slope: 64
+
+tilt_controller:
+    type: dynamixel_hardware_interface/JointPositionController
+    joint: tilt_joint
+    max_velocity: 3.2
+    motors:
+        - id: 5
+          init: 512
+          min: 0
+          max: 1023
+
+multi_joint_c:
+    type: dynamixel_hardware_interface/JointTrajectoryActionController
+    dependencies:
+        - pan_controller
+        - tilt_controller
+    joint_trajectory_action_node:
+        min_velocity: 0.1
+        constraints:
+            goal_time: 0.25
+
+wheel_controller:
+    type: dynamixel_hardware_interface/JointTorqueController
+    joint: wheel_joint
+    max_velocity: 3.2
+    motors:
+        - id: 13
+          init: 512
+          min: 0
+          max: 1023
+
+dual_motor_controller:
+    type: dynamixel_hardware_interface/JointPositionController
+    joint: dual_joint
+    max_velocity: 3.2
+    motors:
+        - id: 6
+          init: 511
+          min: 0
+          max: 1023
+          compliance_margin: 4
+          compliance_slope: 128
+        - id: 13
+          reversed: true
+
+
+gripper_controller:
+    type: wubble2_gripper_controller/WubbleGripperActionController
+    dependencies:
+        - pan_controller
+        - tilt_controller
+    left_controller_name: pan_controller
+    right_controller_name: tilt_controller
+

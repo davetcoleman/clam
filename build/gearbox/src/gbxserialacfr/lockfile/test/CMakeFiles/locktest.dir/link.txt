@@ -1,0 +1,1 @@
+/usr/bin/c++   -O2 -g    CMakeFiles/locktest.dir/locktest.o  -o /home/dave/ros/clam/devel/lib/gearbox/locktest -rdynamic /home/dave/ros/clam/devel/lib/libGbxLockFileAcfr.so.1.0.0 -Wl,-rpath,/home/dave/ros/clam/devel/lib 

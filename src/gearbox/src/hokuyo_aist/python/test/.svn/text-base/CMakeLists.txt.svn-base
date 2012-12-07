@@ -1,0 +1,1 @@
+GBX_ADD_SHARED_FILES(hokuyo_aist hokuyo_aist_example.py)

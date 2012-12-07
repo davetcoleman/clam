@@ -1,0 +1,198 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Matthew Ridley, Ben Upcroft, Michael Moser
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@ingroup gbx_hardware
+@defgroup gbx_library_gbxnovatelacfr GbxNovatelAcfr
+@brief ACFR driver for a Novatel(SPAN) system.
+
+NovatelSPAN is a proprietary Novatel navigation system.
+It minimally consists out of a Novatel OEMV GPS receiver (OEM4 receivers should be compatible).
+If combined with an IMU, a SPAN system can provide an INS navigation solution at high rate (up to 100Hz).
+The driver initializes the hardware and reports navigation data continuously.
+
+
+for a full list of functions see @ref gbxnovatelacfr
+
+@par Tested Hardware
+
+Specific devices this driver has been tested with:
+- @ref gbxnovatelacfr_hw_reviews_michael
+- @ref gbxnovatelacfr_hw_reviews_alen
+
+@par Header file
+
+@verbatim
+#include <gbxnovatelacfr/driver.h>
+@endverbatim
+
+@par Style
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_style.html
+
+@par Copyright
+  Mathew Ridley, Ben Upcroft, Michael Moser
+
+@par Responsible Developer
+  Michael Moser
+
+@par License
+  LGPL
+
+@par Dependencies.
+  @ref gbx_library_gbxserialacfr, @ref gbx_library_gbxutilacfr
+
+@par Example
+
+See test/test.cpp for a full blown usage-example and test/example.readme on how to compile the test program.
+
+To run the test program (defaults: /dev/ttyS0, 115200 bps, ...) call it without parameters.
+@verbatim
+$ gbxnovatelacfrtest
+@endverbatim
+
+If you want to change things, get a short usage description:
+@verbatim
+$ gbxnovatelacfrtest -h
+@endverbatim
+
+The test program reports back all messages received from the driver and prints out the data fields for each message (in verbose mode).
+
+@par Minimal Example
+
+This example (no error checking for clarity, but fully functional) shows the driver's intended usage:
+- create configuration (see @ref gbxnovatelacfr::Config, @ref gbxnovatelacfr::SimpleConfig and @ref gbxnovatelacfr::GpsOnlyConfig)
+- create driver (@ref gbxnovatelacfr::Driver)
+- read from driver and wait for external termination
+
+@verbatim
+#include <gbxnovatelacfr/driver.h>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+namespace gna = gbxnovatelacfr;
+
+int main(void){
+
+    // create a valid configuration
+    std::vector<double> imuToGpsOffset(3,0.0); // made up; this MUST be correct for real work (see gbxnovatelacfr::Config::imuToGpsOffset_)
+    gna::SimpleConfig sCfg(std::string("/dev/ttyS0"), 115200, std::string("IMU_HG1700_AG11"), imuToGpsOffset);
+    gna::Config cfg(sCfg);
+
+    // create the driver
+    gna::Driver driver(cfg);
+
+    while(0){
+        // read from the driver
+        std::auto_ptr<gna::GenericData > generic = driver.read();
+
+        // figure out what type of data we got
+        switch(generic->type()){
+            case gna::InsPva:
+                {
+                    // process data
+                    gna::InsPvaData *data = dynamic_cast<gna::InsPvaData *>(generic.get());
+                    std::cout << data->toString() << "\n";
+                }
+                break;
+            case gna::BestGpsPos:
+                {
+                    // process data
+                    gna::BestGpsPosData *data = dynamic_cast<gna::BestGpsPosData *>(generic.get());
+                    std::cout << data->toString() << "\n";
+                }
+                break;
+            case gna::BestGpsVel:
+                {
+                    // process data
+                    gna::BestGpsVelData *data = dynamic_cast<gna::BestGpsVelData *>(generic.get());
+                    std::cout << data->toString() << "\n";
+                }
+                break;
+            case gna::RawImu:
+                {
+                    // process data
+                    gna::RawImuData *data = dynamic_cast<gna::RawImuData *>(generic.get());
+                    std::cout << data->toString() << "\n";
+                }
+                break;
+            default:
+                if(0 == generic.get()){
+                    std::cout << "Got NULL message!\n";
+                }
+                else{
+                    std::cout << "Got unknown message!\n";
+                    std::cout << generic->toString() << "\n"; // yes this works, since toString() is a member of the base class
+                }
+                break;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+@endverbatim
+
+@par References
+
+This driver was programmed based on the protocol/message descriptions in Novatel's manuals, it does not contain any code from Novatel.
+The main source for information was:
+- http://www.novatel.com/Documents/Manuals/om-20000094.pdf (Novatel OEMV reference)
+- http://www.novatel.com/Documents/Manuals/om-20000104.pdf (SPAN-system manual)
+
+The following sources have also been helpful:
+- http://www.novatel.com/Documents/Manuals/GPS+Reference.pdf (a good overview about GPS: correct, complete, concise)
+- http://www.novatel.com/support/faqs.htm
+- http://www.novatel.com/support/applicationnotes.htm (more details on specific subjects than the manuals)
+
+@par Limitations
+
+- This is a Linux-only implementation (because of the serial library and the system-calls for timestamps,
+this might change in the future, particularly if there is user-demand)
+- Only supports a subset of the messages a NovatelSPAN system can provide, this can be extended, but only if there is demand.
+- The binary parser currently works on little endian architectures (e.g. x86) only. This is checked at run-time.
+- Driver currently treats the hardware as data-source only, communication _to_ the hardware is possible only during initialization.
+- Driver does limited checking if configuring the receiver was successful/as-intended:
+    - Driver checks for 'ack' for commands, reports 'no-ack' and retries
+    - This detects malformed commands _only_
+    - The receiver (and hence the driver) will accept commands to e.g. setup an IMU, even if no IMU is present
+- Driver does not deal with persistent storage:
+    - It is possible to make settings persistent between sessions (receiver command 'saveconfig').
+    Our driver does not use this command, but it could have been used manually.
+    - There are cases where persistent settings could interfere with normal operation of the driver. This is particularly likely
+    to happen when the hardware is shared between projects. There is no easy way to test for this, and the current implementation
+    ignores the problem completely (the user is always right).
+    - Workaround: To make sure that there are no lingering persistent settings,
+    use the receiver's 'freset' command to bring it back to factory-defaults.  The driver itself does not do this,
+    on the grounds that it also might delete settings that were made persistent with good reason and purpose.
+    If you are sharing equipment, check with everybody involved, before you use this approach.
+
+@par History
+
+- August 2009: Bugfix (patch by Ian Mahon), driver's GPS status/solution-type enums matched to Novatel's.
+Note: This will create mismatches with old log-files (not data, status/solution-type only)!
+- January 2009: Accepted into distribution after second hardware review.
+- January 2009: Second hardware review, @ref gbxnovatelacfr_hw_reviews_alen
+- August 2008: First hardware review, @ref gbxnovatelacfr_hw_reviews_michael
+- July/August 2008: Code reviews by AlexB and GeoffB (see developer mailing-list archives)
+- June 2008: Started moving functionality from Orca/Hydro's insgps component to gearbox.
+
+*/
+
+/*!
+@namespace gbxnovatelacfr
+@brief Novatel GPS/INS driver
+
+This namespace contains the public interface of a library to access and run a NovatelSPAN system.
+@see @ref gbx_library_gbxnovatelacfr
+*/

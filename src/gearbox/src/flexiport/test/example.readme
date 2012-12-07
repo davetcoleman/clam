@@ -1,0 +1,66 @@
+Building
+--------
+
+The examples can be built by making a directory (anywhere on your system where
+you have write permissions will do), changing to that directory and executing
+CMake with the examples' source directory as an argument. For example, if you
+have installed GearBox into /usr/local, you could do the following:
+
+$ cd ~
+$ mkdir flexiport_example
+$ cd flexiport_example
+$ ccmake /usr/local/share/gearbox/flexiport/example
+
+Running serial_example
+----------------------
+
+This example requires a serial loopback device. You can make one by connecting
+pins 2 and 3 of a 9-pin serial port. You must specify a path to this serial
+port with the -d option. You may additionally specify extra options for the
+flexiport object, such as a timeout. e.g.:
+
+serial_example -o type=serial,device=/dev/ttyS0,baud=57600,timeout=2.5,debug=2
+
+The example will test sending and receiving several strings to check that the
+SerialPort object is functioning correctly.
+
+This example also comes with a log file pair for use with the LogReaderPort
+port type. Using a log file pair means the hardware (in this case, the loopback
+device) does not need to be present to execute the example. You can use the
+log file pair like this:
+
+serial_example -o type=logreader,file=example.log
+
+See the LogReaderPort object documentation for more options that can be used
+with log file pairs. See the LogWriterPort object documentation for details
+on how to make your own log file pair for testing your programs.
+
+Running tcp_example
+----------------------
+
+The tcp_example is simple to use. Simply execute it, and it will fork off a
+child process, then use this to test a connection between two TCPPort objects.
+
+You may specify additional options for the TCPPort objects using -o, such as
+a timeout. e.g.:
+
+tcp_example -o timeout=1,debug=3
+
+Running udp_example
+----------------------
+
+The udp_example is similar to the tcp_example, replacing the TCPPort object
+with a UDPPort object.
+
+You may specify additional options for the UDPPort objects using -o, such as
+a timeout. e.g.:
+
+udp_example -o timeout=1,debug=3
+
+Note for Windows users
+----------------------
+
+Because Windows lacks a readily-available implementation of getopt, command line
+options are not available for the examples on this platform. Hard-coded options
+will be used instead; change them in the source file and recompile if you need
+to change the port options.

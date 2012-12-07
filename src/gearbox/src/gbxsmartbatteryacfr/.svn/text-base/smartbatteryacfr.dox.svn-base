@@ -1,0 +1,99 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Tobias Kaupp
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_hardware
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@defgroup gbx_library_gbxsmartbatteryacfr GbxSmartBatteryAcfr
+@brief A library to read data from a smart battery system
+
+This library provides a set of classes and functions to read data from a Smart Battery System (SBS). SBS is a specification for determining accurate battery readings. The library also contains classes which are specialised to a battery system provided by OceanServer Technologies Inc.
+
+For a full list of classes and functions, see @ref gbxsmartbatteryacfr.
+
+@par Header file
+
+@verbatim
+#include <gbxsmartbatteryacfr/gbxsmartbatteryacfr.h>
+@endverbatim
+
+@par Examples
+- See 'test/shorttest.cpp' for a simple example of how to use the library. The test makes use of the 'oceanserver' class to read a few records from the oceanserver system and prints the results on the screen.
+- See 'test/longtest.cpp' for an example which continuously reads from an oceanserver system and conducts health checks according to hard-coded health thresholds.
+
+@par Style
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_style.html
+
+@par Copyright
+  Tobias Kaupp
+
+@par Responsible Developer
+  Tobias Kaupp
+  
+@par License
+  LGPL
+  
+@par Dependencies
+
+- @ref gbx_library_gbxutilacfr
+- @ref gbx_library_gbxserialacfr
+
+
+@par Limitations
+
+- This is a Linux-only implementation (due to the Linux-only serial library).  
+- It works with those serial devices which @ref gbx_library_gbxserialacfr supports.
+- The library is tailored to the OceanServer battery system.
+- Has been tested with Battery Management Modules MP08SR and BB04FR and a variable number of battery modules of type BA95HC-FL (individual modules can be added and removed at runtime).
+- Has been tested with the following firmware: V2.10 (2007)
+
+@par MP08SR and BB04FR Layouts
+
+The battery number reported by the driver corresponds to the following connectors on the Battery Management Module boards (the BB04FR board only has the lower level whereas the MP08SR has both levels):
+
+@verbatim
+Level 1 (lower level):
+        ==================
+        |                |
+(J22) 4 |                | 2 (J21)
+(J17) 3 |                | 1 (J12)
+        ==================
+
+
+Level 2 (upper level):
+        ==================
+        |                |
+(J22) 8 |                | 6 (J21)
+(J17) 7 |                | 5 (J12)
+        ==================
+@endverbatim  
+  
+Note that the lower level needs to be powered (at least one battery module needs to be plugged in) to be able to read from the serial port.
+
+@par References
+- SmartBattery standard: http://sbs-forum.org/specs/
+- OceanServer battery systems: http://www.ocean-server.com/overview.html
+- OceanServer battery system manuals: http://www.ocean-server.com/download.html
+- OceanServer online store: http://www.oceanserver-store.com/
+
+*/
+
+/*!
+@brief SmartBattery library
+@namespace gbxsmartbatteryacfr
+
+This namespace is part of a SmartBattery library.
+
+@see @ref gbx_library_gbxsmartbatteryacfr
+
+*/
+

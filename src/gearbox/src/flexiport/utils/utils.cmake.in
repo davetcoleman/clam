@@ -1,0 +1,10 @@
+PROJECT (FlexiPortUtils)
+
+INCLUDE_DIRECTORIES (@CMAKE_INSTALL_PREFIX@)
+
+ADD_EXECUTABLE (porttoport porttoport.cpp)
+TARGET_LINK_LIBRARIES (porttoport flexiport)
+SET_TARGET_PROPERTIES (porttoport PROPERTIES
+                       LINK_FLAGS "-L@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       INSTALL_RPATH "${INSTALL_RPATH};@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       BUILD_WITH_INSTALL_RPATH TRUE)

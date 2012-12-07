@@ -1,0 +1,53 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Alex Brooks, Alexei Makarenko, Tobias Kaupp
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@defgroup gbx_library_gbxutilacfr GbxUtilAcfr
+@brief ACFR utility functions and drivers
+
+Utility functions and objects used accross ACFR libraries and drivers.
+For a full list of classes and functions, see @ref gbxutilacfr.
+
+@par Header file
+
+@verbatim
+#include <gbxutilacfr/gbxutilacfr.h>
+@endverbatim
+
+@par Style
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_style.html
+
+@par Copyright
+  Alex Brooks, Alexei Makarenko, Tobias Kaupp
+
+@par Responsible Developer
+  Alex Makarenko
+  
+@par License
+  LGPL
+  
+@par Dependencies
+
+- none
+
+*/
+
+/*!
+@brief ACFR utilities
+@namespace gbxutilacfr
+
+This namespace is part of a utility library.
+
+@see @ref gbx_library_gbxutilacfr
+
+*/

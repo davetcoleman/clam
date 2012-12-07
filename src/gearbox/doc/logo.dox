@@ -1,0 +1,23 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_logo Project Logos
+
+@par Pre-release
+
+Logo
+@image html gbx_logo_cardbox_sky_150x150.png
+
+Icon
+@image html gbx_icon_cardbox_sky.png
+
+*/

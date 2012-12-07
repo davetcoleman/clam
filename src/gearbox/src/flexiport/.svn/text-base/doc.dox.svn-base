@@ -1,0 +1,97 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008 Geoffrey Biggs
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@ingroup gbx_windows
+@ingroup gbx_osx
+@defgroup gbx_library_flexiport FlexiPort
+@brief FlexiPort data communications library.
+
+Provides a consistent interface for communicating over a range of data port types. Currently serial
+and TCP ports are supported. Support for USB ports is planned for when I get a suitable USB device
+to test with. Logging is possible, which allows communications sessions to be played back at a later
+date without the original hardware present.
+
+The @ref SerialPort and @ref TCPPort port types are cross-platform, usable on Linux, Mac OSX and
+Microsoft Windows. If this library is compiled as static on Windows, you must define the
+@c FLEXIPORT_STATIC preprocessor variable when compiling code that includes port.h, flexiport.h or
+timeout.h.
+
+
+
+For a full list of classes and functions, see @ref flexiport.
+
+@par Header file
+
+Necessary:
+@verbatim
+#include <flexiport/flexiport.h>
+#include <flexiport/port.h>
+@endverbatim
+
+Optional if port type-specific features are required:
+For SerialPort:
+@verbatim
+#include <flexiport/serialport.h>
+@endverbatim
+For TCPPort:
+@verbatim
+#include <flexiport/tcpport.h>
+@endverbatim
+For logging ports:
+@verbatim
+#include <flexiport/logwriterport.h>
+#include <flexiport/logreaderport.h>
+@endverbatim
+
+@par Example
+  See test/tcp_example.cpp and test/serial_example.cpp.
+
+@par Style
+- Naming conventions:
+  - Class methods start with a capital letter.
+  - variableNamesLikeThis.
+  - Private member variables start with an underscore _like _this.
+  - Avoid using \#defines. \#define'd values in all capitals when necessary.
+- Formatting:
+  - 1 tab indentation at start of lines, spaces only for inside lines (e.g. before commands).
+  - Function declarations on one line.
+  - Space between function name and arguments.
+- C++ API.
+  - Functionality provided through classes.
+
+@par Copyright
+  Geoffrey Biggs
+
+@par Responsible Developer
+  Geoffrey Biggs
+  
+@par License
+  LGPL
+  
+@par Dependencies
+
+- None
+
+*/
+
+
+/*!
+@brief FlexiPort data communications library.
+@namespace flexiport
+
+This namespace is part of the FlexiPort library.
+
+@see @ref gbx_library_flexiport
+
+*/

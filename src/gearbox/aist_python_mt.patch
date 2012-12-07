@@ -1,0 +1,11 @@
+--- CMakeLists.txt	2010-11-05 17:13:52.719057243 -0700
++++ CMakeLists.txt.ros	2010-11-05 17:12:30.921672551 -0700
+@@ -41,7 +41,7 @@
+ 		endif(Boost_USE_MULTITHREAD)
+ 		MARK_AS_ADVANCED (BOOST_LIB_SUFFIX)
+ 
+-		SET (boostPythonLib boost_python${BOOST_LIB_SUFFIX})
++		SET (boostPythonLib boost_python)
+ 		INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
+ 		LINK_DIRECTORIES (${Boost_LIBRARY_DIRS})
+ 	else(Boost_FOUND)

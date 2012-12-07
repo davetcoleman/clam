@@ -1,0 +1,12 @@
+CMAKE_MINIMUM_REQUIRED (VERSION 2.4)
+
+PROJECT( hokuyo_aist_example )
+
+INCLUDE_DIRECTORIES( @CMAKE_INSTALL_PREFIX@/include/gearbox )
+
+ADD_EXECUTABLE( hokuyo_aist_example example.cpp )
+TARGET_LINK_LIBRARIES( hokuyo_aist_example hokuyo_aist )
+SET_TARGET_PROPERTIES( hokuyo_aist_example PROPERTIES
+                       LINK_FLAGS "-L@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       INSTALL_RPATH "${INSTALL_RPATH};@CMAKE_INSTALL_PREFIX@/lib/gearbox"
+                       BUILD_WITH_INSTALL_RPATH TRUE )

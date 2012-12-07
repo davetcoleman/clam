@@ -1,0 +1,40 @@
+/*
+ * GearBox Project: Components for robotics 
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This copy of GearBox is licensed to you under the terms described in the
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_documentation Documentation
+
+@note Reviewed for release 0.0.1.
+
+GearBox documentation is written in Doxygen format (*.dox files). It's possible to convert Doxygen files into a variety of formats, but we normally stick with HTML. You have 3 options on how to access it.
+
+@par View On-line
+
+- Latest release: http://gearbox.sourceforge.net/
+- Up to date from SVN HEAD generated every 30 min: http://gearbox.sf.net/head/
+
+@par Download Archive
+
+- Latest release: http://gearbox.sf.net/gearbox-release-doc.tar.gz
+- Up to date from SVN HEAD generated every 30 min: http://gearbox.sf.net/head/gearbox-head-doc.tar.gz
+
+@par Build Locally
+
+To generate documentation, go to the @c doc directory on the top level of the GearBox distribution and run doxygen. (This works for both GearBox releases and the SVN version.)
+
+@verbatim
+$ cd [GEARBOX-SRC]/doc
+$ doxygen doxyfile
+@endverbatim
+
+The documentation is created in a new directory called @c html. Use your browser to open @c [GEARBOX-SRC]/doc/html/index.html
+
+*/

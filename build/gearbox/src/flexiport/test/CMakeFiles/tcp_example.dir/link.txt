@@ -1,0 +1,1 @@
+/usr/bin/c++   -O2 -g    CMakeFiles/tcp_example.dir/tcp_example.o  -o /home/dave/ros/clam/devel/lib/gearbox/tcp_example -rdynamic /home/dave/ros/clam/devel/lib/libflexiport.so.1.0.0 -Wl,-rpath,/home/dave/ros/clam/devel/lib:::::::::::: 

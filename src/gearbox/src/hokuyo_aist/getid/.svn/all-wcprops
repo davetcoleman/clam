@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/hokuyo_aist/getid
+END
+96-hokuyo.rules
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/hokuyo_aist/getid/96-hokuyo.rules
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/hokuyo_aist/getid/CMakeLists.txt
+END
+getid.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/hokuyo_aist/getid/getid.cpp
+END
+doc.dox
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/hokuyo_aist/getid/doc.dox
+END

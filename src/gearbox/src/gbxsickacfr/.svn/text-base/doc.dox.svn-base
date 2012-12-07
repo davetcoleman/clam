@@ -1,0 +1,82 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2004-2010 Alex Brooks, Alexei Makarenko, Tobias Kaupp
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+@ingroup gbx_libs
+@ingroup gbx_hardware
+@ingroup gbx_cpp
+@ingroup gbx_linux
+@defgroup gbx_library_gbxsickacfr GbxSickAcfr
+@brief ACFR driver for SICK laser range-finder.
+
+Drives SICK hardware, directly connected to the computer. For a full list of classes and functions, see @ref gbxsickacfr.
+
+@par Header file
+
+@verbatim
+#include <gbxsickacfr/driver.h>
+@endverbatim
+
+@par Example
+  See test/test.cpp
+
+@par Style
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_style.html
+
+@par Units and Coordinate System
+  See http://orca-robotics.sourceforge.net/orca/orca_doc_units.html
+
+@par Copyright
+  Alex Brooks, Alexei Makarenko, Tobias Kaupp
+
+@par Responsible Developer
+  Alex Brooks
+  
+@par License
+  LGPL
+  
+@par Dependencies
+
+- libIceUtil (for timing/threads/mutexes), v.3.2 or newer (latest tested 3.3).
+- @ref gbx_library_gbxserialacfr
+
+@par Installation
+
+- Finding libIceUtil 
+    - IceUtil will be found automatically if installed in one of several standard locations. 
+    - You can specify it's installation point with @c ICEUTIL_HOME CMake variable (or an environment variable with the same name). For example:
+@verbatim
+$ cmake -DICEUTIL_HOME=/home/myuser/install .
+@endverbatim
+
+@par Limitations
+
+- This is a Linux-only implementation.  
+- It works with those serial devices which @ref gbx_library_gbxserialacfr supports.
+- Currently, timestamps are generated whenever a @b full message
+  arrives.  This is sub-optimal, since the message may take a
+  significant amount of time to be transmitted over the serial
+  interface.  eg. 181 samples at 38400 baud takes about 75ms.
+  An improvement would be to timestamp the start of each message,
+  remembering that timestamp for subsequent reads from the serial port
+  until the end of the message finally arrives.
+- Has been tested with: LMS-291, LMS-211.
+
+*/
+
+/*!
+@brief SICK laser driver
+@namespace gbxsickacfr
+
+This namespace is part of a SICK laser driver
+
+@see @ref gbx_library_gbxsickacfr
+
+*/

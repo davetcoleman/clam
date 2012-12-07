@@ -1,0 +1,55 @@
+/*
+ * GearBox Project: Peer-Reviewed Open-Source Libraries for Robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This distribution is licensed to you under the terms described in
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_getting Download and Install GearBox
+
+@note Reviewed for release 0.0.1
+
+GearBox distribution has one official dependency <a href="http://www.cmake.org/">CMake: Cross-Platform Make</a>.
+
+@section gbx_doc_getting_download Download instructions for GearBox
+
+- Option 1. Download <strong><a href="http://sourceforge.net/project/showfiles.php?group_id=216468" style="text-decoration:none">the latest distribution of GearBox</a></strong>
+
+- Option 2. Checkout source from SVN
+    - Anonymous checkout (your username/password will be asked on commit):
+@verbatim
+$ svn co https://gearbox.svn.sf.net/svnroot/gearbox/gearbox/trunk gearbox
+@endverbatim
+    - See links @ref gbx_doc_version_control "to get started" with SVN.
+    - See <strong><a href="http://sourceforge.net/svn/?group_id=216468" style="text-decoration:none">more detailed SourceForge SVN instructions.</a></strong>
+
+@section gbx_doc_getting_install Installation instructions
+
+Detailed instructions are available for these platforms/distributions:
+    - @ref gbx_doc_installdebian "Debian Linux" (also tested with Ubuntu/Kubuntu)
+    - @ref gbx_doc_installgentoo "Gentoo Linux"
+    - Send feedback on building under other configurations.
+
+The instructions below are quite general, follow them if your platform/distribution combination is not described above:
+
+    -# Download and install <a href="http://www.cmake.org/">CMake: Cross-Platform Make</a> which is used to build the GearBox distribution.
+    - Minimum version required 2.4-patch 4 (latest tested: 2.6-patch 3).
+        - Full instructions are available from the <a href="http://www.cmake.org/HTML/Download.html">download page</a>.
+    -# Download and install any optional dependencies you'd like. Or just skip this step and do it later.
+        - You may want to take a look at our notes on @ref gbx_doc_depends.
+    -# Build and install GearBox distribution.
+        - Download the @ref gbx_doc_getting_download "GearBox source" archive and un-tar it.
+        - Configure using CMake
+        - Compile and install
+    -# Set library paths
+        - Add the Gearbox library directory (by default, /usr/local/lib/gearbox) to the file /etc/ld.so.conf and run ldconfig. This will set
+          the library path system-wide. If you wish to only set it for your user (the better option), specify the library path when linking
+          using the -L option. For example, -L/usr/local/lib/gearbox. Setting the library path in the LD_LIBRARY_PATH environment variable is
+          not recommended.
+    -# Make sure that the libraries and executables are in the path. Finished!
+*/

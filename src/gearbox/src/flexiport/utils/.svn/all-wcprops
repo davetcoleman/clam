@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/utils
+END
+utils.readme
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/utils/utils.readme
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/utils/CMakeLists.txt
+END
+porttoport.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/utils/porttoport.cpp
+END
+utils.cmake.in
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/flexiport/utils/utils.cmake.in
+END

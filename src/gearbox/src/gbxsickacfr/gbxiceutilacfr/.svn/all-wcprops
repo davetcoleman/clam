@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr
+END
+threadutils.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/threadutils.cpp
+END
+safethread.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/safethread.h
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/CMakeLists.txt
+END
+thread.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/thread.h
+END
+notify.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/notify.h
+END
+threadutils.h
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/threadutils.h
+END
+buffer.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/buffer.h
+END
+gbxiceutilacfr.h
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/gbxiceutilacfr.h
+END
+timer.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/timer.cpp
+END
+store.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/store.h
+END
+timer.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/timer.h
+END
+safethread.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/safethread.cpp
+END
+thread.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/gbxiceutilacfr/thread.cpp
+END

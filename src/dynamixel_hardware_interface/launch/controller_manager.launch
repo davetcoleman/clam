@@ -1,0 +1,15 @@
+<launch>
+    <node name="dynamixel_manager" pkg="dynamixel_hardware_interface" type="controller_manager" output="screen" >
+        <rosparam file="$(find dynamixel_hardware_interface)/config/controller_manager.yaml" command="load"/>
+    </node>
+    
+    <rosparam file="$(find dynamixel_hardware_interface)/config/controller_configuration.yaml" command="load"/>
+    <node name="controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port=ttyUSB0
+                pan_controller
+                tilt_controller
+                multi_joint_c
+                dual_motor_controller"
+          output="screen"/>
+</launch>

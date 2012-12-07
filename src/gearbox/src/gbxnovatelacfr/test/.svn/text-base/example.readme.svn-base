@@ -1,0 +1,12 @@
+Building
+--------
+
+The example can be built by making a directory (anywhere on your system where
+you have write permissions will do), changing to that directory and executing
+CMake with the example's source directory as an argument. For example, if you
+have installed GearBox into /usr/local, you could do the following:
+
+$ cd ~
+$ mkdir gbxnovatelacfr_example
+$ cd gbxnovatelacfr_example
+$ ccmake /usr/local/share/gearbox/gbxnovatelacfr

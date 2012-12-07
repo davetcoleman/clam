@@ -1,0 +1,94 @@
+/*
+ * GearBox Project: Components for robotics
+ *               http://gearbox.sf.net/
+ * Copyright (c) 2008-2010 GearBox Team
+ *
+ * This copy of GearBox is licensed to you under the terms described in the
+ * the LICENSE file included in this distribution.
+ *
+ */
+
+/*!
+
+@page gbx_doc_installgentoo Installing GearBox on Gentoo Linux
+
+@note Reviewed for release 1.1
+
+These are detailed instructions for installing GearBox on Gentoo Linux. See @ref gbx_doc_getting for general guidelines.
+
+@section gbx_doc_installgentoo_portageoverlay Portage overlay
+
+The first step is to set up a local overlay for portage. If you already have a local overlay, you can skip this section.
+If you don't know what an overlay is, see the <a href="http://www.gentoo.org/proj/en/overlays/userguide.xml">Gentoo Documentation</a>.
+
+Follow these simple steps to create an overlay:
+-# Create a directory to store the overlay in, for example \b /usr/local/portage
+-# Set the \b PORTDIR_OVERLAY variable in \b /etc/make.conf to include this directory.
+
+@section gbx_doc_installgentoo_copyebuild Download and copy ebuild
+
+Download the Gearbox ebuild from the Gearbox download page. This ebuild must be copied into the local overlay so that portage can
+find it. Extract the downloaded files into your local overlay directory. This should create a subdirectory called \b dev-libs with
+a subdirectory called \b gearbox inside it.
+
+@section gbx_doc_installgentoo_keywordebuild Keyword the ebuild
+
+If the Gearbox ebuild is masked, it will need to be unmasked before it can be installed. Add the following line to /etc/portage/package.keywords
+to unmask it.
+
+@verbatim
+dev-libs/gearbox **
+@endverbatim
+
+@section gbx_doc_installgentoo_setuseflags Set USE flags
+
+This step is optional. If you wish to install Gearbox with the default options, move on to the next step.
+
+The Gearbox ebuild provides many USE flags to control which libraries are installed. They can be set at install time by
+specifying them on the command line, for example:
+
+@verbatim
+USE="hokuyo_aist" emerge gearbox -av
+@endverbatim
+
+Alternatively, they can be set more permanantly be specifying them in /etc/portage/package.use:
+
+@verbatim
+dev-libs/gearbox hokuyo_aist
+@endverbatim
+
+A full list of available USE flags is given below. For a list of those provided by your current ebuild for Gearbox,
+run \b equery \b uses \b gearbox.
+<table><tr><td>doc</td><td>Installs the documentation</td></tr>
+<tr><td>basic</td><td>Enable the basic example library.</td></tr>
+<tr><td>gbxadvanced</td><td>Enable the advanced example library.</td></tr>
+<tr><td>gbxgarminacfr</td><td>Enabled the GbxGarminAcfr GPS driver.</td></tr>
+<tr><td>gbxserialacfr</td><td>Enable the GbxSerialAcfr serial communications library.</td></tr>
+<tr><td>gbxsickacfr</td><td>Enable the GbxSickAcfr SICK laser scanner driver.</td></tr>
+<tr><td>gbxsmartbatteryacfr</td><td>Enable the GbxSmartBatteryAcfr SmartBattery driver.</td></tr>
+<tr><td>gbxutilacfr</td><td>Enable the GbxUtilAcfr utilities library.</td></tr>
+<tr><td>hokuyo_aist</td><td>Enable the hokuyo_aist Hokuyo laser scanner library.</td></tr>
+</table>
+
+@section gbx_doc_installgentoo_install Install
+
+Run the following command to install Gearbox.
+
+@verbatim
+emerge gearbox
+@endverbatim
+
+Gearbox will be automatically downloaded, compiled with the options you have selected via USE flags, and installed.
+Any necessary dependencies for the libraries to be installed will also be installed.
+
+Gearbox will be installed with the prefix \b /usr. Remember to take this into account when setting
+compile options such as library and include paths for your programs.
+
+@section gbx_doc_installgentoo_uninstall Uninstall
+
+To remove Gearbox from your system, run the following command.
+
+@verbatim
+emerge -C gearbox
+@endverbatim
+*/

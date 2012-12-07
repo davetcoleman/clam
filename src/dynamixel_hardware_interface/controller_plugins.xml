@@ -1,0 +1,13 @@
+<library path="lib/libdynamixel_controllers">
+    <class name="dynamixel_hardware_interface/JointPositionController"
+           type="controller::JointPositionController"
+           base_class_type="controller::SingleJointController" />
+           
+    <class name="dynamixel_hardware_interface/JointTorqueController"
+           type="controller::JointTorqueController"
+           base_class_type="controller::SingleJointController" />
+           
+    <class name="dynamixel_hardware_interface/JointTrajectoryActionController"
+           type="controller::JointTrajectoryActionController"
+           base_class_type="controller::MultiJointController" />
+</library>

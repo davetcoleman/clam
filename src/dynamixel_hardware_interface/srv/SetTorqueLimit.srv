@@ -1,0 +1,5 @@
+# value between 0 (0% of maximum torque) and 1 (100% percent of maximum torque)
+
+float64 torque_limit
+---
+

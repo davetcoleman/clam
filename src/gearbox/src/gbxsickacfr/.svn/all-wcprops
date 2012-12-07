@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr
+END
+driver.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/driver.cpp
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/CMakeLists.txt
+END
+messages.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/messages.h
+END
+sickdefines.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/sickdefines.h
+END
+doc.dox
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/doc.dox
+END
+serialhandler.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/serialhandler.cpp
+END
+driver.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/driver.h
+END
+serialhandler.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/serialhandler.h
+END
+messages.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/messages.cpp
+END
+sickdefines.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/gearbox/!svn/ver/530/gearbox/tags/RELEASE_10.11/src/gbxsickacfr/sickdefines.cpp
+END
