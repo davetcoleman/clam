@@ -1,1 +1,0 @@
-/usr/bin/c++   -O2 -g    CMakeFiles/mathtest.dir/mathtest.o  -o /home/dave/ros/clam/devel/lib/gearbox/mathtest -rdynamic /home/dave/ros/clam/devel/lib/libGbxUtilAcfr.so.1.0.0 -Wl,-rpath,/home/dave/ros/clam/devel/lib 

@@ -1,1 +1,0 @@
-/usr/bin/c++   -O2 -g    CMakeFiles/serialechotest.dir/serialechotest.o  -o /home/dave/ros/clam/devel/lib/gearbox/serialechotest -rdynamic /home/dave/ros/clam/devel/lib/libGbxSerialAcfr.so.1.0.0 /home/dave/ros/clam/devel/lib/libGbxLockFileAcfr.so.1.0.0 -Wl,-rpath,/home/dave/ros/clam/devel/lib:::::::::::: 

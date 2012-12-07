@@ -1,5 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "gearbox")
-set(gearbox_RUN_DEPENDS )
-set(gearbox_VERSION "2.0.0")
-set(gearbox_MAINTAINER "Dave Coleman <davetcoleman@gmail.com>")
-set(gearbox_BUILD_DEPENDS )

@@ -1,7 +1,0 @@
-CATKIN_PACKAGE_PREFIX=""
-PROJECT_ABSOLUTE_INCLUDE_DIRS="/home/dave/ros/clam/devel/include"
-PROJECT_CATKIN_DEPENDS=""
-PKG_CONFIG_LIBRARIES=""
-PROJECT_NAME="dynamixel_hardware_interface"
-PROJECT_SPACE_DIR="/home/dave/ros/clam/devel"
-PROJECT_VERSION="2.0.0"

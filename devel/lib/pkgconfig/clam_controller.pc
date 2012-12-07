@@ -1,6 +1,0 @@
-Name: clam_controller
-Description: Description of clam_controller
-Version: 0.0.0
-Cflags: -I
-Libs: -L/home/dave/ros/clam/devel/lib 
-Requires: 
