@@ -340,6 +340,9 @@ GBX_INSTALL_PKGCONFIGS:STRING=TRUE
 GBX_INSTALL_SHARED_FILES:STRING=TRUE
 
 //Path to a program.
+GENACTION_BIN:FILEPATH=/opt/ros/groovy/lib/actionlib_msgs/genaction.py
+
+//Path to a program.
 GITCOMMAND:FILEPATH=/usr/bin/git
 
 //Path to a file.
@@ -469,6 +472,12 @@ _CATKIN_GTEST_INCLUDE:FILEPATH=_CATKIN_GTEST_INCLUDE-NOTFOUND
 //Path to a file.
 _CATKIN_GTEST_SRC:FILEPATH=/usr/src/gtest/src/gtest.cc
 
+//The directory containing a CMake configuration file for actionlib.
+actionlib_DIR:PATH=/opt/ros/groovy/share/actionlib/cmake
+
+//The directory containing a CMake configuration file for actionlib_msgs.
+actionlib_msgs_DIR:PATH=/opt/ros/groovy/share/actionlib_msgs/cmake
+
 //Value Computed by CMake
 beginner_tutorials_BINARY_DIR:STATIC=/home/dave/ros/clam/build/beginner_tutorials
 
@@ -480,8 +489,23 @@ boostPythonLib:STRING=libboost_python
 //The directory containing a CMake configuration file for catkin.
 catkin_DIR:PATH=/opt/ros/groovy/share/catkin/cmake
 
+//The directory containing a CMake configuration file for class_loader.
+class_loader_DIR:PATH=/opt/ros/groovy/share/class_loader/cmake
+
+//The directory containing a CMake configuration file for console_bridge.
+console_bridge_DIR:PATH=/opt/ros/groovy/share/console_bridge/cmake
+
+//The directory containing a CMake configuration file for control_msgs.
+control_msgs_DIR:PATH=/opt/ros/groovy/share/control_msgs/cmake
+
 //The directory containing a CMake configuration file for cpp_common.
 cpp_common_DIR:PATH=/opt/ros/groovy/share/cpp_common/cmake
+
+//The directory containing a CMake configuration file for diagnostic_msgs.
+diagnostic_msgs_DIR:PATH=/opt/ros/groovy/share/diagnostic_msgs/cmake
+
+//The directory containing a CMake configuration file for diagnostic_updater.
+diagnostic_updater_DIR:PATH=/opt/ros/groovy/share/diagnostic_updater/cmake
 
 //Dependencies for the target
 dynamixel_controllers_LIB_DEPENDS:STATIC=general;dynamixel_hardware_interface;
@@ -490,7 +514,7 @@ dynamixel_controllers_LIB_DEPENDS:STATIC=general;dynamixel_hardware_interface;
 dynamixel_hardware_interface_BINARY_DIR:STATIC=/home/dave/ros/clam/build/dynamixel_hardware_interface
 
 //Dependencies for the target
-dynamixel_hardware_interface_LIB_DEPENDS:STATIC=general;flexiport;general;/usr/lib/libboost_thread-mt.so;
+dynamixel_hardware_interface_LIB_DEPENDS:STATIC=general;flexiport;general;/usr/lib/libboost_thread-mt.so;general;/opt/ros/groovy/lib/libroscpp.so;general;/usr/lib/libboost_signals-mt.so;general;/usr/lib/libboost_filesystem-mt.so;general;/usr/lib/libboost_system-mt.so;general;/opt/ros/groovy/lib/libcpp_common.so;general;/opt/ros/groovy/lib/librostime.so;general;/usr/lib/libboost_date_time-mt.so;general;/usr/lib/libboost_thread-mt.so;general;/usr/lib/x86_64-linux-gnu/libpthread.so;general;/opt/ros/groovy/lib/librosconsole.so;general;/opt/ros/groovy/lib/libroscpp_serialization.so;general;/opt/ros/groovy/lib/libxmlrpcpp.so;general;/usr/lib/libtinyxml.so;general;/opt/ros/groovy/lib/libclass_loader.so;general;/usr/lib/x86_64-linux-gnu/libdl.so;general;/usr/lib/libPocoFoundation.so;general;/opt/ros/groovy/lib/libconsole_bridge.so;general;/opt/ros/groovy/lib/libroslib.so;general;/opt/ros/groovy/lib/libactionlib.so;
 
 //Value Computed by CMake
 dynamixel_hardware_interface_SOURCE_DIR:STATIC=/home/dave/ros/clam/src/dynamixel_hardware_interface
@@ -503,6 +527,9 @@ flexiport_LIB_DEPENDS:STATIC=
 
 //Value Computed by CMake
 gearbox_BINARY_DIR:STATIC=/home/dave/ros/clam/build/gearbox
+
+//The directory containing a CMake configuration file for gearbox.
+gearbox_DIR:PATH=/home/dave/ros/clam/devel/share/gearbox/cmake
 
 //Value Computed by CMake
 gearbox_SOURCE_DIR:STATIC=/home/dave/ros/clam/src/gearbox
@@ -554,7 +581,10 @@ hokuyo_aist_py_LIB_DEPENDS:STATIC=general;hokuyo_aist;general;boost_python;gener
 iceutil_home_include_iceutil_dir:PATH=iceutil_home_include_iceutil_dir-NOTFOUND
 
 //Path to a library.
-lib:FILEPATH=/opt/ros/groovy/lib/libxmlrpcpp.so
+lib:FILEPATH=/usr/lib/x86_64-linux-gnu/libpthread.so
+
+//The directory containing a CMake configuration file for pluginlib.
+pluginlib_DIR:PATH=/opt/ros/groovy/share/pluginlib/cmake
 
 //The directory containing a CMake configuration file for rosconsole.
 rosconsole_DIR:PATH=/opt/ros/groovy/share/rosconsole/cmake
@@ -571,6 +601,9 @@ roscpp_traits_DIR:PATH=/opt/ros/groovy/share/roscpp_traits/cmake
 //The directory containing a CMake configuration file for rosgraph_msgs.
 rosgraph_msgs_DIR:PATH=/opt/ros/groovy/share/rosgraph_msgs/cmake
 
+//The directory containing a CMake configuration file for roslib.
+roslib_DIR:PATH=/opt/ros/groovy/share/roslib/cmake
+
 //The directory containing a CMake configuration file for rospy.
 rospy_DIR:PATH=/opt/ros/groovy/share/rospy/cmake
 
@@ -579,6 +612,12 @@ rostime_DIR:PATH=/opt/ros/groovy/share/rostime/cmake
 
 //The directory containing a CMake configuration file for std_msgs.
 std_msgs_DIR:PATH=/opt/ros/groovy/share/std_msgs/cmake
+
+//The directory containing a CMake configuration file for std_srvs.
+std_srvs_DIR:PATH=/opt/ros/groovy/share/std_srvs/cmake
+
+//The directory containing a CMake configuration file for trajectory_msgs.
+trajectory_msgs_DIR:PATH=/opt/ros/groovy/share/trajectory_msgs/cmake
 
 //The directory containing a CMake configuration file for xmlrpcpp.
 xmlrpcpp_DIR:PATH=/opt/ros/groovy/share/xmlrpcpp/cmake

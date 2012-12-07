@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dynamixel_hardware_interface)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg gearbox pluginlib actionlib control_msgs trajectory_msgs diagnostic_updater std_srvs)
 
 ## Declare ROS messages and services
 add_message_files(DIRECTORY msg FILES Num.msg)
@@ -17,7 +17,7 @@ catkin_package()
 ## Build 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-# Add libraries
+# Add additional libraries
 add_library(${PROJECT_NAME} src/dynamixel_io.cpp src/serial_proxy.cpp)
 target_link_libraries(${PROJECT_NAME} flexiport)
 
@@ -26,11 +26,17 @@ find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 
-# Build executable
+
+## Link the executable against catkin - order matters:
+#  include first local includes, than catkin, than any third party stuff
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+# EXECUTABLE ----------------------------------------------------
 add_executable(controller_manager src/controller_manager.cpp)
 target_link_libraries(controller_manager ${PROJECT_NAME})
 
-# Link Libraries
+
+# LIBRARY -------------------------------------------------------
 add_library(dynamixel_controllers src/joint_position_controller.cpp
                                   src/joint_torque_controller.cpp
                                   src/joint_trajectory_action_controller.cpp)

@@ -1,3 +1,6 @@
+build/
+devel/
+
 # Compiled Object files
 *.slo
 *.lo
@@ -11,3 +14,6 @@
 *.lai
 *.la
 *.a
+
+# Python stuff
+*.pyc

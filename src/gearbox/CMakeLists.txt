@@ -1,10 +1,15 @@
 cmake_minimum_required( VERSION 2.4 FATAL_ERROR )
 project( gearbox )
 
+#include_directories(include)
+#include_directories(src/flexiport)
+
 find_package(catkin REQUIRED)
+include_directories(${catkin_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS src/flexiport/
+  INCLUDE_DIRS include
 )
 
 #
@@ -21,3 +26,7 @@ set( GBX_PROJECT_VERSION
 # The rest is done by a script
 #
 include( cmake/internal/Setup.cmake )
+
+
+# DTC stolen from moveit_kinematics_model
+install(DIRECTORY include/ DESTINATION include)

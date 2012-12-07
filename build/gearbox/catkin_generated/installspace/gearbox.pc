@@ -1,6 +1,6 @@
 Name: gearbox
 Description: Description of gearbox
 Version: 2.0.0
-Cflags: -I
+Cflags: -I/home/dave/ros/clam/install/include
 Libs: -L/home/dave/ros/clam/install/lib 
 Requires: 

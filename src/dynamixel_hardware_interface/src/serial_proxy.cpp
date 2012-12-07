@@ -12,8 +12,8 @@
 #include <boost/thread.hpp>
 #include <XmlRpcValue.h>
 
-//#include <gearbox/flexiport/flexiport.h>
-#include <gearbox/src/flexiport/flexiport.h>
+#include <clam/gearbox/flexiport/flexiport.h>
+//#include <gearbox/src/flexiport/flexiport.h>
 //#include <dynamixel_hardware_interface/flexiport.h>
 
 #include <dynamixel_hardware_interface/dynamixel_const.h>

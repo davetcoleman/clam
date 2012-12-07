@@ -295,16 +295,14 @@ Determining if the include file termio.h exists passed with the following output
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -312,16 +310,14 @@ Determining if the include file linux/input.h exists passed with the following o
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -329,16 +325,14 @@ Determining if the include file string.h exists passed with the following output
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -346,16 +340,14 @@ Determining if the include file stdlib.h exists passed with the following output
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -363,16 +355,14 @@ Determining if the include file unistd.h exists passed with the following output
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -380,16 +370,14 @@ Determining if the include file sys/types.h exists passed with the following out
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -397,16 +385,14 @@ Determining if the include file sys/stat.h exists passed with the following outp
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -414,16 +400,14 @@ Determining if the include file pthread.h exists passed with the following outpu
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -431,16 +415,14 @@ Determining if the include file sys/ioctl.h exists passed with the following out
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -448,16 +430,14 @@ Determining if the include file fcntl.h exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -465,16 +445,14 @@ Determining if the include file time.h exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -482,16 +460,14 @@ Determining if the include file errno.h exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -499,16 +475,14 @@ Determining if the include file zlib.h exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o
 /usr/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o   -c /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc         CMakeFiles/cmTryCompileExec.dir/CheckIncludeFile.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -516,16 +490,14 @@ Determining if the function strnlen exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o
 /usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=strnlen   -o CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-2.8/Modules/CheckFunctionExists.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc     -DCHECK_FUNCTION_EXISTS=strnlen    CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -533,16 +505,14 @@ Determining if the function getaddrinfo exists passed with the following output:
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o
 /usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=getaddrinfo   -o CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-2.8/Modules/CheckFunctionExists.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc     -DCHECK_FUNCTION_EXISTS=getaddrinfo    CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o  -o cmTryCompileExec -rdynamic 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 
@@ -550,16 +520,14 @@ Determining if the function clock_gettime exists passed with the following outpu
 Change Dir: /home/dave/ros/clam/build/CMakeFiles/CMakeTmp
 
 Run Build Command:/usr/bin/make "cmTryCompileExec/fast"
-make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
-make[2]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
+make[1]: Entering directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 /usr/bin/cmake -E cmake_progress_report /home/dave/ros/clam/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o
 /usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=clock_gettime -I/home/dave/ros/clam/build/CMakeFiles/CMakeTmp/time.h    -o CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-2.8/Modules/CheckFunctionExists.c
 Linking C executable cmTryCompileExec
 /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
 /usr/bin/gcc     -DCHECK_FUNCTION_EXISTS=clock_gettime    CMakeFiles/cmTryCompileExec.dir/CheckFunctionExists.c.o  -o cmTryCompileExec -rdynamic -lrt 
-make[2]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 make[1]: Leaving directory `/home/dave/ros/clam/build/CMakeFiles/CMakeTmp'
 
 

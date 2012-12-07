@@ -4,6 +4,10 @@
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/include/dynamixel_hardware_interface/dynamixel_const.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/include/dynamixel_hardware_interface/dynamixel_io.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/src/dynamixel_io.cpp
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/flexiport.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/flexiport_types.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/port.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/dynamixel_io.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/timeout.h
 
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/devel/include/dynamixel_hardware_interface/MotorState.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/devel/include/dynamixel_hardware_interface/MotorStateList.h
@@ -11,6 +15,10 @@ dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/ser
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/include/dynamixel_hardware_interface/dynamixel_io.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/include/dynamixel_hardware_interface/serial_proxy.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/dynamixel_hardware_interface/src/serial_proxy.cpp
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/flexiport.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/flexiport_types.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/port.h
+dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /home/dave/ros/clam/src/gearbox/include/clam/gearbox/flexiport/timeout.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /opt/ros/groovy/include/XmlRpcDecl.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /opt/ros/groovy/include/XmlRpcValue.h
 dynamixel_hardware_interface/CMakeFiles/dynamixel_hardware_interface.dir/src/serial_proxy.cpp.o: /opt/ros/groovy/include/diagnostic_msgs/DiagnosticArray.h

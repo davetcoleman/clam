@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-#include <gearbox/flexiport/port.h>
+#include <clam/gearbox/flexiport/port.h>
 
 namespace dynamixel_hardware_interface
 {

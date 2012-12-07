@@ -60,9 +60,9 @@ set(gearbox_CONFIG_INCLUDED TRUE)
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(gearbox_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "" STREQUAL "")
+if(NOT "/home/dave/ros/clam/src/gearbox/include" STREQUAL "")
   set(gearbox_INCLUDE_DIRS "")
-  foreach(idir )
+  foreach(idir /home/dave/ros/clam/src/gearbox/include)
     if(IS_ABSOLUTE ${idir} AND IS_DIRECTORY ${idir})
       set(include ${idir})
     elseif(IS_DIRECTORY /home/dave/ros/clam/src/gearbox/${idir})
