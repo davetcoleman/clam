@@ -1493,10 +1493,11 @@ int Sensor::read_line_with_check(char* buffer, int expected_length,
     if(bytesToConsider < 1)
         throw InsufficientBytesError(bytesToConsider, linelength);
 
-    int checksum = 0;
+    //DTC:var set but not used
+    //int checksum = 0;
     try
     {
-        checksum = confirm_checksum(buffer, bytesToConsider,
+        confirm_checksum(buffer, bytesToConsider,
                 static_cast<int>(buffer[checksumIndex]));
     }
     catch(ProtocolError& e)
@@ -1521,7 +1522,7 @@ int Sensor::read_line_with_check(char* buffer, int expected_length,
                             linelength);
                 }
 
-                checksum = confirm_checksum(buffer, newBytesToConsider,
+                confirm_checksum(buffer, newBytesToConsider,
                         static_cast<int>(buffer[checksumIndex]));
             }
             else

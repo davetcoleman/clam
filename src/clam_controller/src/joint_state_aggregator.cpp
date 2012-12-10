@@ -4,7 +4,8 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
-#include "JointState.h" // DTC: changed this from Anton's version. manually moved file from dynamixel_hardware_interface package. should fix, later...
+//#include "JointState.h" // DTC: changed this from Anton's version. manually moved file from dynamixel_hardware_interface package. should fix, later...
+#include <dynamixel_hardware_interface/JointState.h>
 
 class JointStateAggregator
 {
