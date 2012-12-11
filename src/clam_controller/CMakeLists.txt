@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
-## Declare a catkin package
+# Declare a catkin package
 catkin_package(
   CATKIN_DEPENDS 
     rospy 
@@ -26,5 +26,4 @@ catkin_package(
 #target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 
 add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
-target_link_libraries(joint_state_aggregator 
-  ${PROJECT_NAME} ${catkin_LIBRARIES} )
+target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
