@@ -8,7 +8,7 @@ ClamArm Manipulator
 
 Controls for the 7-dof robotic arm in the Correll Lab at the University of Colorado Boulder. 
 
-*This version uses the new catkin build system and runs on Groovy*
+**This version uses the new catkin build system and runs on Groovy**
 
 BUILD AND RUN
 ---------
