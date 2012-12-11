@@ -1,0 +1,16 @@
+<package>
+  <name>clam_description</name>
+  <version>2.0.0</version>
+  <description></description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author>Dave Coleman</author>
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+
+</package>

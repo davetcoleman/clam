@@ -1,0 +1,18 @@
+<!-- -*- mode: XML -*- -->
+<!-- This launch file starts up a visual interative-marker controller for physical robot -->
+<!-- Pre-reqs: roslaunch clam_bringup clam.launch -->
+<launch>
+
+  <!-- Launch arm navigation stack -->
+  <include file="$(find clam_arm_navigation)/launch/clam_arm_navigation.launch"/>
+
+  <!-- Launch markers -->
+  <node name="clam_marker_server" type="clam_marker_server" pkg="clam_interactive_markers" output="screen">
+    <param name="root_link" value="base_link" />
+    <param name="tip_link" value="gripper_roll_link" />
+  </node>
+
+  <!-- Launch visualizer -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find clam_bringup)/launch/rviz/clam.rviz" />
+
+</launch>

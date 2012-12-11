@@ -1,0 +1,22 @@
+<package>
+  <name>clam_description</name>
+  <version>2.0.0</version>
+  <description>Contains URDF-related files and scripts for visualizing robot</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <author>Dave Coleman</author>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>urdf</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>xacro</run_depend>
+
+</package>

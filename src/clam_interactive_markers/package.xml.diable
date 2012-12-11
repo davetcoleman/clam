@@ -1,0 +1,32 @@
+<package>
+  <name>clam_interactive_markers</name>
+  <version>2.0.0</version>
+  <description>
+    Code for publishing interactive markers to rviz to enable controlling ClamArm
+    with mouse by dragging arrows
+  </description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author>Helen Oleynikova</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>arm_navigation_msgs</build_depend>
+  <build_depend>dynamixel_hardware_interface</build_depend>
+  <build_depend>actionlib</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>arm_navigation_msgs</run_depend>
+  <run_depend>dynamixel_hardware_interface</run_depend>
+  <run_depend>actionlib</run_depend>
+
+
+
+</package>

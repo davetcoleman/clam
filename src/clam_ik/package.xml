@@ -1,0 +1,15 @@
+<package>
+  <name>clam_ik</name>
+  <version>2.0.0</version>
+  <description>Inverse-Kiematics related code</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <author>Dave Coleman</author>
+
+</package>

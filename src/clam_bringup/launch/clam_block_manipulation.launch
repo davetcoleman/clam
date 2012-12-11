@@ -1,0 +1,21 @@
+<!-- -*- mode: XML -*- -->
+<!-- Launch everything for block manipulation -->
+
+<launch>
+
+  <!-- Launch clam basic controls -->
+  <include file="$(find clam_bringup)/launch/clam.launch" />
+
+  <!-- Launch clam interactive controls -->
+  <include file="$(find clam_bringup)/launch/clam_interactive_markers.launch" />
+
+  <!-- Launch vision -->
+  <include file="$(find clam_vision)/launch/clam_vision_freenect.launch" />
+
+  <!-- Launch manipulation software -->
+  <!--include file="$(find clam_block_manipulation)/launch/block_manipulation_old_kinect.launch" /-->
+
+  <!-- roslaunch clam_block_manipulation block_demo.launch -->
+
+</launch>
+

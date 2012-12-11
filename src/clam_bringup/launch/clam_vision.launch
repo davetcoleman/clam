@@ -1,0 +1,8 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <!-- Choose the right vision drivers -->
+  <include file="$(find clam_vision)/launch/clam_vision_freenect.launch" />
+  <!--include file="$(find clam_vision)/launch/clam_vision_?.launch" /-->
+
+</launch>

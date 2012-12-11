@@ -1,0 +1,21 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+  <!-- Startup the arm controller -->
+  <include file="$(find clam_controller)/launch/clam_controller.launch" />
+
+  <!-- Send robot XML description to param server -->
+  <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
+
+  <!-- Combine all the joint info -->
+  <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
+
+  <!-- Publish the joint_states -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <!-- Launch fake joint state publisher -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output="screen">
+    <rosparam param="source_list">[joint_states]</rosparam>
+    <rosparam param="use_gui">FALSE</rosparam>
+  </node>
+
+</launch>

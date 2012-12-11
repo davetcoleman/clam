@@ -1,0 +1,6 @@
+<launch>
+  <node name="clam_marker_server" type="clam_marker_server" pkg="clam_interactive_markers" output="screen">
+    <param name="root_link" value="/base_link" />
+    <param name="tip_link" value="/gripper_roll_link" />
+  </node>
+</launch>
