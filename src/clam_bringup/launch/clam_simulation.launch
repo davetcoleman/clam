@@ -1,11 +1,17 @@
 <?xml version="1.0"?>
 
 <launch>
-	<!-- send erratic robot XML to param server -->
-        <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
+  <!-- send erratic robot XML to param server -->
+  <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
 
-        <param name="use_gui" value="TRUE"/>
-        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find clam_bringup)/launch/vcg/rviz.vcg" />
+  <!-- send fake joint values -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="TRUE"/>
+  </node>
+
+  <!-- Combine joint values -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <!-- Show in Rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find clam_bringup)/launch/rviz/clam.rviz" />
 </launch>

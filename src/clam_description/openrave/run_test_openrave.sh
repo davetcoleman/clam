@@ -1,0 +1,1 @@
+openrave.py --database inversekinematics --robot=clam.robot.xml 
