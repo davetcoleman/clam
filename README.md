@@ -10,12 +10,10 @@ Controls for the 7-dof robotic arm in the Correll Lab at the University of Color
 
 *This version uses the new catkin build system and runs on Groovy*
 
-RUN
+BUILD AND RUN
 ---------
 
-For more compelete documentation visit the project website:
-    
-	[http://correll.cs.colorado.edu/clam/?page_id=28](http://correll.cs.colorado.edu/clam/?page_id=28)
+See [Documentation](http://correll.cs.colorado.edu/clam/?page_id=28)
 
 
 CONTRIBUTORS
