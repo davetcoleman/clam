@@ -30,8 +30,8 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 
-#include <arm_navigation_msgs/MoveArmAction.h>
-#include <arm_navigation_msgs/utils.h>
+#include <moveit_msgs/MoveArmAction.h> //DTC: MotionPlanRequest.msg??
+#include <moveit_msgs/utils.h>
 #include <dynamixel_hardware_interface/TorqueEnable.h>
 
 #include <interactive_markers/interactive_marker_server.h>
@@ -56,7 +56,7 @@ class ClamMarkerServer
 {
 private:
   ros::NodeHandle nh;
-  actionlib::SimpleActionClient<arm_navigation_msgs::MoveArmAction> move_arm; // TODO: maybe initialize with (..) ?
+  actionlib::SimpleActionClient<moveit_msgs::MoveArmAction> move_arm; // TODO: maybe initialize with (..) ?
   interactive_markers::InteractiveMarkerServer server;
   tf::TransformListener tf_listener;
 
@@ -244,7 +244,7 @@ public:
 
   // DTC: This is never used??
   void processCommand(const actionlib::SimpleClientGoalState& state,
-                      const arm_navigation_msgs::MoveArmResultConstPtr& result,
+                      const moveit_msgs::MoveArmResultConstPtr& result,
                       const InteractiveMarkerFeedbackConstPtr &feedback)
   {
     ROS_INFO("Finished in state [%s]", state.toString().c_str());
@@ -273,7 +273,7 @@ public:
     //ROS_INFO("Sending pose command");
 
     // Initialize the goal
-    arm_navigation_msgs::MoveArmGoal goal;
+    moveit_msgs::MoveArmGoal goal;
     goal.motion_plan_request.group_name = "clam_arm"; // corresponds to clam_planning_description.yaml group name
     goal.motion_plan_request.num_planning_attempts = 1;
     goal.motion_plan_request.planner_id = std::string("");
@@ -281,7 +281,7 @@ public:
     goal.motion_plan_request.allowed_planning_time = ros::Duration(10.0); // 50.0
 
     // Create the desired pose
-    arm_navigation_msgs::SimplePoseConstraint desired_pose;
+    moveit_msgs::SimplePoseConstraint desired_pose;
     desired_pose.header.frame_id = root_link; // base_link
     desired_pose.link_name = tip_link;
     desired_pose.pose = feedback->pose;
@@ -297,7 +297,7 @@ public:
     
 
 
-    arm_navigation_msgs::addGoalConstraintToMoveArmGoal(desired_pose,goal);
+    moveit_msgs::addGoalConstraintToMoveArmGoal(desired_pose,goal);
 
     ROS_INFO_STREAM("Sending pose goal:\n" << desired_pose.pose);
 
@@ -330,11 +330,11 @@ public:
   bool sendGripperCommand(const InteractiveMarkerFeedbackConstPtr &feedback)
   {
     /* DTC
-       arm_navigation_msgs::MoveArmGoal goal;
-       arm_navigation_msgs::ArmAction action;
+       moveit_msgs::MoveArmGoal goal;
+       moveit_msgs::ArmAction action;
 
        goal.header.frame_id = tip_link;
-       action.type = arm_navigation_msgs::ArmAction::MOVE_GRIPPER;
+       action.type = moveit_msgs::ArmAction::MOVE_GRIPPER;
        action.command = -feedback->pose.position.y;
        goal.motions.push_back(action);
 
