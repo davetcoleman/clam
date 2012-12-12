@@ -8,7 +8,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   pcl_ros
   pcl
-)
+  image_transport
+  cv_bridge
+  opencv2
+  image_geometry
+  tf
+  visualization_msgs
+  )
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
@@ -32,19 +38,19 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   #INCLUDE_DIRS include
-  CATKIN_DEPENDS 
-    roscpp 
-    pcl 
-    pcl_ros 
-    image_transport 
-    cv_bridge 
-    opencv2 
-    image_geometry
-    vision_opencv
-    eigen 
-    tf 
-    visualization_msgs
-)
+  CATKIN_DEPENDS
+  roscpp
+  pcl
+  pcl_ros
+  image_transport
+  cv_bridge
+  opencv2
+  image_geometry
+  vision_opencv
+  eigen
+  tf
+  visualization_msgs
+  )
 
 ###########
 ## Build ##
@@ -52,7 +58,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 include_directories(include ${catkin_INCLUDE_DIRS}
-)
+  )
 
 ## Declare a cpp library
 # add_library(clam_bringup
@@ -60,10 +66,10 @@ include_directories(include ${catkin_INCLUDE_DIRS}
 # )
 
 ## Declare a cpp executable
-add_executable(calibrate_kinect_checkerboard 
-  src/detect_calibration_pattern.cpp 
+add_executable(calibrate_kinect_checkerboard
+  src/detect_calibration_pattern.cpp
   src/calibrate_kinect_checkerboard.cpp
-)
+  )
 target_link_libraries(calibrate_kinect_checkerboard ${catkin_LIBRARIES})
 
 
