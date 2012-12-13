@@ -143,10 +143,11 @@ Visualization Manager:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
         Goal State Color: 250; 128; 0
+        Interactive Marker Size: 0.1
         Planning Group: arm
         Query Goal State: true
         Query Start State: true
-        Show Workspace: true
+        Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
       Planning Scene Topic: planning_scene
@@ -240,7 +241,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: /vjoint_parent_frame
+    Fixed Frame: /base_link
   Name: root
   Tools:
     - Class: rviz/MoveCamera
@@ -249,17 +250,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.85376
+      Distance: 1.94476
       Focal Point:
         X: -0.0452954
         Y: -0.159898
         Z: 1.08405e-06
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.100399
+      Pitch: 0.405399
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 1.62544
+      Yaw: 1.25544
     Saved: ~
 Window Geometry:
   Displays:
@@ -275,5 +276,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3838
-  Y: 82
+  X: 3836
+  Y: 26

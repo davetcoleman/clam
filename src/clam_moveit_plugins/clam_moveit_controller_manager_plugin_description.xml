@@ -1,0 +1,8 @@
+<library path="libclam_moveit_controller_manager">
+
+  <class name="clam_moveit_controller_manager/ClamMoveItControllerManager" type="clam_moveit_controller_manager::ClamMoveItControllerManager" base_class_type="moveit_controller_manager::MoveItControllerManager">
+    <description>
+    </description>
+  </class>
+
+</library>
