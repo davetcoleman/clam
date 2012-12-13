@@ -32,7 +32,9 @@
     <!-- Start arm trajectory action controller. *Not sure what multi_joint_dummy_port implies... -->
     <rosparam file="$(find clam_controller)/config/clam_trajectory_controller.yaml" command="load"/>
     <node name="arm_trajectory_controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
-          args="--manager=clam_motor_manager                                                                                                        --port=multi_joint_dummy_port                                                                                                       clam_arm_controller"
+          args="--manager=clam_motor_manager
+                --port=multi_joint_dummy_port                                                                                                      
+		clam_arm_controller"
           output="screen"/>
 
 </launch>

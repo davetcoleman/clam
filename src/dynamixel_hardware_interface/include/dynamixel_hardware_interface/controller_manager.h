@@ -44,6 +44,7 @@
 #include <dynamixel_hardware_interface/StartController.h>
 #include <dynamixel_hardware_interface/StopController.h>
 #include <dynamixel_hardware_interface/RestartController.h>
+#include <dynamixel_hardware_interface/ListControllers.h>
 
 namespace dynamixel_controller_manager
 {
@@ -71,6 +72,7 @@ private:
     ros::ServiceServer start_controller_server_;
     ros::ServiceServer stop_controller_server_;
     ros::ServiceServer restart_controller_server_;
+    ros::ServiceServer list_controllers_server_;
     
     std::map<std::string, dynamixel_hardware_interface::SerialProxy*> serial_proxies_;
 
@@ -102,6 +104,9 @@ private:
     
     bool restartControllerSrv(dynamixel_hardware_interface::RestartController::Request& req,
                               dynamixel_hardware_interface::RestartController::Response& res);
+
+    bool listControllersSrv(dynamixel_hardware_interface::ListControllers::Request& req,
+                              dynamixel_hardware_interface::ListControllers::Response& res);
     
 };
 

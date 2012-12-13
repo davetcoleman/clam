@@ -32,7 +32,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-/* Author: Dave Coleman, Ioan Sucan, E. Gil Jones */
+/* Author: Dave Coleman */
 
 #include <ros/ros.h>
 #include <moveit/controller_manager/controller_manager.h>
@@ -40,12 +40,22 @@
 #include <actionlib/client/simple_action_client.h>
 #include <pluginlib/class_list_macros.h>
 
+//#include <dynamixel_hardware_interface/SwitchController.h>
+#include <dynamixel_hardware_interface/StartController.h>
+#include <dynamixel_hardware_interface/StopController.h>
+#include <dynamixel_hardware_interface/ListControllers.h>
 #include <algorithm>
 #include <map>
 
 namespace clam_moveit_controller_manager
 {
 
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ClamFollowJointTrajectoryControllerHandle
+// TODO: convert this
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 class ClamFollowJointTrajectoryControllerHandle : public moveit_controller_manager::MoveItControllerHandle
 {
 public:
@@ -78,7 +88,7 @@ public:
       return false;
     if (!trajectory.multi_dof_joint_trajectory.points.empty())
     {
-      ROS_ERROR("The PR2 FollowJointTrajectory controller cannot execute multi-dof trajectories.");
+      ROS_ERROR("The Clam FollowJointTrajectory controller cannot execute multi-dof trajectories.");
       return false;
     }
     if (done_)
@@ -156,6 +166,12 @@ protected:
   bool done_;
 };
 
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ClamMoveItControllerManager
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 class ClamMoveItControllerManager : public moveit_controller_manager::MoveItControllerManager
 {
 public:
@@ -165,6 +181,7 @@ public:
     node_handle_.param("controller_manager_name", controller_manager_name_, std::string("clam_controller_manager"));
     node_handle_.param("use_controller_manager", use_controller_manager_, true);
 
+    // Read controller_list from parameter server and converto to type ControllerInformation
     XmlRpc::XmlRpcValue controller_list;
     if (node_handle_.hasParam("controller_list"))
     {
@@ -249,15 +266,13 @@ public:
       
       if (attempts < max_attempts)
       {
-        /*
-        lister_service_ = root_node_handle_.serviceClient<clam_mechanism_msgs::ListControllers>(controller_manager_name_ + "/list_controllers", true);
-        switcher_service_ = root_node_handle_.serviceClient<clam_mechanism_msgs::SwitchController>(controller_manager_name_ + "/switch_controller", true);
-        loader_service_ = root_node_handle_.serviceClient<clam_mechanism_msgs::LoadController>(controller_manager_name_ + "/load_controller", true);
-        unloader_service_ = root_node_handle_.serviceClient<clam_mechanism_msgs::UnloadController>(controller_manager_name_ + "/unload_controller", true);
-        */
+        lister_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::ListControllers>(controller_manager_name_ + "/list_controllers", true);
+        //switcher_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::SwitchController>(controller_manager_name_ + "/switch_controller", true);
+        loader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StartController>(controller_manager_name_ + "/load_controller", true);
+        unloader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StopController>(controller_manager_name_ + "/unload_controller", true);
       }
       else
-        ROS_ERROR("Not using the PR2 controller manager");
+        ROS_ERROR("Not using the Clam controller manager");
     }
   }
   
@@ -285,10 +300,9 @@ public:
     return new_handle;
   }
   
-  /*
   virtual void getControllersList(std::vector<std::string> &names)
   {   
-    const clam_mechanism_msgs::ListControllers::Response &res = getListControllerServiceResponse();
+    const dynamixel_hardware_interface::ListControllers::Response &res = getListControllerServiceResponse();
     std::set<std::string> names_set;
     names_set.insert(res.controllers.begin(), res.controllers.end());
     
@@ -298,11 +312,11 @@ public:
     names.clear();
     names.insert(names.end(), names_set.begin(), names_set.end());
   }
-  
+
   virtual void getActiveControllers(std::vector<std::string> &names)
   {
     names.clear();
-    const clam_mechanism_msgs::ListControllers::Response &res = getListControllerServiceResponse();
+    const dynamixel_hardware_interface::ListControllers::Response &res = getListControllerServiceResponse();
     for (std::size_t i = 0; i < res.controllers.size(); ++i)
       if (res.state[i] == "running")
         names.push_back(res.controllers[i]);
@@ -310,10 +324,10 @@ public:
   
   virtual void getLoadedControllers(std::vector<std::string> &names)
   {  
-    const clam_mechanism_msgs::ListControllers::Response &res = getListControllerServiceResponse();
+    const dynamixel_hardware_interface::ListControllers::Response &res = getListControllerServiceResponse();
     names = res.controllers;
   }
-  */
+
   virtual void getControllerJoints(const std::string &name, std::vector<std::string> &joints)
   {
     std::map<std::string, ControllerInformation>::const_iterator it = possibly_unloaded_controllers_.find(name);
@@ -325,12 +339,11 @@ public:
       joints.clear();
     }
   }
-  
-  /*
+
   virtual moveit_controller_manager::MoveItControllerManager::ControllerState getControllerState(const std::string &name)
   {
     moveit_controller_manager::MoveItControllerManager::ControllerState state;
-    const clam_mechanism_msgs::ListControllers::Response &res = getListControllerServiceResponse();
+    const dynamixel_hardware_interface::ListControllers::Response &res = getListControllerServiceResponse();
     for (std::size_t i = 0; i < res.controllers.size(); ++i)
     {
       if (res.controllers[i] == name)
@@ -347,7 +360,7 @@ public:
         state.default_ = true;
     return state;
   }
-  
+
   virtual bool loadController(const std::string &name)
   {
     if (!use_controller_manager_)
@@ -357,9 +370,10 @@ public:
     }
     last_lister_response_ = ros::Time();  
     handle_cache_.erase(name);
-    clam_mechanism_msgs::LoadController::Request req;
-    clam_mechanism_msgs::LoadController::Response res;
+    dynamixel_hardware_interface::StartController::Request req;
+    dynamixel_hardware_interface::StartController::Response res;
     req.name = name;
+    req.port = ""; // TODO - add ability in dynamixel to know the port
     if (!loader_service_.call(req, res))
     {
       ROS_WARN_STREAM("Something went wrong with loader service");
@@ -369,7 +383,7 @@ public:
       ROS_WARN_STREAM("Loading controller " << name << " failed");
     return res.ok;
   }
-  
+
   virtual bool unloadController(const std::string &name)
   { 
     if (!use_controller_manager_)
@@ -379,8 +393,8 @@ public:
     }
     last_lister_response_ = ros::Time();
     handle_cache_.erase(name);
-    clam_mechanism_msgs::UnloadController::Request req;
-    clam_mechanism_msgs::UnloadController::Response res;
+    dynamixel_hardware_interface::StopController::Request req;
+    dynamixel_hardware_interface::StopController::Response res;
     req.name = name;
     if (!unloader_service_.call(req, res))
     {
@@ -391,7 +405,7 @@ public:
       ROS_WARN_STREAM("Unloading controller " << name << " failed");
     return res.ok;
   }
-  
+
   virtual bool switchControllers(const std::vector<std::string> &activate, const std::vector<std::string> &deactivate)
   {
     if (!use_controller_manager_)
@@ -400,10 +414,11 @@ public:
       return false;
     }
     last_lister_response_ = ros::Time();
-    clam_mechanism_msgs::SwitchController::Request req;
-    clam_mechanism_msgs::SwitchController::Response res;
+    /*
+    dynamixel_hardware_interface::SwitchController::Request req;
+    dynamixel_hardware_interface::SwitchController::Response res;
     
-    req.strictness = clam_mechanism_msgs::SwitchController::Request::BEST_EFFORT;
+    req.strictness = dynamixel_hardware_interface::SwitchController::Request::BEST_EFFORT;
     req.start_controllers = activate;
     req.stop_controllers = deactivate;
     if (!switcher_service_.call(req, res))
@@ -414,20 +429,24 @@ public:
     if (!res.ok)
       ROS_WARN_STREAM("Switcher service failed");
     return res.ok;
+    */
+
+      ROS_WARN_STREAM("Something went wrong with switcher service");
+      return false;
   }
-  */
+
 
 protected: 
 
-  /*
-  const clam_mechanism_msgs::ListControllers::Response &getListControllerServiceResponse(void)
+
+  const dynamixel_hardware_interface::ListControllers::Response &getListControllerServiceResponse(void)
   {
     if (use_controller_manager_)
     {
       static const ros::Duration max_cache_age(10.0);
       if ((ros::Time::now() - last_lister_response_) > max_cache_age)
       {
-	clam_mechanism_msgs::ListControllers::Request req;
+	dynamixel_hardware_interface::ListControllers::Request req;
 	if (!lister_service_.call(req, cached_lister_response_))
 	  ROS_WARN_STREAM("Something went wrong with lister service");
 	last_lister_response_ = ros::Time::now();
@@ -435,7 +454,7 @@ protected:
     }
     return cached_lister_response_;
   }
-  */
+
   
   ros::NodeHandle node_handle_;    
   ros::NodeHandle root_node_handle_;    
@@ -448,7 +467,7 @@ protected:
   ros::ServiceClient lister_service_;
   
   ros::Time last_lister_response_;
-  //clam_mechanism_msgs::ListControllers::Response cached_lister_response_;
+  dynamixel_hardware_interface::ListControllers::Response cached_lister_response_;
 
   std::map<std::string, moveit_controller_manager::MoveItControllerHandlePtr> handle_cache_;
   

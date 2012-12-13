@@ -20,6 +20,7 @@ find_package(catkin COMPONENTS
   tf_conversions
   eigen_conversions
   control_msgs
+  dynamixel_hardware_interface
   REQUIRED)
 
 include_directories(${catkin_INCLUDE_DIRS})

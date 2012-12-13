@@ -6,7 +6,17 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg gearbox plu
 
 ## Declare ROS messages and services
 #add_message_files(DIRECTORY msg FILES Num.msg)
-#add_service_files(DIRECTORY srv FILES AddTwoInts.srv)
+add_service_files(DIRECTORY srv FILES 
+  ListControllers.srv
+  RestartController.srv
+  SetComplianceMargin.srv
+  SetComplianceSlope.srv
+  SetTorqueLimit.srv
+  SetVelocity.srv
+  StartController.srv
+  StopController.srv
+  TorqueEnable.srv
+)
 
 ## Generate added messages and services
 generate_messages(DEPENDENCIES std_msgs)
