@@ -1,0 +1,16 @@
+<launch>
+
+  <node name="clam_arm_action_server" pkg="clam_block_manipulation" type="clam_arm_action_server" output="screen">
+  </node>
+  
+  <node name="block_detection_action_server" pkg="clam_block_manipulation" type="block_detection_action_server" output="screen">
+    <!--remap from="/camera/depth_registered/points" to="/camera/rgb/points" /-->
+  </node>
+
+  <node name="pick_and_place_action_server" pkg="clam_block_manipulation" type="pick_and_place_action_server" output="screen">
+  </node>
+  
+  <node name="interactive_manipulation_action_server" pkg="clam_block_manipulation" type="interactive_manipulation_action_server" output="screen">
+  </node>
+
+</launch>

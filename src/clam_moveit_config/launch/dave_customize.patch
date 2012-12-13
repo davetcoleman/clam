@@ -1,0 +1,12 @@
+--- moveit_rviz.launch	2012-12-13 09:17:16.790598655 -0700
++++ moveit_rviz.launch.dave	2012-12-13 09:16:47.990598092 -0700
+@@ -4,7 +4,8 @@
+   <arg unless="$(arg debug)" name="launch_prefix" value="" />
+   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+   
+-  <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" respawn="false" output="screen">
++  <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" 
++	respawn="false" output="screen"  args="-d $(find clam_moveit_config)/launch/moveit.rviz" >
+     <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
+   </node>
+ 

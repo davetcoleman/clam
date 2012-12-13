@@ -1,0 +1,32 @@
+<package>
+  <name>clam_block_manipulation</name>
+  <version>2.0.0</version>
+  <description>clam_block_manipulation contains a demo allowing the ClamArm to manipulate small blocks on a level surface using interactive markers.</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <author>Helen Oleynikova</author>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>interactive_markers</build_depend>
+  <build_depend>arm_navigation_msgs</build_depend>
+  <build_depend>dynamixel_hardware_interface</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>interactive_markers</run_depend>
+  <run_depend>simple_arm_server</run_depend>
+  <run_depend>simple_arm_actions</run_depend>
+  <run_depend>arm_navigation_msgs</run_depend>
+  <run_depend>dynamixel_hardware_interface</run_depend>
+  <run_depend>pcl_ros</run_depend>
+
+</package>
