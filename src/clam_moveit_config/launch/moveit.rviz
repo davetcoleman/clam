@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
@@ -145,7 +146,7 @@ Visualization Manager:
         Planning Group: arm
         Query Goal State: true
         Query Start State: true
-        Show Workspace: false
+        Show Workspace: true
         Start State Alpha: 1
         Start State Color: 0; 255; 0
       Planning Scene Topic: planning_scene
@@ -239,7 +240,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: /base_link
+    Fixed Frame: /vjoint_parent_frame
   Name: root
   Tools:
     - Class: rviz/MoveCamera
@@ -248,17 +249,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.24002
+      Distance: 2.85376
       Focal Point:
-        X: -0.0197659
-        Y: 0.00290048
-        Z: 6.55643e-07
+        X: -0.0452954
+        Y: -0.159898
+        Z: 1.08405e-06
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.760399
+      Pitch: 0.100399
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 1.17543
+      Yaw: 1.62544
     Saved: ~
 Window Geometry:
   Displays:
@@ -274,5 +275,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3839
-  Y: 110
+  X: 3838
+  Y: 82

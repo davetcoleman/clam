@@ -10,10 +10,9 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="arm">
-        <chain base_link="base_link" tip_link="wrist_pitch_link" />
+        <chain base_link="base_link" tip_link="gripper_roll_link" />
     </group>
     <group name="clam_gripper">
-        <joint name="gripper_roll_joint" />
         <joint name="r_gripper_aft_link_joint" />
         <joint name="r_gripper_aft_pincher_joint" />
         <joint name="l_gripper_fwd_link_joint" />
@@ -26,13 +25,14 @@
     <group_state name="cobra" group="arm">
         <joint name="elbow_pitch_joint" value="-0.0096" />
         <joint name="elbow_roll_joint" value="0" />
+        <joint name="gripper_roll_joint" value="0" />
         <joint name="shoulder_pan_joint" value="0" />
         <joint name="shoulder_pitch_joint" value="-0.0678" />
         <joint name="wrist_pitch_joint" value="1.6622" />
         <joint name="wrist_roll_joint" value="0" />
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="clam_gripper" parent_link="wrist_roll_link" group="clam_gripper" parent_group="arm" />
+    <end_effector name="clam_gripper" parent_link="gripper_roll_link" group="clam_gripper" parent_group="arm" />
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="vjoint_1" type="fixed" parent_frame="vjoint_parent_frame" child_link="base_link" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->

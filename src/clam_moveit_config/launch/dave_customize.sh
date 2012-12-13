@@ -1,1 +1,1 @@
-atch -p0 <dave_customize.patch
+patch -p0 <dave_customize.patch
