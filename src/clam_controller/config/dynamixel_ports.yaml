@@ -1,4 +1,4 @@
-namespace: clam_motor_manager
+namespace: clam_controller_manager
 diagnostics_rate: 2
 serial_ports:
      port_ttl:

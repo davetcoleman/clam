@@ -1,0 +1,22 @@
+namespace: dxl_manager
+diagnostics_rate: 5
+serial_ports:
+    ttyUSB0:
+        port_name: /dev/ttyUSB0
+        baud_rate: 1000000
+        min_motor_id: 1
+        max_motor_id: 16
+        update_rate: 10
+        diagnostics:
+            error_level_temp: 70
+            warn_level_temp: 65
+#    ttyUSB1:
+#        port_name: /dev/ttyUSB1
+#        baud_rate: 1000000
+#        min_motor_id: 2
+#        max_motor_id: 24
+#        update_rate: 15
+#        diagnostics:
+#            error_level_temp: 70
+#            warn_level_temp: 65
+

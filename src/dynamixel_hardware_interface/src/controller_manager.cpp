@@ -681,23 +681,31 @@ bool ControllerManager::listControllersSrv(dynamixel_hardware_interface::ListCon
 {
   ROS_DEBUG("List service called");
 
-  res.controllers.resize(sj_controllers_.size() + mj_controllers_.size());
+  // Resize the response to the number of combined controllers
+  res.controllers.resize( mj_controllers_.size() );
+  res.state.resize( mj_controllers_.size() );
 
   int i = 0;
 
+  /*
   // Insert single joint controllers
   for (std::map<std::string, controller::SingleJointController*>::const_iterator it =
-         sj_controllers_.begin(); it != sj_controllers_.end() ; ++it)
+  sj_controllers_.begin(); it != sj_controllers_.end() ; ++it)
   {
-    res.controllers[i] = it->first;
-    res.state[i] = std::string("running"); // TODO: make this work
+  std::cout << "Controller = " << it->first << std::endl;
+
+  res.controllers[i] = std::string(it->first);
+  res.state[i] = std::string("running"); // TODO: make this work
+
+  ++i;
   }
+  */
 
   // Insert multi joint controllers
   for (std::map<std::string, controller::MultiJointController*>::const_iterator it =
          mj_controllers_.begin(); it != mj_controllers_.end() ; ++it)
   {
-    res.controllers[i] = it->first;
+    res.controllers[i] = std::string(it->first);
     res.state[i] = std::string("running"); // TODO: make this work
   }
 

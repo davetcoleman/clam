@@ -1,5 +1,8 @@
 <launch>
 
+  <!-- load controller_list and controller_manager_ns -->
+  <rosparam file="$(find clam_moveit_config)/config/clam_execution_controllers.yaml"/>
+
   <!-- Set the param that trajectory_execution_manager needs to find the controller plugin -->
   <arg name="moveit_controller_manager" default="clam_moveit_controller_manager/ClamMoveItControllerManager" />
   <param name="moveit_controller_manager" value="$(arg moveit_controller_manager)"/>
@@ -14,8 +17,6 @@
   <!-- Flag indicating whether the controller manager should be used or not -->
   <arg name="use_controller_manager" default="true" />
   <param name="use_controller_manager" value="$(arg use_controller_manager)" />
-  
-  <!-- load controller_list and controller_manager_ns -->
-  <rosparam file="$(find clam_moveit_config)/config/clam_execution_controllers.yaml"/>
 
+  
 </launch>
