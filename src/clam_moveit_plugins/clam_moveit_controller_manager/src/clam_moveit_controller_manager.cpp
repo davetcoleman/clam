@@ -92,9 +92,9 @@ public:
       return false;
     }
     if (done_)
-      ROS_DEBUG_STREAM("Sending trajectory to FollowJointTrajectory action for controller " << name_);
+      ROS_INFO_STREAM("Sending trajectory to FollowJointTrajectory action for controller " << name_);
     else
-      ROS_DEBUG_STREAM("Sending continuation for the currently executed trajectory to FollowJointTrajectory action for controller " << name_);
+      ROS_INFO_STREAM("Sending continuation for the currently executed trajectory to FollowJointTrajectory action for controller " << name_);
     control_msgs::FollowJointTrajectoryGoal goal;
     goal.trajectory = trajectory.joint_trajectory;
     follow_joint_trajectory_action_client_->sendGoal(goal,
@@ -135,7 +135,7 @@ public:
   void controllerDoneCallback(const actionlib::SimpleClientGoalState& state,
                               const control_msgs::FollowJointTrajectoryResultConstPtr& result)
   {
-    ROS_DEBUG_STREAM("Controller " << name_ << " is done with state " << state.toString() << ": " << state.getText());
+    ROS_INFO_STREAM("Controller " << name_ << " is done with state " << state.toString() << ": " << state.getText());
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
       last_exec_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
     else
@@ -151,7 +151,7 @@ public:
 
   void controllerActiveCallback(void)
   {
-    ROS_DEBUG_STREAM("Controller " << name_ << " started execution");
+    ROS_INFO_STREAM("Controller " << name_ << " started execution");
   }
 
   void controllerFeedbackCallback(const control_msgs::FollowJointTrajectoryFeedbackConstPtr& feedback)
@@ -249,7 +249,7 @@ public:
     else
     {
       if (use_controller_manager_)
-        ROS_DEBUG_STREAM("No controller list specified. Using list obtained from the " << controller_manager_name_);
+        ROS_INFO_STREAM("No controller list specified. Using list obtained from the " << controller_manager_name_);
       else
         ROS_ERROR_STREAM("Not using a controller manager and no controllers specified. There are no known controllers.");
     }
@@ -372,6 +372,8 @@ public:
 
   virtual bool loadController(const std::string &name)
   {
+    ROS_INFO("Recieved load controller request");
+
     if (!use_controller_manager_)
     {
       ROS_WARN_STREAM("Cannot load controller without using the controller manager");
@@ -395,6 +397,8 @@ public:
 
   virtual bool unloadController(const std::string &name)
   {
+    ROS_INFO("Recieved unload controller request");
+
     if (!use_controller_manager_)
     {
       ROS_WARN_STREAM("Cannot unload controller without using the controller manager");
