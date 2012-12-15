@@ -12,14 +12,22 @@ Panels:
         - /MotionPlanning1/Planning Metrics1
         - /MotionPlanning1/Planned Path1
       Splitter Ratio: 0.5
-    Tree Height: 538
-  - Class: rviz/Help
-    Name: Help
+    Tree Height: 593
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+    Name: Tool Properties
+    Splitter Ratio: 0.588679
   - Class: rviz/Views
     Expanded:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: rviz/Time
+    Name: Time
 Visualization Manager:
   Class: ""
   Displays:
@@ -131,7 +139,7 @@ Visualization Manager:
         Show Robot Collision: false
         Show Robot Visual: true
         Show Trail: false
-        State Display Time: 0.05
+        State Display Time: 0.05 s
         Trajectory Topic: /move_group/display_planned_path
       Planning Metrics:
         Payload: 1
@@ -142,15 +150,16 @@ Visualization Manager:
       Planning Request:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
-        Goal State Color: 0; 255; 255
+        Goal State Color: 250; 128; 0
         Interactive Marker Size: 0.1
+        Joint Violation Color: 255; 0; 255
         Planning Group: arm
         Query Goal State: true
-        Query Start State: true
+        Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: planning_scene
+      Planning Scene Topic: /move_group/monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -258,35 +267,44 @@ Visualization Manager:
   Tools:
     - Class: rviz/MoveCamera
     - Class: rviz/Interact
+    - Class: rviz/Select
+    - Class: rviz/SetInitialPose
+      Topic: /initialpose
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
   Value: true
   Views:
     Current:
-      Class: rviz/XYOrbit
-      Distance: 1.3253
+      Class: rviz/Orbit
+      Distance: 1.08808
       Focal Point:
-        X: -0.0452954
-        Y: -0.159898
-        Z: 1.08405e-06
+        X: 0.246612
+        Y: 0.0637548
+        Z: 0.218783
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.320399
-      Target Frame: /base_link
-      Value: XYOrbit (rviz)
-      Yaw: 1.49544
+      Pitch: 0.0997977
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.6454
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
   Height: 1200
-  Help:
-    collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002a600000434fc0200000004fb000000100044006900730070006c0061007900730100000041000002a9000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000001c1000000a9000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000002f0000001850000014300ffffff000003920000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002a200000434fc0200000006fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000041000002e0000000dd00fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003270000014e0000014300ffffff000000010000010f00000385fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004100000385000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000002bf00fffffffb0000000800540069006d00650100000000000004500000000000000000000003960000043400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
   Views:
     collapsed: false
   Width: 1600
-  X: 3835
-  Y: -2
+  X: 3830
+  Y: -297
