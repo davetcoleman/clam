@@ -133,7 +133,7 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-        Loop Animation: true
+        Loop Animation: false
         Robot Alpha: 0.5
         Show Robot Collision: false
         Show Robot Visual: true
@@ -305,5 +305,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3827
-  Y: -381
+  X: 3826
+  Y: -409
