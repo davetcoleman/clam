@@ -5,7 +5,12 @@ project(dynamixel_hardware_interface)
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg gearbox pluginlib actionlib control_msgs trajectory_msgs diagnostic_updater std_srvs)
 
 ## Declare ROS messages and services
-#add_message_files(DIRECTORY msg FILES Num.msg)
+add_message_files(DIRECTORY msg FILES
+  JointState.msg
+  MotorStateList.msg
+  MotorState.msg
+)
+
 add_service_files(DIRECTORY srv FILES 
   ListControllers.srv
   RestartController.srv

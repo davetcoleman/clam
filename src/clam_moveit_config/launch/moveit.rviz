@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
         - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
@@ -150,16 +149,16 @@ Visualization Manager:
       Planning Request:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
-        Goal State Color: 250; 128; 0
+        Goal State Color: 0; 85; 255
         Interactive Marker Size: 0.1
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
         Query Goal State: true
-        Query Start State: false
+        Query Start State: true
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: /move_group/monitored_planning_scene
+      Planning Scene Topic: /planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -276,17 +275,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.08808
+      Distance: 1.2458
       Focal Point:
-        X: 0.246612
-        Y: 0.0637548
-        Z: 0.218783
+        X: 0.150712
+        Y: 0.127262
+        Z: 0.445307
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.0997977
+      Pitch: 0.184798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.6454
+      Yaw: 4.92541
     Saved: ~
 Window Geometry:
   Displays:
@@ -306,5 +305,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3830
-  Y: -297
+  X: 3828
+  Y: -353

@@ -8,7 +8,7 @@ find_package(Boost REQUIRED thread)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
-find_package(catkin COMPONENTS
+find_package(catkin REQUIRED COMPONENTS
   moveit_core
   pluginlib
   actionlib
@@ -21,17 +21,26 @@ find_package(catkin COMPONENTS
   eigen_conversions
   control_msgs
   dynamixel_hardware_interface
-  REQUIRED)
+  )
 
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
 catkin_package(
   LIBRARIES
-    clam_moveit_controller_manager
+  clam_moveit_controller_manager
   DEPENDS
-    moveit_core
-    )
+  moveit_core
+  pluginlib
+  actionlib
+  roscpp
+  urdf
+  kdl_parser
+  tf_conversions
+  eigen_conversions
+  control_msgs
+  dynamixel_hardware_interface
+  )
 
 include_directories(clam_moveit_controller_manager/include)
 
@@ -39,7 +48,7 @@ add_subdirectory(clam_moveit_controller_manager)
 
 install(
   FILES
-    clam_moveit_controller_manager_plugin_description.xml
+  clam_moveit_controller_manager_plugin_description.xml
   DESTINATION
-    ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    )
+  ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  )

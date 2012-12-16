@@ -144,8 +144,11 @@ void JointTorqueController::processMotorStates(const dynamixel_hardware_interfac
     joint_state_.velocity = ((double)state.velocity / dynamixel_hardware_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
     joint_state_.load = (double)state.load / dynamixel_hardware_interface::DXL_MAX_LOAD_ENCODER;
     joint_state_.moving = state.moving;
-    
+    joint_state_.alive = state.alive;
+
     joint_state_pub_.publish(joint_state_);
+
+    checkPowerFailure(state);
 }
 
 void JointTorqueController::processCommand(const std_msgs::Float64ConstPtr& msg)

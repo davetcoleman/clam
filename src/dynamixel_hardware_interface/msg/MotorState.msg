@@ -10,7 +10,7 @@ int32 velocity          # current velocity
 int32 torque_limit      # current torque limit
 int32 load              # current load - ratio of applied torque over maximum torque
 bool  moving            # whether the motor is currently in motion
-
+bool  alive             # whether the motor is currently giving valid feedback info
 int32 voltage           # current voltage (V * 10)
 int32 temperature       # current temperature (degrees Celsius)
 
