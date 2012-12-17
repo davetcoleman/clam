@@ -295,6 +295,11 @@ public:
   virtual bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
                                    dynamixel_hardware_interface::TorqueEnable::Request& res)
   {
+    return setTorqueEnable( req.torque_enable );    
+  }
+
+  bool setTorqueEnable( bool torque_enable )
+  {
     std::vector<std::vector<int> > mcv;
 
     for (size_t i = 0; i < motor_ids_.size(); ++i)
@@ -303,7 +308,7 @@ public:
 
       std::vector<int> pair;
       pair.push_back(motor_id);
-      pair.push_back(req.torque_enable);
+      pair.push_back(torque_enable);
 
       mcv.push_back(pair);
     }
@@ -313,6 +318,11 @@ public:
 
   bool processResetOverloadError(std_srvs::Empty::Request& req,
                                  std_srvs::Empty::Request& res)
+  {
+    return resetOverloadError();    
+  }
+
+  bool resetOverloadError()
   {
     bool result = true;
 
@@ -327,8 +337,11 @@ public:
   bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
                              dynamixel_hardware_interface::SetTorqueLimit::Request& res)
   {
-    double torque_limit = req.torque_limit;
+    return setTorqueLimit( req.torque_limit );    
+  }
 
+  bool setTorqueLimit( double torque_limit )
+  {
     if (torque_limit < 0)
     {
       ROS_WARN("%s: Torque limit is below minimum (%f < %f)", name_.c_str(), torque_limit, 0.0);
@@ -356,8 +369,14 @@ public:
     return dxl_io_->setMultiTorqueLimit(mcv);
   }
 
+
   bool processSetComplianceMargin(dynamixel_hardware_interface::SetComplianceMargin::Request& req,
                                   dynamixel_hardware_interface::SetComplianceMargin::Request& res)
+  {
+    return setComplianceMargin( req.margin );    
+  }
+
+  bool setComplianceMargin( int margin )
   {
     std::vector<std::vector<int> > mcv;
 
@@ -367,8 +386,8 @@ public:
 
       std::vector<int> pair;
       pair.push_back(motor_id);
-      pair.push_back(req.margin);
-      pair.push_back(req.margin);
+      pair.push_back(margin);
+      pair.push_back(margin);
 
       mcv.push_back(pair);
     }
@@ -379,6 +398,11 @@ public:
   bool processSetComplianceSlope(dynamixel_hardware_interface::SetComplianceSlope::Request& req,
                                  dynamixel_hardware_interface::SetComplianceSlope::Request& res)
   {
+    return setComplianceSlope( req.slope );    
+  }
+
+  bool setComplianceSlope( int slope )
+  {
     std::vector<std::vector<int> > mcv;
 
     for (size_t i = 0; i < motor_ids_.size(); ++i)
@@ -387,8 +411,8 @@ public:
 
       std::vector<int> pair;
       pair.push_back(motor_id);
-      pair.push_back(req.slope);
-      pair.push_back(req.slope);
+      pair.push_back(slope);
+      pair.push_back(slope);
 
       mcv.push_back(pair);
     }

@@ -150,11 +150,11 @@ Visualization Manager:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
         Goal State Color: 0; 85; 255
-        Interactive Marker Size: 0.1
+        Interactive Marker Size: 0.3
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
         Query Goal State: true
-        Query Start State: true
+        Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
@@ -282,10 +282,10 @@ Visualization Manager:
         Z: 0.445307
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.184798
+      Pitch: 0.194798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.92541
+      Yaw: 4.75541
     Saved: ~
 Window Geometry:
   Displays:
@@ -305,5 +305,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3826
-  Y: -409
+  X: 3824
+  Y: -465

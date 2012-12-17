@@ -56,7 +56,10 @@ bool JointPositionController::initialize(std::string name,
                                          std::string port_namespace,
                                          dynamixel_hardware_interface::DynamixelIO* dxl_io)
 {
-  if (!SingleJointController::initialize(name, port_namespace, dxl_io)) { return false; }
+  if (!SingleJointController::initialize(name, port_namespace, dxl_io))
+  { 
+    return false;
+  }
 
   for (size_t i = 0; i < motor_ids_.size(); ++i)
   {

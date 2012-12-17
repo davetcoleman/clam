@@ -119,6 +119,7 @@
     <disable_collisions link1="r_gripper_aft_link" link2="shoulder_pitch_link" reason="Never" />
     <disable_collisions link1="r_gripper_aft_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="r_gripper_aft_link" link2="wrist_roll_link" reason="Never" />
+    <disable_collisions link1="r_gripper_aft_link" link2="r_gripper_fwd_link" reason="User" />
     <disable_collisions link1="r_gripper_fwd_link" link2="r_gripper_pincher" reason="Never" />
     <disable_collisions link1="r_gripper_fwd_link" link2="shoulder_pan_link" reason="Never" />
     <disable_collisions link1="r_gripper_fwd_link" link2="shoulder_pitch_link" reason="Never" />

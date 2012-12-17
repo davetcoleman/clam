@@ -38,6 +38,9 @@
 #include <dynamixel_hardware_interface/joint_trajectory_action_controller.h>
 #include <dynamixel_hardware_interface/JointState.h>
 
+#include <dynamixel_hardware_interface/SetComplianceMargin.h>
+#include <dynamixel_hardware_interface/SetComplianceSlope.h>
+
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -62,7 +65,11 @@ JointTrajectoryActionController::~JointTrajectoryActionController()
 
 bool JointTrajectoryActionController::initialize(std::string name, std::vector<SingleJointController*> deps)
 {
-  if (!MultiJointController::initialize(name, deps)) { return false; }
+  // Load the multi joint controller that this class inherits from. This loads the list of joint_names_
+  if (!MultiJointController::initialize(name, deps))
+  {
+    return false;
+  }
 
   update_rate_ = 1000;
   state_update_rate_ = 50;
@@ -98,6 +105,26 @@ bool JointTrajectoryActionController::initialize(std::string name, std::vector<S
 
 void JointTrajectoryActionController::start()
 {
+  // Subscribe to the set compliance slope and margin
+  /*
+    while (ros::ok() &&
+    !ros::service::waitForService(controller_manager_name_ + "/set_compliance_slope", ros::Duration(5.0))  &&
+    ++attempts < max_attempts)
+    {
+    ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/set_compliance_slope" << " to come up");
+    }
+    for( std::vector<std::string>::const_iterator joint_it = joint_names_.begin();
+    joint_it < joint_names_.end(); ++joint_it )
+    {
+    set_compliance_slope_ = c_nh_.serviceClient<dynamixel_hardware_interface::SetComplianceSlope>
+    (*joint_it + "/start_controller", true);
+    set_compliance_margin_ = c_nh_.serviceClient<dynamixel_hardware_interface::SetComplianceSlope>
+    (name_ + "/start_controller", true);
+    }
+  */
+
+
+
   command_sub_ = c_nh_.subscribe("command", 50, &JointTrajectoryActionController::processCommand, this);
   state_pub_ = c_nh_.advertise<control_msgs::FollowJointTrajectoryFeedback>("state", 50);
 
@@ -119,13 +146,16 @@ void JointTrajectoryActionController::stop()
   delete feedback_thread_;
 
   command_sub_.shutdown();
-  state_pub_.shutdown();  
+  state_pub_.shutdown();
   action_server_->shutdown();
 }
 
 void JointTrajectoryActionController::processCommand(const trajectory_msgs::JointTrajectoryConstPtr& msg)
 {
-  if (action_server_->isActive()) { action_server_->setPreempted(); }
+  if (action_server_->isActive())
+  {
+    action_server_->setPreempted();
+  }
 
   while (action_server_->isActive())
   {
@@ -135,6 +165,7 @@ void JointTrajectoryActionController::processCommand(const trajectory_msgs::Join
   processTrajectory(*msg, false);
 }
 
+// This is what MoveIt is sending out
 void JointTrajectoryActionController::processFollowTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal)
 {
   processTrajectory(goal->trajectory, true);
@@ -182,6 +213,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   // Maps from an index in joints_ to an index in the msg
   std::vector<int> lookup(num_joints_, -1);
 
+  // Check that all the joints in the trajectory exist in this multiDOF controller
   for (size_t j = 0; j < num_joints_; ++j)
   {
     for (size_t k = 0; k < traj.joint_names.size(); ++k)
@@ -203,10 +235,17 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     }
   }
 
-  std::vector<double> durations;//(num_points, 0.0);
+  // Lower the compliance margin and slope now then raise them back up after trajectory is completed
+  // TODO: move this to configuration file
+  int traj_compliance_margin = 1;
+  int traj_compliance_slope = 90;
+  MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
+
+  
+  // find out the duration of each segment in the trajectory
+  std::vector<double> durations;
   durations.resize(num_points);
 
-  // find out the duration of each segment in the trajectory
   durations[0] = traj.points[0].time_from_start.toSec();
   double trajectory_duration = durations[0];
 
@@ -214,8 +253,8 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   {
     durations[i] = (traj.points[i].time_from_start - traj.points[i-1].time_from_start).toSec();
     trajectory_duration += durations[i];
-    //ROS_DEBUG("tpi: %f, tpi-1: %f", traj.points[i].time_from_start.toSec(), traj.points[i-1].time_from_start.toSec());
-    //ROS_DEBUG("i: %d, duration: %f, total: %f", i, durations[i], trajectory_duration);
+    ROS_DEBUG("tpi: %f, tpi-1: %f", traj.points[i].time_from_start.toSec(), traj.points[i-1].time_from_start.toSec());
+    ROS_DEBUG("i: %d, duration: %f, total: %f", i, durations[i], trajectory_duration);
   }
 
   if (traj.points[0].positions.empty())
@@ -223,7 +262,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
     error_msg = "First point of trajectory has no positions";
     ROS_ERROR("%s", error_msg.c_str());
-    if (is_action) { action_server_->setAborted(traj_result, error_msg); }
+    if (is_action)
+    {
+      action_server_->setAborted(traj_result, error_msg);
+    }
     return;
   }
 
@@ -252,7 +294,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
       error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " + boost::lexical_cast<std::string>(point.velocities.size()) + " elements for the velocities, expecting " + boost::lexical_cast<std::string>(num_joints_);
       ROS_ERROR("%s", error_msg.c_str());
-      if (is_action) { action_server_->setAborted(traj_result, error_msg); }
+      if (is_action)
+      {
+        action_server_->setAborted(traj_result, error_msg);
+      }
       return;
     }
 
@@ -261,7 +306,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
       error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " + boost::lexical_cast<std::string>(point.positions.size()) + " elements for the positions, expecting " + boost::lexical_cast<std::string>(num_joints_);
       ROS_ERROR("%s", error_msg.c_str());
-      if (is_action) { action_server_->setAborted(traj_result, error_msg); }
+      if (is_action)
+      {
+        action_server_->setAborted(traj_result, error_msg);
+      }
       return;
     }
 
@@ -294,57 +342,105 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   ros::Time traj_start_time = ros::Time::now();
   ros::Rate rate(update_rate_);
 
-  for (int seg = 0; seg < num_points; ++seg)
+  //------------------------------------------------------------------------------------------------
+  // The main loop - sends motor commands once per for loop
+  for (int traj_seg = 0; traj_seg < num_points; ++traj_seg)
   {
-    ROS_DEBUG("Processing segment %d", seg);
+    ROS_DEBUG("Processing segment %d -------------------------------------------------", traj_seg);
 
     // first point in trajectories calculated by OMPL is current position with duration of 0 seconds, skip it
-    if (durations[seg] == 0.0)
+    if (durations[traj_seg] == 0.0)
     {
-      ROS_DEBUG("Skipping segment %d becuase duration is 0", seg);
+      ROS_DEBUG("Skipping segment %d because duration is 0", traj_seg);
       continue;
     }
 
-    std::map<std::string, std::vector<std::vector<int> > > multi_packet;
+    // List of every port, and that port's corresponding commands for every motor
+    std::map<std::string, std::vector<std::vector<int> > > multi_port_commands;
 
-    std::map<std::string, std::vector<std::string> >::const_iterator pjit;
-    std::vector<std::string>::const_iterator jit;
+    // -----------------------------------------------------------------------------------------
+    // Combine all the commands for every motor of every joint that is on the same port into one
+    // "multi_port_commands"
 
-    for (pjit = port_to_joints_.begin(); pjit != port_to_joints_.end(); ++pjit)
+    // Loop through every port in this multi joint controller
+    for ( std::map<std::string, std::vector<std::string> >::const_iterator port_it =
+            port_to_joints_.begin(); port_it != port_to_joints_.end(); ++port_it)
     {
-      std::vector<std::vector<int> > vals;
+      ROS_DEBUG_STREAM("Processing Port " << port_it->first );
 
-      for (jit = pjit->second.begin(); jit != pjit->second.end(); ++jit)
+      // List of all commands for a particular port
+      std::vector<std::vector<int> > port_motor_commands;
+
+      // Loop through every joint on the port
+      for ( std::vector<std::string>::const_iterator joint_it = port_it->second.begin();
+            joint_it != port_it->second.end(); ++joint_it)
       {
-        std::string joint = *jit;
-        int j = joint_to_idx_[joint];
+        // Cache joint data
+        int joint_idx = joint_to_idx_[*joint_it];
 
-        double start_position = joint_states_[joint]->position;
-        if (seg != 0) { start_position = trajectory[seg-1].positions[j]; }
-
-        double desired_position = trajectory[seg].positions[j];
-        double desired_velocity = std::max<double>(min_velocity_, std::abs(desired_position - start_position) / durations[seg]);
-
-        ROS_DEBUG("\tstart_position: %f, duration: %f", start_position, durations[seg]);
-        ROS_DEBUG("\tport: %s, joint: %s, dpos: %f, dvel: %f", pjit->first.c_str(), joint.c_str(), desired_position, desired_velocity);
-
-        std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
-        for (size_t i = 0; i < mvcs.size(); ++i)
+        // Get start position of this joint
+        double start_position;
+        if (traj_seg != 0)
         {
-          vals.push_back(mvcs[i]);
+          start_position = trajectory[traj_seg-1].positions[joint_idx];
+        }
+        else
+        {
+          start_position = joint_states_[*joint_it]->position;
         }
 
-        multi_packet[pjit->first] = vals;
+        // Calculate desired values
+        double desired_position = trajectory[traj_seg].positions[joint_idx];
+        double desired_velocity = std::max<double>(min_velocity_,
+                                                   std::abs(desired_position - start_position) /
+                                                   durations[traj_seg]);
+
+        ROS_DEBUG("\tstart_position: %f, duration: %f", start_position, durations[traj_seg]);
+        ROS_DEBUG("\tport: %s, joint: %s, dpos: %f, dvel: %f", port_it->first.c_str(),
+                  joint_it->c_str(), desired_position, desired_velocity);
+
+        // Check that desired_veclocity is not too high, e.g. the position difference not too large
+        if( desired_velocity > joint_to_controller_[*joint_it]->getMaxVelocity() )
+        {
+          traj_result.error_code = control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
+          error_msg = "Invalid joint trajectory: max velocity exceeded for joint " + *joint_it +
+            " with a velocity of " + boost::lexical_cast<std::string>(desired_velocity) +
+            " when the max velocity is set to " +
+            boost::lexical_cast<std::string>(joint_to_controller_[*joint_it]->getMaxVelocity()) +
+            ". On trajectory step " + boost::lexical_cast<std::string>(traj_seg);
+          ROS_ERROR("%s", error_msg.c_str());
+          if (is_action)
+          {
+            action_server_->setAborted(traj_result, error_msg);
+          }
+          return;
+        }
+
+        // Generate raw motor commands
+        std::vector<std::vector<int> > joint_motor_commands =
+          joint_to_controller_[*joint_it]->getRawMotorCommands(desired_position, desired_velocity);
+
+        // Copy raw motor commands to port vector
+        for (size_t i = 0; i < joint_motor_commands.size(); ++i)
+        {
+          port_motor_commands.push_back(joint_motor_commands[i]);
+        }
+
+        // Copy port vector to multi port vector
+        multi_port_commands[port_it->first] = port_motor_commands;
       }
     }
 
-    std::map<std::string, std::vector<std::vector<int> > >::const_iterator mpit;
-    for (mpit = multi_packet.begin(); mpit != multi_packet.end(); ++mpit)
+    // Loop through every port and send it their raw commands
+    for ( std::map<std::string, std::vector<std::vector<int> > >::const_iterator
+            multi_port_commands_it = multi_port_commands.begin();
+          multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
     {
-      port_to_io_[mpit->first]->setMultiPositionVelocity(mpit->second);
+      port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
     }
 
-    while (time < seg_end_times[seg])
+    // Now wait for the next segment to be ready to go
+    while (time < seg_end_times[traj_seg])
     {
       // check if new trajectory was received, if so abort old one by setting the desired state to current state
       if (is_action && action_server_->isPreemptRequested())
@@ -352,36 +448,36 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
         traj_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
         error_msg = "New trajectory received. Aborting old trajectory.";
 
-        std::map<std::string, std::vector<std::vector<int> > > multi_packet;
+        std::map<std::string, std::vector<std::vector<int> > > multi_port_commands;
 
-        std::map<std::string, std::vector<std::string> >::const_iterator pjit;
-        std::vector<std::string>::const_iterator jit;
+        std::map<std::string, std::vector<std::string> >::const_iterator port_it;
+        std::vector<std::string>::const_iterator joint_it;
 
-        for (pjit = port_to_joints_.begin(); pjit != port_to_joints_.end(); ++pjit)
+        for (port_it = port_to_joints_.begin(); port_it != port_to_joints_.end(); ++port_it)
         {
-          std::vector<std::vector<int> > vals;
+          std::vector<std::vector<int> > port_motor_commands;
 
-          for (jit = pjit->second.begin(); jit != pjit->second.end(); ++jit)
+          for (joint_it = port_it->second.begin(); joint_it != port_it->second.end(); ++joint_it)
           {
-            std::string joint = *jit;
+            std::string joint = *joint_it;
 
             double desired_position = joint_states_[joint]->position;
             double desired_velocity = joint_states_[joint]->velocity;
 
-            std::vector<std::vector<int> > mvcs = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
-            for (size_t i = 0; i < mvcs.size(); ++i)
+            std::vector<std::vector<int> > joint_motor_commands = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
+            for (size_t i = 0; i < joint_motor_commands.size(); ++i)
             {
-              vals.push_back(mvcs[i]);
+              port_motor_commands.push_back(joint_motor_commands[i]);
             }
 
-            multi_packet[pjit->first] = vals;
+            multi_port_commands[port_it->first] = port_motor_commands;
           }
         }
 
-        std::map<std::string, std::vector<std::vector<int> > >::const_iterator mpit;
-        for (mpit = multi_packet.begin(); mpit != multi_packet.end(); ++mpit)
+        std::map<std::string, std::vector<std::vector<int> > >::const_iterator multi_port_commands_it;
+        for (multi_port_commands_it = multi_port_commands.begin(); multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
         {
-          port_to_io_[mpit->first]->setMultiPositionVelocity(mpit->second);
+          port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
         }
 
         action_server_->setPreempted(traj_result, error_msg);
@@ -400,7 +496,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       {
         traj_result.error_code = control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
         error_msg = "Unsatisfied position constraint for " + joint_names_[j] +
-          " trajectory point " + boost::lexical_cast<std::string>(seg) +
+          " trajectory point " + boost::lexical_cast<std::string>(traj_seg) +
           ", " + boost::lexical_cast<std::string>(msg_.error.positions[j]) +
           " is larger than " + boost::lexical_cast<std::string>(trajectory_constraints_[j]);
         ROS_ERROR("%s", error_msg.c_str());
@@ -408,7 +504,13 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
         return;
       }
     }
-  }
+  } // end of the main loop
+
+  // Raise the compliance margin and slope
+  // TODO: move this to configuration file
+  traj_compliance_margin = 1;
+  traj_compliance_slope = 30;
+  setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
 
   // let motors roll for specified amount of time
   ros::Duration(goal_time_constraint_).sleep();
@@ -424,7 +526,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
         boost::lexical_cast<std::string>(msg_.error.positions[i]) +
         " is larger than the goal constraints " + boost::lexical_cast<std::string>(goal_constraints_[i]);
       ROS_ERROR("%s", error_msg.c_str());
-      if (is_action) { action_server_->setAborted(traj_result, error_msg); }
+      if (is_action)
+      {
+        action_server_->setAborted(traj_result, error_msg);
+      }
       return;
     }
   }

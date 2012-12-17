@@ -10,9 +10,9 @@ clam_arm_controller:
         - wrist_roll_controller
         - wrist_pitch_controller
     joint_trajectory_action_node:
-        min_velocity: 0.1
+        min_velocity: 0.0
         constraints:
-            goal_time: 0.25
+            goal_time: 0.3
             shoulder_pan_joint:
                 goal: 0.045
             gripper_roll_joint:

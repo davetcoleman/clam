@@ -1,7 +1,7 @@
 shoulder_pan_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: shoulder_pan_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 0
           init: 512
@@ -11,7 +11,7 @@ shoulder_pan_controller:
 shoulder_pitch_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: shoulder_pitch_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 1
           init: 2048
@@ -21,7 +21,7 @@ shoulder_pitch_controller:
 elbow_roll_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: elbow_roll_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 2
           init: 512
@@ -31,7 +31,7 @@ elbow_roll_controller:
 elbow_pitch_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: elbow_pitch_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 3
           init: 512
@@ -41,7 +41,7 @@ elbow_pitch_controller:
 wrist_roll_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: wrist_roll_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 4
           init: 512
@@ -51,7 +51,7 @@ wrist_roll_controller:
 wrist_pitch_controller:
     type: dynamixel_hardware_interface/JointPositionController 
     joint: wrist_pitch_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 5
           init: 512
@@ -61,7 +61,7 @@ wrist_pitch_controller:
 gripper_roll_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: gripper_roll_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 6
           init: 512
@@ -71,7 +71,7 @@ gripper_roll_controller:
 l_gripper_aft_controller:
     type: dynamixel_hardware_interface/JointPositionController
     joint: l_gripper_aft_joint
-    max_velocity: 3.2
+    max_velocity: 2.0
     motors:
         - id: 7
           init: 424

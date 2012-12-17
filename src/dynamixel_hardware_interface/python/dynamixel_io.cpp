@@ -369,6 +369,7 @@ BOOST_PYTHON_MODULE(dynamixel_io)
     docstring_options local_docstring_options(true, true, false);
 
     def("get_motor_model_name", &getMotorModelName);
+
     def("get_motor_model_params", &getMotorModelParams);
     
     scope().attr("DXL_MAX_LOAD_ENCODER") = DXL_MAX_LOAD_ENCODER;
