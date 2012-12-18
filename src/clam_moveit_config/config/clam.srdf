@@ -17,7 +17,7 @@
         <joint name="r_gripper_aft_pincher_joint" />
         <joint name="l_gripper_fwd_link_joint" />
         <joint name="r_gripper_fwd_link_joint" />
-        <joint name="gripper_link_joint" />
+        <joint name="camera_calibration_link_joint" />
         <joint name="l_gripper_aft_joint" />
         <joint name="l_gripper_aft_pincher_joint" />
     </group>
@@ -38,7 +38,7 @@
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="base_link" link2="elbow_pitch_link" reason="Never" />
     <disable_collisions link1="base_link" link2="elbow_roll_link" reason="Never" />
-    <disable_collisions link1="base_link" link2="gripper_link" reason="Never" />
+    <disable_collisions link1="base_link" link2="camera_calibration_link" reason="Never" />
     <disable_collisions link1="base_link" link2="gripper_roll_link" reason="Never" />
     <disable_collisions link1="base_link" link2="l_gripper_aft_link" reason="Never" />
     <disable_collisions link1="base_link" link2="l_gripper_fwd_link" reason="Never" />
@@ -48,7 +48,7 @@
     <disable_collisions link1="base_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="base_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="elbow_roll_link" reason="Adjacent" />
-    <disable_collisions link1="elbow_pitch_link" link2="gripper_link" reason="Never" />
+    <disable_collisions link1="elbow_pitch_link" link2="camera_calibration_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="gripper_roll_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="l_gripper_aft_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="l_gripper_fwd_link" reason="Never" />
@@ -59,7 +59,7 @@
     <disable_collisions link1="elbow_pitch_link" link2="shoulder_pan_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="wrist_roll_link" reason="Adjacent" />
-    <disable_collisions link1="elbow_roll_link" link2="gripper_link" reason="Never" />
+    <disable_collisions link1="elbow_roll_link" link2="camera_calibration_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="gripper_roll_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="l_gripper_aft_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="l_gripper_fwd_link" reason="Never" />
@@ -71,17 +71,17 @@
     <disable_collisions link1="elbow_roll_link" link2="shoulder_pitch_link" reason="Adjacent" />
     <disable_collisions link1="elbow_roll_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="wrist_roll_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="gripper_roll_link" reason="Adjacent" />
-    <disable_collisions link1="gripper_link" link2="l_gripper_aft_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="l_gripper_fwd_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="l_gripper_pincher" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="r_gripper_aft_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="r_gripper_fwd_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="r_gripper_pincher" reason="User" />
-    <disable_collisions link1="gripper_link" link2="shoulder_pan_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="shoulder_pitch_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="wrist_pitch_link" reason="Never" />
-    <disable_collisions link1="gripper_link" link2="wrist_roll_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="gripper_roll_link" reason="Adjacent" />
+    <disable_collisions link1="camera_calibration_link" link2="l_gripper_aft_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="l_gripper_fwd_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="l_gripper_pincher" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="r_gripper_aft_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="r_gripper_fwd_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="r_gripper_pincher" reason="User" />
+    <disable_collisions link1="camera_calibration_link" link2="shoulder_pan_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="shoulder_pitch_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="wrist_pitch_link" reason="Never" />
+    <disable_collisions link1="camera_calibration_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="gripper_roll_link" link2="l_gripper_aft_link" reason="Adjacent" />
     <disable_collisions link1="gripper_roll_link" link2="l_gripper_fwd_link" reason="Adjacent" />
     <disable_collisions link1="gripper_roll_link" link2="l_gripper_pincher" reason="Never" />

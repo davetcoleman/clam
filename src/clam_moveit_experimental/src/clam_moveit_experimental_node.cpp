@@ -38,6 +38,9 @@
 #include <ros/ros.h>
 #include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
+// For recording data
+#include <iostream>
+#include <fstream>
 
 int main(int argc, char **argv)
 {
@@ -52,6 +55,11 @@ int main(int argc, char **argv)
 
   actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_action_("clam_arm", true);
   clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_action_server
+
+  // wait for clam arm action server to come up
+  while(!clam_arm_action_.waitForServer(ros::Duration(5.0))){
+    ROS_INFO("[pick and place] Waiting for the clam_arm action server");
+  }
 
   // Go to zero
   ROS_INFO("[pick and place] Resetting");
@@ -90,28 +98,60 @@ int main(int argc, char **argv)
     group.followConstraints(goal_pose);
   */
 
+  double z = 0.2;
+  std::ofstream data_file;
+  data_file.open("/home/dave/ros/clam/src/clam_moveit_experimental/data/valid_points.dat");
+
+  // Create a robot start state of all 0 joint values
+  /*kinematic_state::KinematicState start_state(group.getCurrentState());
+    std::vector<double> joint_state_values( group.getCurrentJointValues().size(), 0.0 );
+    start_state.setStateValues(joint_state_values);*/
+
   group.setStartStateToCurrentState();
-  group.setPositionTarget(0.22222, 0, 0.3);
-  group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+  group.setEndEffectorLink("camera_calibration_link");
 
-  ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
-
-  ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
-
-  move_group_interface::MoveGroup::Plan plan;
-  if( group.plan(plan) )
+  for( double x = 0.1; x < 0.5; x += 0.05 )
   {
-    ROS_INFO("Executing in 5 seconds...");
-    sleep(5);
+    for( double y = -0.2; y < 0.2; y += 0.05 )
+    {
+      //group.setStartState( start_state );
 
-    ROS_INFO("Executing...");
-    group.execute(plan);
+      //  group.setPositionTarget(0.22222, 0, 0.2);
+      group.setPositionTarget(x, y, z);
+      group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
 
+      ROS_INFO_STREAM("Planning for x:" << x << " y:" << y << " z:" << z);
+      //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
+      //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
+
+      move_group_interface::MoveGroup::Plan plan;
+      if( group.plan(plan) )
+      {
+        data_file << x << "," << y <<  "," << z << "\n";
+
+        ROS_INFO("Executing...");
+        group.execute(plan);
+
+        ROS_INFO("[pick and place] Opening gripper");
+        clam_arm_goal_.command = "OPEN_GRIPPER";
+        clam_arm_action_.sendGoal(clam_arm_goal_);
+        while(!clam_arm_action_.getState().isDone() && ros::ok())
+        {
+          //ROS_INFO("[pick and place] Waiting for gripper to open");
+          ros::Duration(0.1).sleep();
+        }
+
+        ROS_INFO("SLEEPING");
+        sleep(1);
+      }
+      else
+      {
+        ROS_WARN("Failed to find a plan");
+      }
+    }
   }
-  else
-  {
-    ROS_WARN("Failed to find a plan");
-  }
+  data_file.close();
+
 
   ROS_INFO("Node exiting");
   return 0;

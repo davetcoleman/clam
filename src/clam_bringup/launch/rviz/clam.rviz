@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
       Splitter Ratio: 0.392982
-    Tree Height: 515
+    Tree Height: 557
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -28,7 +28,6 @@ Visualization Manager:
       Name: Grid
       Normal Cell Count: 0
       Offset:
-        Value: 0; 0; 0
         X: 0
         Y: 0
         Z: 0
@@ -76,11 +75,6 @@ Visualization Manager:
           Show Trail: false
           Value: true
         elbow_roll_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        gripper_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -288,22 +282,29 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.16403
+      Distance: 1.59015
       Focal Point:
-        Value: 0.0028927; 0.23083; -1.2666e-06
-        X: 0.00289273
-        Y: 0.230831
-        Z: -1.2666e-06
+        X: 1.1628
+        Y: -0.0372567
+        Z: -1.62166e-06
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.344797
+      Pitch: 0.270203
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.25311
+      Yaw: 3.10811
     Saved: ~
 Window Geometry:
-  Height: 1024
-  QMainWindow State: 000000ff00000000fd0000000100000000000001fd00000384fc0200000003fb000000100044006900730070006c0061007900730100000041000002a9000000dc00fffffffb0000000800480065006c00700000000342000000bb0000007900fffffffb0000000a0056006900650077007301000002f0000000d5000000a900ffffff000002fb0000038400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Width: 1280
-  X: 3817
-  Y: -255
+  Displays:
+    collapsed: false
+  Height: 1080
+  Help:
+    collapsed: false
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd0000000100000000000001fd000003bdfc0200000003fb000000100044006900730070006c0061007900730100000041000002d4000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073010000031b000000e3000000b000ffffff0000057d000003bd00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Views:
+    collapsed: false
+  Width: 1920
+  X: 1896
+  Y: -452

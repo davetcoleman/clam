@@ -201,24 +201,24 @@ void JointTrajectoryActionController::updateState()
   }
 }
 
-void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj, bool is_action)
+void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj_msg, bool is_action)
 {
   control_msgs::FollowJointTrajectoryResult traj_result;
   std::string error_msg;
 
-  int num_points = traj.points.size();
+  int num_points = traj_msg.points.size();
 
   ROS_DEBUG("Received trajectory with %d points", num_points);
 
-  // Maps from an index in joints_ to an index in the msg
+  // Maps from an index in joint_names_ to an index in the JointTrajectory msg "traj_msg"
   std::vector<int> lookup(num_joints_, -1);
 
   // Check that all the joints in the trajectory exist in this multiDOF controller
   for (size_t j = 0; j < num_joints_; ++j)
   {
-    for (size_t k = 0; k < traj.joint_names.size(); ++k)
+    for (size_t k = 0; k < traj_msg.joint_names.size(); ++k)
     {
-      if (traj.joint_names[k] == joint_names_[j])
+      if (traj_msg.joint_names[k] == joint_names_[j])
       {
         lookup[j] = k;
         break;
@@ -235,29 +235,9 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     }
   }
 
-  // Lower the compliance margin and slope now then raise them back up after trajectory is completed
-  // TODO: move this to configuration file
-  int traj_compliance_margin = 1;
-  int traj_compliance_slope = 90;
-  MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
 
-  
-  // find out the duration of each segment in the trajectory
-  std::vector<double> durations;
-  durations.resize(num_points);
-
-  durations[0] = traj.points[0].time_from_start.toSec();
-  double trajectory_duration = durations[0];
-
-  for (int i = 1; i < num_points; ++i)
-  {
-    durations[i] = (traj.points[i].time_from_start - traj.points[i-1].time_from_start).toSec();
-    trajectory_duration += durations[i];
-    ROS_DEBUG("tpi: %f, tpi-1: %f", traj.points[i].time_from_start.toSec(), traj.points[i-1].time_from_start.toSec());
-    ROS_DEBUG("i: %d, duration: %f, total: %f", i, durations[i], trajectory_duration);
-  }
-
-  if (traj.points[0].positions.empty())
+  // Check for initial position
+  if (traj_msg.points[0].positions.empty())
   {
     traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
     error_msg = "First point of trajectory has no positions";
@@ -269,30 +249,51 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     return;
   }
 
+
+  // Find out the duration of each segment in the trajectory
+  std::vector<double> durations;
+  durations.resize(num_points);
+
+  durations[0] = traj_msg.points[0].time_from_start.toSec();
+  double trajectory_duration = durations[0];
+
+  for (int i = 1; i < num_points; ++i)
+  {
+    durations[i] = (traj_msg.points[i].time_from_start - traj_msg.points[i-1].time_from_start).toSec();
+    trajectory_duration += durations[i];
+    ROS_DEBUG("tpi: %f, tpi-1: %f", traj_msg.points[i].time_from_start.toSec(), traj_msg.points[i-1].time_from_start.toSec());
+    ROS_DEBUG("i: %d, duration: %f, total: %f", i, durations[i], trajectory_duration);
+  }
+
+
+  // Loop through each trajectory point, do error checking and create a corresponding "segment"
   std::vector<Segment> trajectory;
   ros::Time time = ros::Time::now() + ros::Duration(0.01);
 
   for (int i = 0; i < num_points; ++i)
   {
-    const trajectory_msgs::JointTrajectoryPoint point = traj.points[i];
+    const trajectory_msgs::JointTrajectoryPoint point = traj_msg.points[i];
     Segment seg;
 
-    if (traj.header.stamp == ros::Time(0.0))
+    // Decide segments start time
+    if (traj_msg.header.stamp == ros::Time(0.0))
     {
       seg.start_time = (time + point.time_from_start).toSec() - durations[i];
     }
     else
     {
-      seg.start_time = (traj.header.stamp + point.time_from_start).toSec() - durations[i];
+      seg.start_time = (traj_msg.header.stamp + point.time_from_start).toSec() - durations[i];
     }
 
     seg.duration = durations[i];
 
-    // Checks that the incoming segment has the right number of elements.
+    // Checks that the incoming segment has the right number of velocity elements
     if (!point.velocities.empty() && point.velocities.size() != num_joints_)
     {
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
-      error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " + boost::lexical_cast<std::string>(point.velocities.size()) + " elements for the velocities, expecting " + boost::lexical_cast<std::string>(num_joints_);
+      error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " +
+        boost::lexical_cast<std::string>(point.velocities.size()) +
+        " elements for the velocities, expecting " + boost::lexical_cast<std::string>(num_joints_);
       ROS_ERROR("%s", error_msg.c_str());
       if (is_action)
       {
@@ -301,10 +302,13 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       return;
     }
 
+    // Checks that the incoming segment has the right number of position elements
     if (!point.positions.empty() && point.positions.size() != num_joints_)
     {
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_GOAL;
-      error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " + boost::lexical_cast<std::string>(point.positions.size()) + " elements for the positions, expecting " + boost::lexical_cast<std::string>(num_joints_);
+      error_msg = "Command point " + boost::lexical_cast<std::string>(i) + " has " +
+        boost::lexical_cast<std::string>(point.positions.size()) +
+        " elements for the positions, expecting " + boost::lexical_cast<std::string>(num_joints_);
       ROS_ERROR("%s", error_msg.c_str());
       if (is_action)
       {
@@ -313,9 +317,9 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       return;
     }
 
+    // Create a new segment datastructure
     seg.velocities.resize(num_joints_);
     seg.positions.resize(num_joints_);
-
     for (size_t j = 0; j < num_joints_; ++j)
     {
       seg.velocities[j] = point.velocities[lookup[j]];
@@ -325,10 +329,51 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     trajectory.push_back(seg);
   }
 
-  ROS_INFO("Trajectory start requested at %.3lf, waiting...", traj.header.stamp.toSec());
-  ros::Time::sleepUntil(traj.header.stamp);
 
-  ros::Time end_time = traj.header.stamp + ros::Duration(trajectory_duration);
+  // Check if this trajectory goal is already fullfilled by robot's current position
+  bool outside_bounds = false; // flag for remembing if a different position was found
+  double acceptable_bound = 0.05; // amount two positions can vary without being considered different positions
+  Segment* last_segment = &trajectory[trajectory.size()-1];
+  for( std::size_t i = 0; i < last_segment->positions.size(); ++i)
+  {
+    std::string joint_name = joint_names_[i];
+
+    ROS_WARN_STREAM("Checking for similarity on joint " << joint_name << " with real position " << joint_states_[ joint_name ]->position);
+    ROS_WARN_STREAM("    Iterator id = " << i << " size " << last_segment->positions.size() );
+    ROS_WARN_STREAM("    Goal position: " << last_segment->positions[i] );
+
+    // Test if outside acceptable bounds, meaning we should continue trajectory as normal
+    if( last_segment->positions[i] > (joint_states_[ joint_name ]->position + acceptable_bound) ||
+        last_segment->positions[i] < (joint_states_[ joint_name ]->position - acceptable_bound) )
+    {
+      outside_bounds = true;
+      break;
+    }
+  }
+  // Check if all the states were inside the position bounds
+  if( !outside_bounds )
+  {
+    // We can exit trajectory
+    traj_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+    error_msg = "Trajectory execution skipped because goal is same as current state";
+    ROS_INFO("%s", error_msg.c_str());
+    action_server_->setSucceeded(traj_result, error_msg);
+    return;
+  }
+
+
+  // Lower the compliance margin and slope now then raise them back up after trajectory is completed
+  // TODO: move this to configuration file
+  int traj_compliance_margin = 1;
+  int traj_compliance_slope = 50;
+  MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
+
+
+  // Wait until we've reached the trajectory start time
+  ROS_INFO("Trajectory start requested at %.3lf, waiting...", traj_msg.header.stamp.toSec());
+  ros::Time::sleepUntil(traj_msg.header.stamp);
+
+  ros::Time end_time = traj_msg.header.stamp + ros::Duration(trajectory_duration);
   std::vector<ros::Time> seg_end_times(num_points, ros::Time(0.0));
 
   for (int i = 0; i < num_points; ++i)
