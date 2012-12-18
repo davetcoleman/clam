@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   roscpp 
   tf
+  clam_block_manipulation
 )
 
 ###################################################
@@ -36,6 +37,7 @@ catkin_package(
      moveit_ros_planning_interface
      roscpp 
      tf
+     clam_block_manipulation
 #  DEPENDS system_lib
 )
 
@@ -57,6 +59,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a cpp executable
 add_executable(clam_moveit_experimental_node src/clam_moveit_experimental_node.cpp)
+
 
 ## Add dependencies to the executable
 add_dependencies(clam_moveit_experimental_node ${catkin_LIBRARIES})

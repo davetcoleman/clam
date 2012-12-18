@@ -36,6 +36,8 @@
 
 #include <moveit/move_group_interface/move_group.h>
 #include <ros/ros.h>
+//#include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
+#include <actionlib/client/simple_action_client.h>
 
 int main(int argc, char **argv)
 {
@@ -47,22 +49,61 @@ int main(int argc, char **argv)
   std::string group_name = argc > 1 ? argv[1] : "arm";
   ROS_INFO_STREAM("Preparing to send command to group = " << group_name);
 
+
+  /*
+  actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_action_("clam_arm", true);
+  ClamArmGoal clam_arm_goal_; // sent to the clam_arm_action_server
+
+  // Open gripper -------------------------------------------------------------------------------
+  ROS_INFO("[pick and place] Opening gripper");
+  clam_arm_goal_.command = "OPEN_GRIPPER";
+  clam_arm_action_.sendGoal(clam_arm_goal_);
+  while(!clam_arm_action_.getState().isDone() && ros::ok())
+  {
+    //ROS_INFO("[pick and place] Waiting for gripper to open");
+    ros::Duration(0.1).sleep();
+  }
+  */
+
   move_group_interface::MoveGroup group(group_name);
-  geometry_msgs::PoseStamped current_pose = group.getCurrentPose();
-  
-  ROS_INFO_STREAM("Current\n" << current_pose);
 
-  std::vector<geometry_msgs::Pose> goal_pose(2);
-  goal_pose[0] = current_pose.pose;
-  goal_pose[1] = goal_pose[0];
-  goal_pose[1].position.x -= 0.01;
+  /*
+    geometry_msgs::PoseStamped current_pose = group.getCurrentPose();
 
-  ROS_INFO_STREAM("Goal\n" << goal_pose[1]);
+    ROS_INFO_STREAM("Current\n" << current_pose);
 
-  group.followConstraints(goal_pose);
+    std::vector<geometry_msgs::Pose> goal_pose(2);
+    goal_pose[0] = current_pose.pose;
+    goal_pose[1] = goal_pose[0];
+    goal_pose[1].position.z -= 0.1;
+
+    ROS_INFO_STREAM("Goal\n" << goal_pose[1]);
+
+    group.followConstraints(goal_pose);
+  */
+
+  group.setStartStateToCurrentState();
+  group.setPositionTarget(0.22222, 0, 0.3);
+  group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+
+  ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
+
+  ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
+
   move_group_interface::MoveGroup::Plan plan;
-  group.plan(plan);
-  sleep(2);
+  if( group.plan(plan) )
+  {
+    ROS_INFO("Executing in 5 seconds...");
+    sleep(5);
+
+    ROS_INFO("Executing...");
+    group.execute(plan);
+
+  }
+  else
+  {
+    ROS_WARN("Failed to find a plan");
+  }
 
   ROS_INFO("Node exiting");
   return 0;

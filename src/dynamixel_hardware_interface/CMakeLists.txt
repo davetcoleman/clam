@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(dynamixel_hardware_interface)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg gearbox pluginlib actionlib control_msgs trajectory_msgs diagnostic_updater std_srvs)
+find_package(catkin REQUIRED COMPONENTS 
+  roscpp rospy std_msgs genmsg gearbox pluginlib actionlib control_msgs trajectory_msgs diagnostic_updater std_srvs)
 
 ## Declare ROS messages and services
 add_message_files(DIRECTORY msg FILES
