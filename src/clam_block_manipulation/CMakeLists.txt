@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(clam_block_manipulation)
 
-
-add_action_files(DIRECTORY action FILES
-  ClamArmAction
-)
-
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED
   roscpp
@@ -17,7 +12,11 @@ find_package(catkin REQUIRED
   pcl_ros
 )
 
-#uncomment if you have defined messages
+## Declare ROS messages and services
+add_action_files(DIRECTORY action FILES
+  ClamArmAction
+)
+
 generate_messages(DEPENDENCIES
   std_msgs
   geometry_msgs  
@@ -33,8 +32,11 @@ catkin_package(DEPENDS
   dynamixel_hardware_interface 
   pcl_ros
 #  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
+#  LIBRARIES ${PROJECT_NAME}
 )
+
+## Build 
+include_directories(include ${catkin_INCLUDE_DIRS})
  
 #add_executable(block_manipulation test/block_manipulation.cpp)
 #add_executable(block_detection_action_server src/block_detection_action_server.cpp)

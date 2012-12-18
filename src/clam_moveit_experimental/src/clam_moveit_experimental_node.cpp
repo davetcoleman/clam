@@ -36,7 +36,7 @@
 
 #include <moveit/move_group_interface/move_group.h>
 #include <ros/ros.h>
-//#include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
+#include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
 
 int main(int argc, char **argv)
@@ -50,9 +50,18 @@ int main(int argc, char **argv)
   ROS_INFO_STREAM("Preparing to send command to group = " << group_name);
 
 
-  /*
   actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_action_("clam_arm", true);
-  ClamArmGoal clam_arm_goal_; // sent to the clam_arm_action_server
+  clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_action_server
+
+  // Go to zero
+  ROS_INFO("[pick and place] Resetting");
+  clam_arm_goal_.command = "RESET";
+  clam_arm_action_.sendGoal(clam_arm_goal_);
+  while(!clam_arm_action_.getState().isDone() && ros::ok())
+  {
+    //ROS_INFO("[pick and place] Waiting for gripper to open");
+    ros::Duration(0.1).sleep();
+  }
 
   // Open gripper -------------------------------------------------------------------------------
   ROS_INFO("[pick and place] Opening gripper");
@@ -63,7 +72,6 @@ int main(int argc, char **argv)
     //ROS_INFO("[pick and place] Waiting for gripper to open");
     ros::Duration(0.1).sleep();
   }
-  */
 
   move_group_interface::MoveGroup group(group_name);
 
