@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib 
   eigen_conversions 
   moveit_ros_planning 
-  moveit_ros_warehouse 
   moveit_ros_planning_interface
   roscpp 
   tf
@@ -33,7 +32,6 @@ catkin_package(
      actionlib 
      eigen_conversions 
      moveit_ros_planning 
-     moveit_ros_warehouse 
      moveit_ros_planning_interface
      roscpp 
      tf
@@ -65,9 +63,7 @@ add_executable(clam_moveit_experimental_node src/clam_moveit_experimental_node.c
 add_dependencies(clam_moveit_experimental_node ${catkin_LIBRARIES})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(clam_moveit_experimental_node
-   ${catkin_LIBRARIES}
-)
+target_link_libraries(clam_moveit_experimental_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -10,21 +10,28 @@
   <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
   <url type="repository">https://github.com/davetcoleman/clam</url>
 
-  <author>Helen Oleynikova</author>
+  <author>Dave Coleman</author>
 
   <build_depend>roscpp</build_depend>
+  <build_depend>eigen_conversions</build_depend>
   <build_depend>std_msgs</build_depend>  
   <build_depend>actionlib</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>interactive_markers</build_depend>
   <build_depend>dynamixel_hardware_interface</build_depend>
   <build_depend>pcl_ros</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+
   <run_depend>roscpp</run_depend>
+  <run_depend>eigen_conversions</run_depend>
   <run_depend>std_msgs</run_depend>  
   <run_depend>actionlib</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>interactive_markers</run_depend>
   <run_depend>dynamixel_hardware_interface</run_depend>
   <run_depend>pcl_ros</run_depend>
+  <run_depend>moveit_ros_planning</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
 
 </package>

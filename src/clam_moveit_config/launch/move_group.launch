@@ -11,7 +11,7 @@
 
   <arg name="allow_trajectory_execution" default="true"/>
   <arg name="max_safe_path_cost" default="1"/>
-  <arg name="publish_monitored_planning_scene" default="true"/>
+  <arg name="publish_monitored_planning_scene" default="false"/>
 
   <include ns="move_group" file="$(find clam_moveit_config)/launch/planning_pipeline.launch">
     <arg name="pipeline" value="ompl" />

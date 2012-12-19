@@ -44,8 +44,9 @@
 
 int main(int argc, char **argv)
 {
+  // -----------------------------------------------------------------------------------------------
+  // Initialize node
   ros::init(argc, argv, "clam_moveit_experimental_node", ros::init_options::AnonymousName);
-
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
@@ -53,96 +54,99 @@ int main(int argc, char **argv)
   ROS_INFO_STREAM("Preparing to send command to group = " << group_name);
 
 
-  actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_action_("clam_arm", true);
-  clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_action_server
+  // -----------------------------------------------------------------------------------------------
+  // Connect to ClamArm action server
+  actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_client_("clam_arm", true);
+  clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
 
-  // wait for clam arm action server to come up
-  while(!clam_arm_action_.waitForServer(ros::Duration(5.0))){
+  while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
     ROS_INFO("[pick and place] Waiting for the clam_arm action server");
   }
 
-  // Go to zero
-  ROS_INFO("[pick and place] Resetting");
+  // -----------------------------------------------------------------------------------------------
+  // Go to home position
+  ROS_INFO("[pick and place] Resetting arm to home position");
   clam_arm_goal_.command = "RESET";
-  clam_arm_action_.sendGoal(clam_arm_goal_);
-  while(!clam_arm_action_.getState().isDone() && ros::ok())
-  {
-    //ROS_INFO("[pick and place] Waiting for gripper to open");
-    ros::Duration(0.1).sleep();
-  }
+  clam_arm_client_.sendGoal(clam_arm_goal_);
+  clam_arm_client_.waitForResult(ros::Duration(20.0));
+  //while(!clam_arm_client_.getState().isDone() && ros::ok())
+  //  ros::Duration(0.1).sleep();
 
-  // Open gripper -------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
+  // Open gripper
   ROS_INFO("[pick and place] Opening gripper");
   clam_arm_goal_.command = "OPEN_GRIPPER";
-  clam_arm_action_.sendGoal(clam_arm_goal_);
-  while(!clam_arm_action_.getState().isDone() && ros::ok())
-  {
-    //ROS_INFO("[pick and place] Waiting for gripper to open");
+  clam_arm_client_.sendGoal(clam_arm_goal_);
+  while(!clam_arm_client_.getState().isDone() && ros::ok())
     ros::Duration(0.1).sleep();
-  }
 
+  // -----------------------------------------------------------------------------------------------
+  // Move arm
   move_group_interface::MoveGroup group(group_name);
 
-  /*
-    geometry_msgs::PoseStamped current_pose = group.getCurrentPose();
-
-    ROS_INFO_STREAM("Current\n" << current_pose);
-
-    std::vector<geometry_msgs::Pose> goal_pose(2);
-    goal_pose[0] = current_pose.pose;
-    goal_pose[1] = goal_pose[0];
-    goal_pose[1].position.z -= 0.1;
-
-    ROS_INFO_STREAM("Goal\n" << goal_pose[1]);
-
-    group.followConstraints(goal_pose);
-  */
-
   double z = 0.2;
+
+  // Save results to file
   std::ofstream data_file;
   data_file.open("/home/dave/ros/clam/src/clam_moveit_experimental/data/valid_points.dat");
 
-  // Create a robot start state of all 0 joint values
-  /*kinematic_state::KinematicState start_state(group.getCurrentState());
-    std::vector<double> joint_state_values( group.getCurrentJointValues().size(), 0.0 );
-    start_state.setStateValues(joint_state_values);*/
-
   group.setStartStateToCurrentState();
-  group.setEndEffectorLink("camera_calibration_link");
+  //  group.setEndEffectorLink("camera_calibration_link");
+  //group.setEndEffectorLink("l_gripper_aft_link");
 
+  bool gripperOpen = true;
+
+  // -----------------------------------------------------------------------------------------------
+  // Loop through x and y range
   for( double x = 0.1; x < 0.5; x += 0.05 )
   {
     for( double y = -0.2; y < 0.2; y += 0.05 )
     {
-      //group.setStartState( start_state );
+      // -------------------------------------------------------------------------------------------
+      // Create start and goal
 
+      //group.setStartState( start_state );
       //  group.setPositionTarget(0.22222, 0, 0.2);
       group.setPositionTarget(x, y, z);
       group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
-
       ROS_INFO_STREAM("Planning for x:" << x << " y:" << y << " z:" << z);
       //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
       //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
 
+      // -------------------------------------------------------------------------------------------
+      // Plan
       move_group_interface::MoveGroup::Plan plan;
+
       if( group.plan(plan) )
       {
+        // -----------------------------------------------------------------------------------------
+        // Save to file
         data_file << x << "," << y <<  "," << z << "\n";
 
+        // -----------------------------------------------------------------------------------------
+        // Execute plan
         ROS_INFO("Executing...");
         group.execute(plan);
 
-        ROS_INFO("[pick and place] Opening gripper");
-        clam_arm_goal_.command = "OPEN_GRIPPER";
-        clam_arm_action_.sendGoal(clam_arm_goal_);
-        while(!clam_arm_action_.getState().isDone() && ros::ok())
-        {
-          //ROS_INFO("[pick and place] Waiting for gripper to open");
-          ros::Duration(0.1).sleep();
-        }
 
-        ROS_INFO("SLEEPING");
-        sleep(1);
+        // -----------------------------------------------------------------------------------------
+        // Close Gripper
+        if( gripperOpen )
+        {
+          ROS_INFO("[pick and place] Closing gripper");
+          clam_arm_goal_.command = "CLOSE_GRIPPER";
+          gripperOpen = false;
+        }
+        else
+        {
+          ROS_INFO("[pick and place] Opening gripper");
+          clam_arm_goal_.command = "OPEN_GRIPPER";
+          gripperOpen = true;
+        }
+        clam_arm_client_.sendGoal(clam_arm_goal_);
+        while(!clam_arm_client_.getState().isDone() && ros::ok())
+          ros::Duration(0.1).sleep();
+
       }
       else
       {
@@ -150,9 +154,14 @@ int main(int argc, char **argv)
       }
     }
   }
+
+  // -----------------------------------------------------------------------------------------------
+  // Close down
   data_file.close();
 
 
   ROS_INFO("Node exiting");
   return 0;
 }
+
+

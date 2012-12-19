@@ -371,8 +371,7 @@ http://www.ros.org/wiki/xacro
       </geometry>
     </visual>
   </link>
-  <!-- KINECT LINK - Not Needed! -->
-  <!--
+  <!-- KINECT LINK - Not Needed even for calibration
   <joint name="base_kinect_joint" type="fixed">
     <origin xyz="0.769541 -0.0539292 0.836631" rpy="0 0 0" />
     <parent link="base_link"/>
@@ -387,6 +386,6 @@ http://www.ros.org/wiki/xacro
       </geometry>
     </visual>
   </link>
--->
+  -->
 </robot>
 

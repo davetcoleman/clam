@@ -45,7 +45,7 @@
 #include <sstream>
 
 
-const std::string pick_and_place_topic = "/pick_and_place";
+const std::string _topic = "/";
 
 namespace clam_block_manipulation
 {
@@ -58,12 +58,12 @@ private:
   // Actions
   actionlib::SimpleActionClient<BlockDetectionAction> block_detection_action_;
   actionlib::SimpleActionClient<InteractiveBlockManipulationAction> interactive_manipulation_action_;
-  actionlib::SimpleActionClient<PickAndPlaceAction> pick_and_place_action_;
+  actionlib::SimpleActionClient<PickAndPlaceAction> pick_place_action_;
   actionlib::SimpleActionClient<ClamArmAction> clam_arm_action_;
 
   BlockDetectionGoal block_detection_goal_;
   InteractiveBlockManipulationGoal interactive_manipulation_goal_;
-  PickAndPlaceGoal pick_and_place_goal_;
+  PickAndPlaceGoal pick_place_goal_;
   ClamArmGoal clam_arm_goal_;
 
   // Parameters
@@ -80,7 +80,7 @@ public:
   BlockManipulationAction() :
     block_detection_action_("block_detection", true),
     interactive_manipulation_action_("interactive_manipulation", true),
-    pick_and_place_action_("pick_and_place", true),
+    pick_place_action_("pick_place", true),
     clam_arm_action_("clam_arm", true)
   {
     // Load parameters -------------------------------------------------------------------
@@ -104,11 +104,11 @@ public:
     block_detection_goal_.block_size = block_size;
 
     // Pick and Place
-    pick_and_place_goal_.frame = arm_link;
-    pick_and_place_goal_.z_up = z_up;
-    pick_and_place_goal_.gripper_open = gripper_open;
-    pick_and_place_goal_.gripper_closed = gripper_closed;
-    pick_and_place_goal_.topic = pick_and_place_topic;
+    pick_place_goal_.frame = arm_link;
+    pick_place_goal_.z_up = z_up;
+    pick_place_goal_.gripper_open = gripper_open;
+    pick_place_goal_.gripper_closed = gripper_closed;
+    pick_place_goal_.topic = _topic;
 
     // Interactive Manipulation
     interactive_manipulation_goal_.block_size = block_size;
@@ -123,7 +123,7 @@ public:
     interactive_manipulation_action_.waitForServer();
     ROS_INFO("- Found interactive manipulation.");
 
-    pick_and_place_action_.waitForServer();
+    pick_place_action_.waitForServer();
     ROS_INFO("- Found pick and place server.");
 
     clam_arm_action_.waitForServer();
@@ -178,7 +178,7 @@ public:
       ROS_ERROR("4. Rviz interactive marker input did not succeed: %s",  state.toString().c_str());
       ros::shutdown();
     }
-    pick_and_place_action_.sendGoal(pick_and_place_goal_,
+    pick_place_action_.sendGoal(pick_place_goal_,
                                     boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 

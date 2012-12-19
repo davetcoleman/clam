@@ -5,6 +5,7 @@
 
   <!-- This is highly dependent on the setup of the kinect in the lab -->
   <node name="clam_vision_frame" pkg="tf" type="static_transform_publisher" output="screen"
-	args="0.320593 0.721478 0.757392 0.30815 0.319746 -0.592972 0.671707 /base_link /camera_link 100"/>
+	args="0.688402 0.108181 0.804499 -0.573927 -0.0151095 0.818767 0.00045841 /base_link /camera_link 100"/>
+
 
 </launch>
