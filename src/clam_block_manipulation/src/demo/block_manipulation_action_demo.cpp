@@ -45,7 +45,7 @@
 #include <sstream>
 
 
-const std::string _topic = "/";
+const std::string pick_place_topic = "/pick_place";
 
 namespace clam_block_manipulation
 {
@@ -108,7 +108,7 @@ public:
     pick_place_goal_.z_up = z_up;
     pick_place_goal_.gripper_open = gripper_open;
     pick_place_goal_.gripper_closed = gripper_closed;
-    pick_place_goal_.topic = _topic;
+    pick_place_goal_.topic = pick_place_topic;
 
     // Interactive Manipulation
     interactive_manipulation_goal_.block_size = block_size;
@@ -139,7 +139,15 @@ public:
 
     clam_arm_goal_.command = "RESET";
     clam_arm_action_.sendGoal(clam_arm_goal_,
-                               boost::bind( &BlockManipulationAction::detectBlocks, this));
+                              //                               boost::bind( &BlockManipulationAction::detectBlocks, this));
+                               boost::bind( &BlockManipulationAction::skipPerception, this));
+  }
+
+  void skipPerception()
+  {
+    ROS_INFO("1.1 Skipping perception, sending goal");
+    pick_place_action_.sendGoal(pick_place_goal_,
+                                    boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 
   void detectBlocks()

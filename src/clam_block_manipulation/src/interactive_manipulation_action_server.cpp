@@ -57,7 +57,7 @@ private:
     clam_block_manipulation::InteractiveBlockManipulationGoalConstPtr goal_;
 
     ros::Subscriber block_sub_;
-    ros::Publisher  pick_and_place_pub_;
+    ros::Publisher  pick_place_pub_;
 
     geometry_msgs::Pose old_pose_;
 
@@ -86,7 +86,7 @@ public:
         as_.start();
 
         block_sub_ = nh_.subscribe("/clam_blocks", 1, &InteractiveManipulationServer::addBlocks, this);
-        pick_and_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_and_place", 1, true);
+        pick_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_place", 1, true);
     }
 
     void goalCB()
@@ -181,7 +181,7 @@ public:
         msg.poses.push_back(start_pose_bumped);
         msg.poses.push_back(end_pose_bumped);
 
-        pick_and_place_pub_.publish(msg);
+        pick_place_pub_.publish(msg);
 
         as_.setSucceeded(result_);
 

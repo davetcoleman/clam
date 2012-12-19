@@ -51,7 +51,7 @@ private:
   ros::NodeHandle nh_;
 
   // MoveGroup
-  move_group_interface::MoveGroup group_;
+  //  move_group_interface::MoveGroup group_;
 
   // Action Servers and Clients
   actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> as_;
@@ -75,7 +75,7 @@ private:
 public:
   PickPlaceServer(const std::string name) :
     nh_("~"), as_(name, false),
-    group_("arm"),
+    //    group_("arm"),
     clam_arm_client_("clam_arm", true)
   {
 
@@ -106,19 +106,37 @@ public:
     // Change the goal constraints on the servos to be less strict, so that the controllers don't die. this is a hack
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
+    /*
     // Check if our listener has recieved a goal from the topic yet
     if (goal_->topic.length() < 1)
     {
-      ROS_INFO("[pick place] Goal has already been recieved, start moveing arm");
-      pickAndPlace(goal_->pickup_pose, goal_->place_pose); // yes, start moving arm
+    ROS_INFO("[pick place] Goal has already been recieved, start moving arm");
+    pickAndPlace(goal_->pickup_pose, goal_->place_pose); // yes, start moving arm
     }
     else
     {
-      ROS_INFO("[pick place] Waiting for goal to be received");
-      pick_place_sub_ = nh_.subscribe(goal_->topic, 1, // no, wait for topic
-                                      &PickPlaceServer::sendGoalFromTopic, this);
+    ROS_INFO_STREAM("[pick place] Waiting for goal to be received on topic " << goal_->topic);
+    pick_place_sub_ = nh_.subscribe(goal_->topic, 1, // no, wait for topic
+    &PickPlaceServer::sendGoalFromTopic, this);
     }
+    */
+
+
+    // Skip perception
+    geometry_msgs::Pose start_pose;
+    geometry_msgs::Pose end_pose;
+
+    start_pose.position.x = 0.2;
+    start_pose.position.y = 0.0;
+    start_pose.position.z = 0.2;
+
+    end_pose.position.x = 0.2;
+    end_pose.position.y = 0.1;
+    end_pose.position.z = 0.2;
+
+    pickAndPlace(start_pose, end_pose);
   }
 
   void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr& msg)
@@ -137,6 +155,8 @@ public:
 
   bool sendGoal(const geometry_msgs::Pose& pose)
   {
+    move_group_interface::MoveGroup group_("arm"); // TODO: move
+
     // ---------------------------------------------------------------------------------------------
     // Create start pose
     group_.setStartStateToCurrentState();
@@ -148,22 +168,29 @@ public:
     double z = pose.position.z;
     group_.setPositionTarget(x, y, z);
     group_.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
-    ROS_INFO_STREAM("Planning for x:" << x << " y:" << y << " z:" << z);
+    ROS_INFO_STREAM("[pick place] Planning for x:" << x << " y:" << y << " z:" << z);
 
     // -------------------------------------------------------------------------------------------
     // Plan
+    ROS_INFO("HERE3");
     move_group_interface::MoveGroup::Plan plan;
 
-    if( !group_.plan(plan) )
+    ROS_INFO("HERE");
+    if( group_.plan(plan) )
+    {
+      ROS_INFO("YAY");
+    }
+    else
     {
       ROS_ERROR("[pick place] Unable to plan");
       as_.setAborted(result_);
       return false;
     }
+    ROS_INFO("HERE2");
 
     // -----------------------------------------------------------------------------------------
     // Execute plan
-    ROS_INFO("Executing...");
+    ROS_INFO("[pick place] Executing...");
     group_.execute(plan);
 
     return true;
@@ -224,7 +251,7 @@ public:
     desired_pose.position.z = 0.2;
     ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendGoal(desired_pose))
-      return;    
+      return;
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
