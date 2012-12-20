@@ -54,6 +54,7 @@ class SingleJointController
 {
 public:
   SingleJointController() {};
+
   virtual ~SingleJointController() {};
 
   virtual bool initialize(std::string name,
@@ -63,6 +64,7 @@ public:
     name_ = name;
     port_namespace_ = port_namespace;
     dxl_io_ = dxl_io;
+    dead_time_ = 0;
 
     try
     {
@@ -426,7 +428,7 @@ public:
     if( dead_time_ > TIME_DECLARE_MOTOR_DEAD && state.alive )
     {
       // assume power went down
-      ROS_WARN_STREAM("Suspected power loss. Reinitializing " << name_);
+      ROS_WARN_STREAM("Suspected power loss. Reinitializing " << name_ << " after dead time " << dead_time_);
       setVelocity(current_velocity_);
     }
 
@@ -476,7 +478,7 @@ protected:
   int compliance_margin_;
   int compliance_slope_;
 
-  static const int TIME_DECLARE_MOTOR_DEAD = 3;
+  static const int TIME_DECLARE_MOTOR_DEAD = 4;
   int dead_time_; // used to keep track of when motor goes down and we need to re-initialize
 
   double encoder_ticks_per_radian_;
@@ -516,3 +518,24 @@ private:
 }
 
 #endif  // DYNAMIXEL_HARDWARE_INTERFACE_SINGLE_JOINT_CONTROLLER_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

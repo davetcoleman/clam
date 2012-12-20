@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   // Move arm
   move_group_interface::MoveGroup group(GROUP_NAME);
 
-  double x = 0.2;
+  double x = 0.3;
   double y = 0.0;
 
   // Save results to file
@@ -107,8 +107,8 @@ int main(int argc, char **argv)
   data_file.open(DATA_FILE_OUTPUT.c_str());
 
   group.setStartStateToCurrentState();
-  //  group.setEndEffectorLink("camera_calibration_link");
-  group.setEndEffectorLink("l_gripper_aft_link");
+  group.setEndEffectorLink("gripper_fake_tip_link");
+  //  group.setEndEffectorLink("l_gripper_aft_link");
 
   // -----------------------------------------------------------------------------------------------
   // Loop through z range

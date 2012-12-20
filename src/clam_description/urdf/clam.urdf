@@ -247,7 +247,7 @@ http://www.ros.org/wiki/xacro
       <material name="Grey"/>
     </visual>
   </link>
-  <joint name="r_gripper_aft_link_joint" type="revolute">
+  <joint name="r_gripper_aft_joint" type="revolute">
     <parent link="gripper_roll_link"/>
     <child link="r_gripper_aft_link"/>
     <origin rpy="4.22543855 1.570795 0.603534345556" xyz="0.026 -0.011  0"/>
@@ -266,7 +266,7 @@ http://www.ros.org/wiki/xacro
       <material name="Grey"/>
     </visual>
   </link>
-  <joint name="l_gripper_fwd_link_joint" type="revolute">
+  <joint name="l_gripper_fwd_joint" type="revolute">
     <parent link="gripper_roll_link"/>
     <child link="l_gripper_fwd_link"/>
     <origin rpy="3.2672536 1.570795 3.74512434556" xyz="0.05 0.008 0.007"/>
@@ -285,7 +285,7 @@ http://www.ros.org/wiki/xacro
       <material name="Grey"/>
     </visual>
   </link>
-  <joint name="r_gripper_fwd_link_joint" type="revolute">
+  <joint name="r_gripper_fwd_joint" type="revolute">
     <parent link="gripper_roll_link"/>
     <child link="r_gripper_fwd_link"/>
     <origin rpy="3.0159264 1.570795 2.53805565444" xyz="0.05 -0.0014 0.007"/>
@@ -358,12 +358,12 @@ http://www.ros.org/wiki/xacro
     </visual>
   </link>
   <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP -->
-  <joint name="camera_calibration_link_joint" type="fixed">
+  <joint name="gripper_fake_tip_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.1795 0.002 0"/>
     <parent link="gripper_roll_link"/>
-    <child link="camera_calibration_link"/>
+    <child link="gripper_fake_tip_link"/>
   </joint>
-  <link name="camera_calibration_link">
+  <link name="gripper_fake_tip_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
