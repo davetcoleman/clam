@@ -107,12 +107,12 @@ int main(int argc, char **argv)
   data_file.open(DATA_FILE_OUTPUT.c_str());
 
   group.setStartStateToCurrentState();
-  group.setEndEffectorLink("gripper_fake_tip_link");
+  //  group.setEndEffectorLink("gripper_fake_tip_link");
   //  group.setEndEffectorLink("l_gripper_aft_link");
 
   // -----------------------------------------------------------------------------------------------
   // Loop through z range
-  for( double z = 0.1; z > 0.0; z -= 0.025 ) // valid range is 0.075 to 0.025 +- .025
+  for( double z = 0.3; z > 0.0; z -= 0.1 ) // valid range is 0.075 to 0.025 +- .025
   {
     // -------------------------------------------------------------------------------------------
     // Create start and goal

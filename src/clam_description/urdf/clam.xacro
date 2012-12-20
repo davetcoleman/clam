@@ -317,7 +317,7 @@ http://www.ros.org/wiki/xacro
 
   <joint name="l_gripper_aft_pincher_joint" type="continuous">
     <parent link="l_gripper_aft_link"/>
-    <child link="l_gripper_pincher"/>
+    <child link="l_gripper_pincher_link"/>
     <origin xyz="-0.0032 0 -0.0508" rpy="${203.27*M_PI/180-.3150*M_PI} 0 0" />
     <axis xyz="1 0 0" />
     <limit effort="300" velocity="1" lower="-1.57" upper="1.57" />
@@ -326,7 +326,7 @@ http://www.ros.org/wiki/xacro
   </joint>
 
   <!-- LEFT GRIPPER PINCHER -->
-  <link name="l_gripper_pincher">
+  <link name="l_gripper_pincher_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
       <geometry>
@@ -338,7 +338,7 @@ http://www.ros.org/wiki/xacro
 
   <joint name="r_gripper_aft_pincher_joint" type="revolute">
     <parent link="r_gripper_aft_link"/>
-    <child link="r_gripper_pincher"/>
+    <child link="r_gripper_pincher_link"/>
     <origin xyz="0 0 -0.0508" rpy="${23.27*M_PI/180-.3150*M_PI} ${M_PI} 0" />
     <axis xyz="1 0 0" />
 
@@ -348,7 +348,7 @@ http://www.ros.org/wiki/xacro
   </joint>
 
   <!-- RIGHT GRIPPER PINCHER -->
-  <link name="r_gripper_pincher">
+  <link name="r_gripper_pincher_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
       <geometry>

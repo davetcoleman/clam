@@ -100,6 +100,8 @@ int main(int argc, char **argv)
   // Move arm
   move_group_interface::MoveGroup group(GROUP_NAME);
 
+  double x = 0.0;
+  double y = 0.0;
   double z = 0.1;
 
   // Save results to file
@@ -115,9 +117,9 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Loop through x and y range
-  for( double x = 0.1; x < 0.5; x += 0.05 )
+  for( x = 0.1; x < 0.5; x += 0.05 )
   {
-    for( double y = -0.2; y < 0.2; y += 0.05 )
+    for( z = 0.4; x > 0; z -= 0.05 )
     {
       // -------------------------------------------------------------------------------------------
       // Create start and goal
@@ -125,7 +127,7 @@ int main(int argc, char **argv)
       //group.setStartState( start_state );
       //  group.setPositionTarget(0.22222, 0, 0.2);
       group.setPositionTarget(x, y, z);
-      //group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+      group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
       ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
       //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
       //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
@@ -184,7 +186,7 @@ int main(int argc, char **argv)
       {
         ROS_WARN("[coverage test] Failed to find a plan");
       }
-    }
+         }
   }
 
   // -----------------------------------------------------------------------------------------------
