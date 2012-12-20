@@ -30,10 +30,10 @@
 
 /*
   Allows you to perform various actions to the clam arm: (see clam_controller::ClamArmAction::command msg)
-   - Reset the arm to its default/home pose
-   - Open and close the end effector
-   - TODO: close end effector with feedback
-   - TODO: shutdown: go to sleep position
+  - Reset the arm to its default/home pose
+  - Open and close the end effector
+  - TODO: close end effector with feedback
+  - TODO: shutdown: go to sleep position
 */
 
 #include <clam_controller/ClamArmAction.h>
@@ -41,6 +41,7 @@
 #include <actionlib/server/simple_action_server.h> // For providing functionality
 #include <actionlib/client/simple_action_client.h> // For calling the joint trajectory action
 #include <dynamixel_hardware_interface/SetVelocity.h> // For changing servo velocities using service call
+#include <dynamixel_hardware_interface/JointState.h> // For knowing the state of the end effector
 #include <control_msgs/FollowJointTrajectoryAction.h> // for sending arm to home position
 #include <std_msgs/Float64.h> // For sending end effector joint position commands
 
@@ -48,6 +49,17 @@ namespace clam_controller
 {
 
 typedef actionlib::SimpleActionClient< control_msgs::FollowJointTrajectoryAction > TrajClient;
+
+// Constants for the end_effector
+static const double END_EFFECTOR_OPEN_VALUE = -1.0;
+static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
+static const double END_EFFECTOR_POSITION_TOLERANCE = 0.02;
+static const double END_EFFECTOR_VELOCITY = 0.6;
+static const double END_EFFECTOR_SLOW_VELOCITY = 0.1;
+static const double END_EFFECTOR_LOAD_SETPOINT = -0.3;
+static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
+static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
+static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
 
 class ClamArmServer
 {
@@ -63,51 +75,41 @@ private:
 
   // External publishers and services
   ros::Publisher end_effector_pub_; // publish joint values to servos
-  ros::Publisher shoulderp_pub_;
   ros::ServiceClient velocity_client_; // change end_effector velocity
-
-  // Constants that define the limits of the end_effector - TODO: move to parameters
-  static const double END_EFFECTOR_OPEN_VALUE = -1.0;
-  static const double END_EFFECTOR_CLOSE_VALUE = -0.5;//-0.1;
+  ros::Subscriber end_effector_status_; // read the position of the end effector
 
   // Action client for the joint trajectory action used to trigger the arm movement action
   TrajClient* trajectory_client_;
 
+  dynamixel_hardware_interface::JointState ee_status_;
+
 public:
   ClamArmServer(const std::string name) :
-    nh_("~"), 
-    action_server_(name, false), 
+    nh_("~"),
+    action_server_(name, false),
     action_name_(name)
   {
 
     // Create publishers for servo positions
-    end_effector_pub_ = nh_.advertise< std_msgs::Float64 >("/l_end_effector_aft_controller/command", 1, true);
-    shoulderp_pub_ = nh_.advertise< std_msgs::Float64 >("/shoulder_pitch_controller/command", 1, true);
+    end_effector_pub_ = nh_.advertise< std_msgs::Float64 >(EE_POSITION_MSG_NAME, 1, true);
 
-    // Set the velocity for the end effector servo
-    ROS_INFO("[clam arm] Setting end effector servo velocity");
-    velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >
-      ("/l_gripper_aft_controller/set_velocity");
-    dynamixel_hardware_interface::SetVelocity set_velocity_srv;
-    set_velocity_srv.request.velocity = double(0.1);
-    if( !velocity_client_.call(set_velocity_srv) )
-    {
-      ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
-    }
+    // Get the position of the end effector
+    ROS_INFO("[clam arm] Reading end effector position");
+    end_effector_status_ = nh_.subscribe( EE_STATE_MSG_NAME, 1, &ClamArmServer::proccessEEStatus, this);
 
+    // Start up the trajectory client
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
-
-    // wait for action server to come up
-    while(!trajectory_client_->waitForServer(ros::Duration(5.0))){
-      ROS_INFO("[clam arm] Waiting for the joint_trajectory_action server");
+    while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
+    {
+      ROS_WARN("[clam arm] Waiting for the joint_trajectory_action server");
     }
 
     //register the goal and feeback callbacks
     action_server_.registerGoalCallback(boost::bind(&ClamArmServer::goalCB, this));
     action_server_.registerPreemptCallback(boost::bind(&ClamArmServer::preemptCB, this));
 
-    action_server_.start();
-
+    action_server_.start(); // This service is ready
+    ROS_INFO("[clam arm] ClamArm action server ready");
   }
 
   // Recieve Action Goal Function
@@ -117,23 +119,23 @@ public:
 
     switch( goal_->command )
     {
-    case clam_controller::ClamArmAction::RESET:
+    case clam_controller::ClamArmGoal::RESET:
       ROS_INFO("[clam arm] Received reset arm goal");
       resetArm();
       break;
-    case clam_controller::ClamArmAction::END_EFFECTOR_OPEN:
+    case clam_controller::ClamArmGoal::END_EFFECTOR_OPEN:
       ROS_INFO("[clam arm] Received open end effector goal");
-      openEndEffector(true);
+      openEndEffector();
       break;
-    case clam_controller::ClamArmAction::END_EFFECTOR_CLOSE:
+    case clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE:
       ROS_INFO("[clam arm] Received close end effector goal");
-      openEndEffector(false);
+      closeEndEffector();
       break;
-    case clam_controller::ClamArmAction::END_EFFECTOR_SET:
-      ROS_ERROR("[clam arm] not implemented");
-
+    case clam_controller::ClamArmGoal::END_EFFECTOR_SET:
+      ROS_INFO("[clam arm] Received close end effector to setpoint goal");
+      setEndEffector(goal_->end_effector_setpoint);
       break;
-    case clam_controller::ClamArmAction::END_EFFECTOR_SHUTDOWN:
+    case clam_controller::ClamArmGoal::SHUTDOWN:
       ROS_ERROR("[clam arm] not implemented");
 
       break;
@@ -150,12 +152,7 @@ public:
     action_server_.setPreempted();
   }
 
-  //! Generates a simple trajectory with two waypoints, used as an example
-  /*! Note that this trajectory contains two waypoints, joined together
-    as a single trajectory. Alternatively, each of these waypoints could
-    be in its own trajectory - a trajectory can have one or more waypoints
-    depending on the desired application.
-  */
+  // Send arm to home position
   control_msgs::FollowJointTrajectoryGoal resetTrajectory()
   {
     //our goal variable
@@ -210,8 +207,6 @@ public:
   // Actually run the action
   void resetArm()
   {
-    // TODO: add code here to check if we are already in the desired arm position
-
     control_msgs::FollowJointTrajectoryGoal goal = resetTrajectory();
 
     ROS_INFO("[clam arm] Starting trajectory to reset arm");
@@ -227,47 +222,246 @@ public:
     }
 
     ROS_INFO("[clam arm] Finished resetting arm action");
+    result_.success = true;
     action_server_.setSucceeded(result_);
   }
 
-  // Open or close end effector
-  void openEndEffector( bool open )
+  bool endEffectorResponding()
   {
+    if( ee_status_.header.stamp < ros::Time::now() - ros::Duration(1.0) )
+    {
+      ROS_ERROR("[clam arm] Unable to open end effector: servo status is expired");
+      result_.success = false;
+      action_server_.setSucceeded(result_);
+      return false;
+    }
+    if( !ee_status_.alive )
+    {
+      ROS_ERROR("[clam arm] Unable to open end effector: servo not responding");
+      result_.success = false;
+      action_server_.setSucceeded(result_);
+      return false;
+    }
+    return true;
+  }
+
+  // Open end effector
+  void openEndEffector()
+  {
+    // Error check - servos are alive and we've been recieving messages
+    if( !endEffectorResponding() )
+    {
+      return;
+    }
+
+    // Check if end effector is already open and arm is still
+    if( ee_status_.target_position == END_EFFECTOR_OPEN_VALUE &&
+        ee_status_.moving == false &&
+        ee_status_.position > END_EFFECTOR_OPEN_VALUE + END_EFFECTOR_POSITION_TOLERANCE &&
+        ee_status_.position < END_EFFECTOR_OPEN_VALUE - END_EFFECTOR_POSITION_TOLERANCE )
+    {
+      // Consider the ee to already be in the corret position
+      ROS_INFO("[clam arm] End effector open: already in position");
+      result_.success = true;
+      action_server_.setSucceeded(result_);
+      return;
+    }
+
+    // Set the velocity for the end effector servo
+    ROS_INFO("[clam arm] Setting end effector servo velocity");
+    velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
+    while(!velocity_client_.waitForExistence(ros::Duration(1.0)))
+    {
+    }
+    dynamixel_hardware_interface::SetVelocity set_velocity_srv;
+    set_velocity_srv.request.velocity = END_EFFECTOR_VELOCITY;
+    if( !velocity_client_.call(set_velocity_srv) )
+    {
+      ROS_WARN("[clam arm] Failed to set the end effector servo velocity via service call");
+    }
+
     // Publish command to servos
     std_msgs::Float64 joint_value;
-    if(open)
-    {
-      joint_value.data = END_EFFECTOR_OPEN_VALUE;
-    }
-    else
-    {
-      joint_value.data = END_EFFECTOR_CLOSE_VALUE;
-    }
+    joint_value.data = END_EFFECTOR_OPEN_VALUE;
     end_effector_pub_.publish(joint_value);
 
-    // Just a guess on how long to wait
-    ros::Duration(4).sleep();
+    // Wait until end effector is done moving
+    int timeout = 0;
+    while( ee_status_.moving == true &&
+           ee_status_.position > END_EFFECTOR_OPEN_VALUE + END_EFFECTOR_POSITION_TOLERANCE &&
+           ee_status_.position < END_EFFECTOR_OPEN_VALUE - END_EFFECTOR_POSITION_TOLERANCE &&
+           ros::ok() )
+    {
+      ros::Duration(0.25).sleep();
+      ++timeout;
+      if( timeout > 16 )  // wait 4 seconds
+      {
+        ROS_ERROR("[clam arm] Unable to open end effector: timeout on goal position");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+        return;
+      }
+    }
 
-    // Assume it works TODO don't assume?
-    ROS_INFO("[clam arm] Finished end effector action");
+    // It worked!
+    //    ROS_INFO("[clam arm] Finished end effector action");
+    result_.success = true;
     action_server_.setSucceeded(result_);
   }
 
-  // Lower down the end_effector to pickup object
-  void lowerPose()
+  // Close end effector to setpoint
+  void setEndEffector(double setpoint)
   {
+    // Error check - servos are alive and we've been recieving messages
+    if( !endEffectorResponding() )
+    {
+      return;
+    }
+
+    // Check that there is a valid end effector setpoint set
+    if( setpoint >= END_EFFECTOR_CLOSE_VALUE_MAX &&
+        setpoint <= END_EFFECTOR_OPEN_VALUE )
+    {
+      ROS_ERROR_STREAM("[clam arm] Unable to set end effector: out of range setpoint of " <<
+                       setpoint << ". Valid range is " << END_EFFECTOR_CLOSE_VALUE_MAX << " to "
+                       << END_EFFECTOR_OPEN_VALUE );
+      result_.success = false;
+      action_server_.setSucceeded(result_);
+      return;
+    }
+
+    // Check if end effector is already close and arm is still
+    if( ee_status_.target_position == setpoint &&
+        ee_status_.moving == false &&
+        ee_status_.position > setpoint + END_EFFECTOR_POSITION_TOLERANCE &&
+        ee_status_.position < setpoint - END_EFFECTOR_POSITION_TOLERANCE )
+    {
+      // Consider the ee to already be in the corret position
+      ROS_INFO("[clam arm] End effector close: already in position");
+      result_.success = true;
+      action_server_.setSucceeded(result_);
+      return;
+    }
+
     // Publish command to servos
     std_msgs::Float64 joint_value;
-    joint_value.data = 1.2;
-    shoulderp_pub_.publish(joint_value);
+    joint_value.data = setpoint;
+    end_effector_pub_.publish(joint_value);
 
-    // Just a guess on how long to wait
-    ros::Duration(4).sleep();
+    // Wait until end effector is done moving
+    int timeout = 0;
+    while( ee_status_.moving == true &&
+           ee_status_.position > setpoint + END_EFFECTOR_POSITION_TOLERANCE &&
+           ee_status_.position < setpoint - END_EFFECTOR_POSITION_TOLERANCE &&
+           ros::ok() )
+    {
+      ros::Duration(0.25).sleep();
+      ++timeout;
+      if( timeout > 16 )  // wait 4 seconds
+      {
+        ROS_ERROR("[clam arm] Unable to close end effector: timeout on goal position");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+        return;
+      }
+    }
 
-    // Assume it works TODO don't assume?
-    ROS_INFO("[clam arm] Finished lower action");
+    // It worked!
+    //    ROS_INFO("[clam arm] Finished end effector action");
+    result_.success = true;
     action_server_.setSucceeded(result_);
   }
+
+  // Close end effector
+  void closeEndEffector()
+  {
+    ROS_INFO("\n HERE \n");
+
+    // Error check - servos are alive and we've been recieving messages
+    if( !endEffectorResponding() )
+    {
+      return;
+    }
+
+    // Check if end effector is already close and arm is still
+    if( ee_status_.target_position == END_EFFECTOR_CLOSE_VALUE_MAX &&
+        ee_status_.moving == false &&
+        ee_status_.position > END_EFFECTOR_CLOSE_VALUE_MAX - END_EFFECTOR_POSITION_TOLERANCE &&
+        ee_status_.position < END_EFFECTOR_CLOSE_VALUE_MAX + END_EFFECTOR_POSITION_TOLERANCE )
+    {
+      // Consider the ee to already be in the corret position
+      ROS_INFO("[clam arm] End effector already closed completely, unable to close further");
+      result_.success = true;
+      action_server_.setSucceeded(result_);
+      return;
+    }
+
+    // Set the velocity for the end effector to a low value
+    ROS_INFO("[clam arm] Setting end effector servo velocity low");
+    velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
+    while(!velocity_client_.waitForExistence(ros::Duration(1.0)))
+    {
+    }
+    dynamixel_hardware_interface::SetVelocity set_velocity_srv;
+    set_velocity_srv.request.velocity = END_EFFECTOR_SLOW_VELOCITY;
+    if( !velocity_client_.call(set_velocity_srv) )
+    {
+      ROS_WARN("[clam arm] Failed to set the end effector servo velocity via service call");
+    }
+
+    // Publish command to servos
+    std_msgs::Float64 joint_value;
+    joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
+    end_effector_pub_.publish(joint_value);
+
+    // Wait until end effector is done moving
+    double timeout_sec = 10;
+    double sleep_sec = 0.1;
+    while( //ee_status_.moving == true &&
+          ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
+          ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
+          //          ros::ok() )
+           )
+    {
+      ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
+      //ROS_INFO_STREAM("Load is " << ee_status_.load );
+
+      // Check if load has peaked
+      if( ee_status_.load < END_EFFECTOR_LOAD_SETPOINT ) // we have touched object!
+      {
+        joint_value.data = ee_status_.position + 0.01; // update to current position and backout a little
+        ROS_WARN("Setting end effector setpoint to %f", joint_value.data);
+        end_effector_pub_.publish(joint_value);
+      }
+
+      //ROS_INFO_STREAM(joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
+      //                ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE );
+
+      ros::Duration(sleep_sec).sleep();
+      timeout_sec -= sleep_sec;
+      if( timeout_sec <= 0 )
+      {
+        ROS_ERROR("[clam arm] Unable to close end effector: timeout on goal position");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+        return;
+      }
+    }
+
+    // DONE
+    //ROS_INFO("[clam arm] Finished end effector action --------------------------------------- \n");
+    result_.success = true;
+    action_server_.setSucceeded(result_);
+  }
+
+  // Update status of end effector
+  void proccessEEStatus(const dynamixel_hardware_interface::JointState& msg)
+  {
+    ee_status_ = msg;
+  }
+
+
+
 };
 
 };

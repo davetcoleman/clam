@@ -32,14 +32,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman 
+/* Author: Dave Coleman
    Desc:   This node goes through a series of x and y locations on the workspace table
-           and plans to see if robot can reach each location
+   and plans to see if robot can reach each location
 */
 
 #include <moveit/move_group_interface/move_group.h>
 #include <ros/ros.h>
-#include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
+#include <clam_controller/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
 
 #include <iostream> // For recording data
@@ -62,8 +62,8 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Connect to ClamArm action server
-  actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_client_("clam_arm", true);
-  clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
+  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_("clam_arm", true);
+  clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
 
   while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
     ROS_INFO("[coverage test] Waiting for the clam_arm action server");
@@ -72,20 +72,58 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   // Go to home position
   ROS_INFO("[coverage test] Resetting arm to home position");
-  clam_arm_goal_.command = "RESET";
+  clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(20.0));
   //while(!clam_arm_client_.getState().isDone() && ros::ok())
   //  ros::Duration(0.1).sleep();
   // TODO: check if this is working correctly
 
-  // -----------------------------------------------------------------------------------------------
-  // Open gripper
-  ROS_INFO("[coverage test] Opening gripper");
-  clam_arm_goal_.command = "OPEN_GRIPPER";
-  clam_arm_client_.sendGoal(clam_arm_goal_);
-  while(!clam_arm_client_.getState().isDone() && ros::ok())
-    ros::Duration(0.1).sleep();
+  for(int i = 0; i < 20; ++i)
+  {
+    if( i % 2 )
+    {
+      // -----------------------------------------------------------------------------------------------
+      // Open gripper
+      ROS_INFO("[coverage test] Opening gripper");
+      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
+      
+      // Error check
+      if( !clam_arm_client_.getState().isDone() ||
+          !clam_arm_client_.getResult()->success )
+      {
+        ROS_ERROR("[coverage test] Timeout: Unable to open end effector");
+        return 2;
+      }
+
+    }
+    else
+    {
+      // -----------------------------------------------------------------------------------------------
+      // Close gripper
+      ROS_INFO("[coverage test] Closing gripper");
+      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+      //clam_arm_goal_.end_effector_setpoint = 0.0; // -0.1
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
+
+      // Error check
+      if( !clam_arm_client_.getState().isDone() ||
+          !clam_arm_client_.getResult()->success )
+      {
+        ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
+        return 2;
+      }
+
+    }
+    ROS_WARN("sleeping");
+    ros::Duration(8).sleep();
+    ROS_WARN("repeating");
+  }
+
+  return 0;
 
   // -----------------------------------------------------------------------------------------------
   // Move arm
@@ -140,13 +178,13 @@ int main(int argc, char **argv)
         if( gripperOpen )
         {
           ROS_INFO("[coverage test] Closing gripper");
-          clam_arm_goal_.command = "CLOSE_GRIPPER";
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
           gripperOpen = false;
         }
         else
         {
           ROS_INFO("[coverage test] Opening gripper");
-          clam_arm_goal_.command = "OPEN_GRIPPER";
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
           gripperOpen = true;
         }
         clam_arm_client_.sendGoal(clam_arm_goal_);

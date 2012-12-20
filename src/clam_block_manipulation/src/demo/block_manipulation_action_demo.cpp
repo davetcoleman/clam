@@ -37,9 +37,9 @@
 
 #include <actionlib/client/simple_action_client.h>
 #include <clam_block_manipulation/BlockDetectionAction.h>
-#include <clam_block_manipulation/PickAndPlaceAction.h>
-#include <clam_block_manipulation/ClamArmAction.h>
+#include <clam_block_manipulation/PickPlaceAction.h>
 #include <clam_block_manipulation/InteractiveBlockManipulationAction.h>
+#include <clam_controller/ClamArmAction.h>
 
 #include <string>
 #include <sstream>
@@ -56,15 +56,15 @@ private:
   ros::NodeHandle nh_;
 
   // Actions
-  actionlib::SimpleActionClient<BlockDetectionAction> block_detection_action_;
-  actionlib::SimpleActionClient<InteractiveBlockManipulationAction> interactive_manipulation_action_;
-  actionlib::SimpleActionClient<PickAndPlaceAction> pick_place_action_;
-  actionlib::SimpleActionClient<ClamArmAction> clam_arm_action_;
+  actionlib::SimpleActionClient<clam_block_manipulation::BlockDetectionAction> block_detection_action_;
+  actionlib::SimpleActionClient<clam_block_manipulation::InteractiveBlockManipulationAction> interactive_manipulation_action_;
+  actionlib::SimpleActionClient<clam_block_manipulation::PickPlaceAction> pick_place_action_;
+  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_action_;
 
-  BlockDetectionGoal block_detection_goal_;
-  InteractiveBlockManipulationGoal interactive_manipulation_goal_;
-  PickAndPlaceGoal pick_place_goal_;
-  ClamArmGoal clam_arm_goal_;
+  clam_block_manipulation::BlockDetectionGoal block_detection_goal_;
+  clam_block_manipulation::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
+  clam_block_manipulation::PickPlaceGoal pick_place_goal_;
+  clam_controller::ClamArmGoal clam_arm_goal_;
 
   // Parameters
   std::string arm_link;
@@ -137,7 +137,7 @@ public:
   {
     ROS_INFO("1. Sending arm to home position (reseting)");
 
-    clam_arm_goal_.command = "RESET";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
     clam_arm_action_.sendGoal(clam_arm_goal_,
                               //                               boost::bind( &BlockManipulationAction::detectBlocks, this));
                                boost::bind( &BlockManipulationAction::skipPerception, this));
@@ -190,7 +190,7 @@ public:
                                     boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 
-  void finish(const actionlib::SimpleClientGoalState& state, const PickAndPlaceResultConstPtr& result)
+  void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
       ROS_INFO("5. Picked and place commands successfull");

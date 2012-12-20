@@ -35,7 +35,7 @@
 #include <actionlib/client/simple_action_client.h>
 
 #include <clam_block_manipulation/PickPlaceAction.h>
-#include <clam_block_manipulation/ClamArmAction.h>
+#include <clam_controller/ClamArmAction.h>
 
 #include <moveit/move_group_interface/move_group.h>
 
@@ -55,10 +55,10 @@ private:
 
   // Action Servers and Clients
   actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> as_;
-  actionlib::SimpleActionClient<clam_block_manipulation::ClamArmAction> clam_arm_client_;
+  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_;
 
   // Action messages
-  clam_block_manipulation::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
+  clam_controller::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
   clam_block_manipulation::PickPlaceFeedback     feedback_;
   clam_block_manipulation::PickPlaceResult       result_;
   clam_block_manipulation::PickPlaceGoalConstPtr goal_;
@@ -207,7 +207,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
-    clam_arm_goal_.command = "RESET";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     clam_arm_client_.waitForResult(ros::Duration(20.0));
     //while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -216,7 +216,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Open gripper
     ROS_INFO("[pick place] Opening gripper");
-    clam_arm_goal_.command = "OPEN_GRIPPER";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -239,7 +239,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Close gripper
     ROS_INFO("[pick place] Closing gripper");
-    clam_arm_goal_.command = "CLOSE_GRIPPER";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -256,7 +256,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Open gripper
     ROS_INFO("[pick place] Opening gripper");
-    clam_arm_goal_.command = "OPEN_GRIPPER";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -264,7 +264,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Reset
     ROS_INFO("[pick place] Going to home position");
-    clam_arm_goal_.command = "RESET";
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
