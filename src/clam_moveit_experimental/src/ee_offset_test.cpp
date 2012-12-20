@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
   group.setStartStateToCurrentState();
   //  group.setEndEffectorLink("camera_calibration_link");
-  //group.setEndEffectorLink("l_gripper_aft_link");
+  group.setEndEffectorLink("l_gripper_aft_link");
 
   // -----------------------------------------------------------------------------------------------
   // Loop through z range
