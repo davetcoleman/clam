@@ -55,14 +55,20 @@ link_directories(${catkin_LIBRARY_DIRS})
 #   src/${PROJECT_NAME}/clam_moveit_experimental.cpp
 # )
 
-## Declare a cpp executable
+## Declare cpp executables
+
+# Coverage test
 add_executable(coverage_test src/coverage_test.cpp)
-
-## Add dependencies to the executable
-add_dependencies(coverage_test ${catkin_LIBRARIES})
-
-## Specify libraries to link a library or executable target against
 target_link_libraries(coverage_test ${catkin_LIBRARIES})
+
+# Gripper Test
+add_executable(gripper_test src/gripper_test.cpp)
+target_link_libraries(gripper_test ${catkin_LIBRARIES})
+
+# End effector offset test
+add_executable(ee_offset_test src/ee_offset_test.cpp)
+target_link_libraries(ee_offset_test ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##

@@ -375,8 +375,6 @@ public:
   // Close end effector
   void closeEndEffector()
   {
-    ROS_INFO("\n HERE \n");
-
     // Error check - servos are alive and we've been recieving messages
     if( !endEffectorResponding() )
     {
@@ -424,24 +422,25 @@ public:
            )
     {
       ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
-      //ROS_INFO_STREAM("Load is " << ee_status_.load );
 
       // Check if load has peaked
       if( ee_status_.load < END_EFFECTOR_LOAD_SETPOINT ) // we have touched object!
       {
         joint_value.data = ee_status_.position + 0.01; // update to current position and backout a little
-        ROS_WARN("Setting end effector setpoint to %f", joint_value.data);
+        ROS_INFO("Setting end effector setpoint to %f", joint_value.data);
         end_effector_pub_.publish(joint_value);
       }
-
-      //ROS_INFO_STREAM(joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
-      //                ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE );
+      
+      // Debug output
+      ROS_DEBUG_STREAM(joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
+                      ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE 
+                      << " -- LOAD: " << ee_status_.load );
 
       ros::Duration(sleep_sec).sleep();
       timeout_sec -= sleep_sec;
       if( timeout_sec <= 0 )
       {
-        ROS_ERROR("[clam arm] Unable to close end effector: timeout on goal position");
+        ROS_ERROR("[clam arm] Timeout: Unable to close end effector");
         result_.success = false;
         action_server_.setSucceeded(result_);
         return;

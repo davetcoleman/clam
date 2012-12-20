@@ -33,8 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   This node goes through a series of x and y locations on the workspace table
-   and plans to see if robot can reach each location
+   Desc:   Test the offset from the gripper tip
 */
 
 #include <moveit/move_group_interface/move_group.h>
@@ -47,7 +46,7 @@
 
 // Constants
 static const std::string GROUP_NAME = "arm";
-static const std::string DATA_FILE_OUTPUT = "/home/dave/ros/clam/src/clam_moveit_experimental/data/coverage_test.dat";
+static const std::string DATA_FILE_OUTPUT = "/home/dave/ros/clam/src/clam_moveit_experimental/data/ee_offset_test.dat";
 
 // Simple test program
 int main(int argc, char **argv)
@@ -82,9 +81,9 @@ int main(int argc, char **argv)
   }
 
   // -----------------------------------------------------------------------------------------------
-  // Open gripper
-  ROS_INFO("[coverage test] Opening gripper");
-  clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+  // Close gripper
+  ROS_INFO("[coverage test] Closing gripper");
+  clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
 
@@ -92,7 +91,7 @@ int main(int argc, char **argv)
   if( !clam_arm_client_.getState().isDone() ||
       !clam_arm_client_.getResult()->success )
   {
-    ROS_ERROR("[coverage test] Timeout: Unable to open end effector");
+    ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
     return 2;
   }
 
@@ -100,7 +99,8 @@ int main(int argc, char **argv)
   // Move arm
   move_group_interface::MoveGroup group(GROUP_NAME);
 
-  double z = 0.2;
+  double x = 0.2;
+  double y = 0.0;
 
   // Save results to file
   std::ofstream data_file;
@@ -110,65 +110,62 @@ int main(int argc, char **argv)
   //  group.setEndEffectorLink("camera_calibration_link");
   //group.setEndEffectorLink("l_gripper_aft_link");
 
-  bool gripperOpen = true;
-
   // -----------------------------------------------------------------------------------------------
-  // Loop through x and y range
-  for( double x = 0.1; x < 0.5; x += 0.05 )
+  // Loop through z range
+  for( double z = 0.4; z > -0.4; z -= 0.025 )
   {
-    for( double y = -0.2; y < 0.2; y += 0.05 )
+    // -------------------------------------------------------------------------------------------
+    // Create start and goal
+
+    //group.setStartState( start_state );
+    //  group.setPositionTarget(0.22222, 0, 0.2);
+    group.setPositionTarget(x, y, z);
+    //group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+    ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
+    //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
+    //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
+
+    // -------------------------------------------------------------------------------------------
+    // Plan
+    move_group_interface::MoveGroup::Plan plan;
+
+    if( group.plan(plan) )
     {
-      // -------------------------------------------------------------------------------------------
-      // Create start and goal
+      // -----------------------------------------------------------------------------------------
+      // Save to file
+      data_file << x << "," << y <<  "," << z << "\n";
 
-      //group.setStartState( start_state );
-      //  group.setPositionTarget(0.22222, 0, 0.2);
-      group.setPositionTarget(x, y, z);
-      group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
-      ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
-      //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
-      //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
+      // -----------------------------------------------------------------------------------------
+      // Execute plan
+      ROS_INFO("[coverage test] Executing...");
+      group.execute(plan);
 
-      // -------------------------------------------------------------------------------------------
-      // Plan
-      move_group_interface::MoveGroup::Plan plan;
-
-      if( group.plan(plan) )
+      /*
+      // -----------------------------------------------------------------------------------------
+      // Close Gripper
+      if( gripperOpen )
       {
-        // -----------------------------------------------------------------------------------------
-        // Save to file
-        data_file << x << "," << y <<  "," << z << "\n";
-
-        // -----------------------------------------------------------------------------------------
-        // Execute plan
-        ROS_INFO("[coverage test] Executing...");
-        group.execute(plan);
-
-        // -----------------------------------------------------------------------------------------
-        // Close Gripper
-        if( gripperOpen )
-        {
-          ROS_INFO("[coverage test] Closing gripper");
-          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
-          gripperOpen = false;
-        }
-        else
-        {
-          ROS_INFO("[coverage test] Opening gripper");
-          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
-          gripperOpen = true;
-        }
-        clam_arm_client_.sendGoal(clam_arm_goal_);
-        while(!clam_arm_client_.getState().isDone() && ros::ok())
-          ros::Duration(0.1).sleep();
-
+      ROS_INFO("[coverage test] Closing gripper");
+      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+      gripperOpen = false;
       }
       else
       {
-        ROS_WARN("[coverage test] Failed to find a plan");
+      ROS_INFO("[coverage test] Opening gripper");
+      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+      gripperOpen = true;
       }
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+      */
+    }
+    else
+    {
+      ROS_WARN("[coverage test] Failed to find a plan");
     }
   }
+
 
   // -----------------------------------------------------------------------------------------------
   // Close down
