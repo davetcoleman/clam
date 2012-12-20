@@ -11,7 +11,7 @@ find_package(catkin REQUIRED
   actionlib 
   visualization_msgs 
   interactive_markers 
-  dynamixel_hardware_interface 
+  clam_controller 
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 
@@ -20,7 +20,8 @@ find_package(catkin REQUIRED
 
 ## Declare ROS messages and services
 add_action_files(DIRECTORY action FILES
-  ClamArmAction
+  BlockDetectionAction
+  InteractiveBlockManipulationAction
   PickPlaceAction
 )
 
@@ -36,7 +37,7 @@ catkin_package(DEPENDS
   actionlib 
   visualization_msgs 
   interactive_markers 
-  dynamixel_hardware_interface 
+  clam_controller 
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 
@@ -62,9 +63,6 @@ target_link_libraries(interactive_manipulation_action_server ${catkin_LIBRARIES}
 
 add_executable(pick_place_action_server src/pick_place_action_server.cpp)
 target_link_libraries(pick_place_action_server ${catkin_LIBRARIES})
-
-add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
-target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
 
 add_executable(block_manipulation_action_demo src/demo/block_manipulation_action_demo.cpp)
 target_link_libraries(block_manipulation_action_demo ${catkin_LIBRARIES})

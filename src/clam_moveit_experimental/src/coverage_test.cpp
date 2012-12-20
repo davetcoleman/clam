@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Willow Garage, Inc.
+ *  Copyright (c) 2012, Dave Coleman
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,27 +32,33 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman */
+/* Author: Dave Coleman 
+   Desc:   This node goes through a series of x and y locations on the workspace table
+           and plans to see if robot can reach each location
+*/
 
 #include <moveit/move_group_interface/move_group.h>
 #include <ros/ros.h>
 #include <clam_block_manipulation/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
-// For recording data
-#include <iostream>
+
+#include <iostream> // For recording data
 #include <fstream>
 
+// Constants
+static const std::string GROUP_NAME = "arm";
+static const std::string DATA_FILE_OUTPUT = "/home/dave/ros/clam/src/clam_moveit_experimental/data/coverage_test.dat";
+
+// Simple test program
 int main(int argc, char **argv)
 {
   // -----------------------------------------------------------------------------------------------
   // Initialize node
-  ros::init(argc, argv, "clam_moveit_experimental_node", ros::init_options::AnonymousName);
+  ros::init(argc, argv, "clam_coverage_test", ros::init_options::AnonymousName);
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-  std::string group_name = argc > 1 ? argv[1] : "arm";
-  ROS_INFO_STREAM("Preparing to send command to group = " << group_name);
-
+  ROS_INFO_STREAM("[coverage test] Preparing to send command to group = " << GROUP_NAME);
 
   // -----------------------------------------------------------------------------------------------
   // Connect to ClamArm action server
@@ -60,21 +66,22 @@ int main(int argc, char **argv)
   clam_block_manipulation::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
 
   while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
-    ROS_INFO("[pick and place] Waiting for the clam_arm action server");
+    ROS_INFO("[coverage test] Waiting for the clam_arm action server");
   }
 
   // -----------------------------------------------------------------------------------------------
   // Go to home position
-  ROS_INFO("[pick and place] Resetting arm to home position");
+  ROS_INFO("[coverage test] Resetting arm to home position");
   clam_arm_goal_.command = "RESET";
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(20.0));
   //while(!clam_arm_client_.getState().isDone() && ros::ok())
   //  ros::Duration(0.1).sleep();
+  // TODO: check if this is working correctly
 
   // -----------------------------------------------------------------------------------------------
   // Open gripper
-  ROS_INFO("[pick and place] Opening gripper");
+  ROS_INFO("[coverage test] Opening gripper");
   clam_arm_goal_.command = "OPEN_GRIPPER";
   clam_arm_client_.sendGoal(clam_arm_goal_);
   while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -82,13 +89,13 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Move arm
-  move_group_interface::MoveGroup group(group_name);
+  move_group_interface::MoveGroup group(GROUP_NAME);
 
   double z = 0.2;
 
   // Save results to file
   std::ofstream data_file;
-  data_file.open("/home/dave/ros/clam/src/clam_moveit_experimental/data/valid_points.dat");
+  data_file.open(DATA_FILE_OUTPUT.c_str());
 
   group.setStartStateToCurrentState();
   //  group.setEndEffectorLink("camera_calibration_link");
@@ -109,7 +116,7 @@ int main(int argc, char **argv)
       //  group.setPositionTarget(0.22222, 0, 0.2);
       group.setPositionTarget(x, y, z);
       group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
-      ROS_INFO_STREAM("Planning for x:" << x << " y:" << y << " z:" << z);
+      ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
       //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
       //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
 
@@ -125,21 +132,20 @@ int main(int argc, char **argv)
 
         // -----------------------------------------------------------------------------------------
         // Execute plan
-        ROS_INFO("Executing...");
+        ROS_INFO("[coverage test] Executing...");
         group.execute(plan);
-
 
         // -----------------------------------------------------------------------------------------
         // Close Gripper
         if( gripperOpen )
         {
-          ROS_INFO("[pick and place] Closing gripper");
+          ROS_INFO("[coverage test] Closing gripper");
           clam_arm_goal_.command = "CLOSE_GRIPPER";
           gripperOpen = false;
         }
         else
         {
-          ROS_INFO("[pick and place] Opening gripper");
+          ROS_INFO("[coverage test] Opening gripper");
           clam_arm_goal_.command = "OPEN_GRIPPER";
           gripperOpen = true;
         }
@@ -150,7 +156,7 @@ int main(int argc, char **argv)
       }
       else
       {
-        ROS_WARN("Failed to find a plan");
+        ROS_WARN("[coverage test] Failed to find a plan");
       }
     }
   }
@@ -160,7 +166,7 @@ int main(int argc, char **argv)
   data_file.close();
 
 
-  ROS_INFO("Node exiting");
+  ROS_INFO("[coverage test] Node exiting");
   return 0;
 }
 

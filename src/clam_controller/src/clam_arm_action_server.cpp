@@ -29,18 +29,22 @@
  */
 
 /*
-  Allows you to reset the arm to its default pose, as well as open and close the gripper
+  Allows you to perform various actions to the clam arm: (see clam_controller::ClamArmAction::command msg)
+   - Reset the arm to its default/home pose
+   - Open and close the end effector
+   - TODO: close end effector with feedback
+   - TODO: shutdown: go to sleep position
 */
 
-#include <clam_block_manipulation/ClamArmAction.h>
+#include <clam_controller/ClamArmAction.h>
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h> // For providing functionality
 #include <actionlib/client/simple_action_client.h> // For calling the joint trajectory action
 #include <dynamixel_hardware_interface/SetVelocity.h> // For changing servo velocities using service call
 #include <control_msgs/FollowJointTrajectoryAction.h> // for sending arm to home position
-#include <std_msgs/Float64.h> // For sending gripper joint position commands
+#include <std_msgs/Float64.h> // For sending end effector joint position commands
 
-namespace clam_block_manipulation
+namespace clam_controller
 {
 
 typedef actionlib::SimpleActionClient< control_msgs::FollowJointTrajectoryAction > TrajClient;
@@ -51,42 +55,44 @@ private:
   ros::NodeHandle nh_;
 
   // Internal action server stuff
-  actionlib::SimpleActionServer<clam_block_manipulation::ClamArmAction> as_;
+  actionlib::SimpleActionServer<clam_controller::ClamArmAction> action_server_;
   std::string action_name_;
-  clam_block_manipulation::ClamArmFeedback     feedback_;
-  clam_block_manipulation::ClamArmResult       result_;
-  clam_block_manipulation::ClamArmGoalConstPtr goal_;
+  clam_controller::ClamArmFeedback     feedback_;
+  clam_controller::ClamArmResult       result_;
+  clam_controller::ClamArmGoalConstPtr goal_;
 
   // External publishers and services
-  ros::Publisher gripper_pub_; // publish joint values to servos
+  ros::Publisher end_effector_pub_; // publish joint values to servos
   ros::Publisher shoulderp_pub_;
-  ros::ServiceClient velocity_client_; // change gripper velocity
+  ros::ServiceClient velocity_client_; // change end_effector velocity
 
-  // Constants that define the limits of the gripper - TODO: move to parameters
-  static const double GRIPPER_OPEN_VALUE = -1.0;
-  static const double GRIPPER_CLOSE_VALUE = -0.5;//-0.1;
+  // Constants that define the limits of the end_effector - TODO: move to parameters
+  static const double END_EFFECTOR_OPEN_VALUE = -1.0;
+  static const double END_EFFECTOR_CLOSE_VALUE = -0.5;//-0.1;
 
   // Action client for the joint trajectory action used to trigger the arm movement action
   TrajClient* trajectory_client_;
 
 public:
   ClamArmServer(const std::string name) :
-    nh_("~"), as_(name, false), action_name_(name)
+    nh_("~"), 
+    action_server_(name, false), 
+    action_name_(name)
   {
 
     // Create publishers for servo positions
-    gripper_pub_ = nh_.advertise< std_msgs::Float64 >("/l_gripper_aft_controller/command", 1, true);
+    end_effector_pub_ = nh_.advertise< std_msgs::Float64 >("/l_end_effector_aft_controller/command", 1, true);
     shoulderp_pub_ = nh_.advertise< std_msgs::Float64 >("/shoulder_pitch_controller/command", 1, true);
 
-    // Set the velocity for the gripper servo
-    ROS_INFO("[clam arm] Setting gripper servo velocity");
+    // Set the velocity for the end effector servo
+    ROS_INFO("[clam arm] Setting end effector servo velocity");
     velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >
       ("/l_gripper_aft_controller/set_velocity");
     dynamixel_hardware_interface::SetVelocity set_velocity_srv;
     set_velocity_srv.request.velocity = double(0.1);
     if( !velocity_client_.call(set_velocity_srv) )
     {
-      ROS_ERROR("[clam arm] Failed to set the gripper servo velocity via service call");
+      ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
     }
 
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
@@ -97,40 +103,41 @@ public:
     }
 
     //register the goal and feeback callbacks
-    as_.registerGoalCallback(boost::bind(&ClamArmServer::goalCB, this));
-    as_.registerPreemptCallback(boost::bind(&ClamArmServer::preemptCB, this));
+    action_server_.registerGoalCallback(boost::bind(&ClamArmServer::goalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&ClamArmServer::preemptCB, this));
 
-    as_.start();
+    action_server_.start();
 
   }
 
   // Recieve Action Goal Function
   void goalCB()
   {
-    goal_ = as_.acceptNewGoal();
+    goal_ = action_server_.acceptNewGoal();
 
-    if( goal_->command == "RESET")
+    switch( goal_->command )
     {
+    case clam_controller::ClamArmAction::RESET:
       ROS_INFO("[clam arm] Received reset arm goal");
       resetArm();
-    }
-    else if( goal_->command == "OPEN_GRIPPER" )
-    {
-      ROS_INFO("[clam arm] Received open gripper goal");
-      openGripper(true);
-    }
-    else if( goal_->command == "CLOSE_GRIPPER" )
-    {
-      ROS_INFO("[clam arm] Received close gripper goal");
-      openGripper(false);
-    }
-    else if( goal_->command == "LOWER" )
-    {
-      ROS_INFO("[clam arm] Received down goal");
-      lowerPose();
-    }
-    else
-    {
+      break;
+    case clam_controller::ClamArmAction::END_EFFECTOR_OPEN:
+      ROS_INFO("[clam arm] Received open end effector goal");
+      openEndEffector(true);
+      break;
+    case clam_controller::ClamArmAction::END_EFFECTOR_CLOSE:
+      ROS_INFO("[clam arm] Received close end effector goal");
+      openEndEffector(false);
+      break;
+    case clam_controller::ClamArmAction::END_EFFECTOR_SET:
+      ROS_ERROR("[clam arm] not implemented");
+
+      break;
+    case clam_controller::ClamArmAction::END_EFFECTOR_SHUTDOWN:
+      ROS_ERROR("[clam arm] not implemented");
+
+      break;
+    default:
       ROS_ERROR_STREAM("Unknown command to clam_arm_action_server: " << goal_->command);
     }
   }
@@ -140,7 +147,7 @@ public:
   {
     ROS_INFO("[%s] Preempted", action_name_.c_str());
     // set the action state to preempted
-    as_.setPreempted();
+    action_server_.setPreempted();
   }
 
   //! Generates a simple trajectory with two waypoints, used as an example
@@ -220,33 +227,33 @@ public:
     }
 
     ROS_INFO("[clam arm] Finished resetting arm action");
-    as_.setSucceeded(result_);
+    action_server_.setSucceeded(result_);
   }
 
-  // Open or close gripper
-  void openGripper( bool open )
+  // Open or close end effector
+  void openEndEffector( bool open )
   {
     // Publish command to servos
     std_msgs::Float64 joint_value;
     if(open)
     {
-      joint_value.data = GRIPPER_OPEN_VALUE;
+      joint_value.data = END_EFFECTOR_OPEN_VALUE;
     }
     else
     {
-      joint_value.data = GRIPPER_CLOSE_VALUE;
+      joint_value.data = END_EFFECTOR_CLOSE_VALUE;
     }
-    gripper_pub_.publish(joint_value);
+    end_effector_pub_.publish(joint_value);
 
     // Just a guess on how long to wait
     ros::Duration(4).sleep();
 
     // Assume it works TODO don't assume?
-    ROS_INFO("[clam arm] Finished gripper action");
-    as_.setSucceeded(result_);
+    ROS_INFO("[clam arm] Finished end effector action");
+    action_server_.setSucceeded(result_);
   }
 
-  // Lower down the gripper to pickup object
+  // Lower down the end_effector to pickup object
   void lowerPose()
   {
     // Publish command to servos
@@ -259,7 +266,7 @@ public:
 
     // Assume it works TODO don't assume?
     ROS_INFO("[clam arm] Finished lower action");
-    as_.setSucceeded(result_);
+    action_server_.setSucceeded(result_);
   }
 };
 
@@ -270,7 +277,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "clam_arm_action_server");
 
-  clam_block_manipulation::ClamArmServer server("clam_arm");
+  clam_controller::ClamArmServer server("clam_arm");
   ros::spin();
 
   return 0;

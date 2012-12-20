@@ -1,29 +1,29 @@
 # Generate IKFast module
 
-roscd clam_description/urdf
+roscd clam_description/urdf_ikfast
 
 # Convert xacro to urdf
-rosrun xacro xacro.py clam_nolimits.xacro > clam_nolimits.urdf;
+rosrun xacro xacro.py clam.xacro > clam.urdf;
 
 # Create dae file
-rosrun collada_urdf urdf_to_collada clam_nolimits.urdf clam_nolimits.dae
+rosrun collada_urdf urdf_to_collada clam.urdf clam.dae
 
-read -p "Press any key to launch openrave";
+read -p "Press any key to see link info";
 
 # View list of links in model:
-/usr/bin/openrave-robot.py clam_nolimits.dae --info links
+/usr/bin/openrave-robot.py clam.dae --info links
 
 # Launch openrave
 read -p "Press any key to launch openrave";
-openrave clam_nolimits.dae
-read -p "Press any key to launch openrave";
+openrave clam.dae
+read -p "Press any key to continue";
 
 # Run this script from within clam_ik/scripts
 roscd clam_ik/src
 
 # Now create IK. Make sure urdf/dae file location path is correct
 #python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/clam_description/urdf/clam.dae --iktype=transform6d --baselink=0 --eelink=6 --savefile=output_ikfast61.cpp #--freeindex=2
-python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/clam_description/urdf/clam.dae --iktype=transform6d --baselink=0 --eelink=7 --savefile=output_ikfast61.cpp --freeindex=2
+python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/clam_description/urdf_ikfast/clam.dae --iktype=transform6d --baselink=0 --eelink=7 --savefile=output_ikfast61.cpp --freeindex=2
 
 # Compile test program. I had to add the -I part myself, is system dependent probably
 g++ -lstdc++ -llapack -o ../bin/test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/
@@ -58,22 +58,22 @@ g++ -lstdc++ -llapack -o ../bin/test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/pyth
 read -p "Press any key to continue";
 
 # Create plugin for arm_navigation
-mkdir ~/ros/clam/clam_arm_navigation/src
-mkdir ~/ros/clam/clam_arm_navigation/include
-cp output_ikfast61.cpp ~/ros/clam/clam_arm_navigation/src/clam_clam_arm_ikfast_solver.cpp #<robot_name>_<group_name>_ikfast_solver.cpp
+#mkdir ~/ros/clam/clam_arm_navigation/src
+#mkdir ~/ros/clam/clam_arm_navigation/include
+#cp output_ikfast61.cpp ~/ros/clam/clam_arm_navigation/src/clam_clam_arm_ikfast_solver.cpp #<robot_name>_<group_name>_ikfast_solver.cpp
 
 # Make sure arm_kinematics_tools package is installed
 #roscd
 #svn co http://kaist-ros-pkg.googlecode.com/svn/trunk/arm_kinematics_tools/ arm_kinematics_tools
 
 # ikfast.h unfound??
-cp /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.h ~/ros/clam/clam_arm_navigation/include/
+#cp /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.h ~/ros/clam/clam_arm_navigation/include/
 
 # Create plugin
-rosrun arm_kinematics_tools create_ikfast_plugin.py clam
+#rosrun arm_kinematics_tools create_ikfast_plugin.py clam
 
 # Rebuild pkg
-rosmake clam_arm_navigation
+#rosmake clam_arm_navigation
 
 # Patch arm_kinematics_constraint_aware plugin
 #cd /opt/ros/fuerte/stacks/arm_navigation/

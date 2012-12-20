@@ -53,7 +53,7 @@ http://www.ros.org/wiki/xacro
     <child link="shoulder_pan_link"/>
     <origin xyz="0 0 0.05" rpy="0 ${M_PI/2} ${M_PI*0}" />
     <axis xyz="-1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="1.98394848567"/>
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -80,7 +80,7 @@ http://www.ros.org/wiki/xacro
     <child link="shoulder_pitch_link"/>
     <origin xyz="-0.041 0.0021 0.0" rpy="-${M_PI/2} 0 ${M_PI/2}" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-1.19962513147" upper="1.89994105047" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -107,7 +107,7 @@ http://www.ros.org/wiki/xacro
     <child link="elbow_roll_link"/>
     <origin xyz="-0.002 0 0.1206" rpy="${M_PI} ${M_PI/2} 0" />
     <axis xyz="-1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="0.705631162427" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -134,7 +134,7 @@ http://www.ros.org/wiki/xacro
     <child link="elbow_pitch_link"/>
     <origin xyz="-0.035 0 0.0" rpy="0.055 ${M_PI/2} 0" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-1.5953400194" upper="1.93281579274" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -162,7 +162,7 @@ http://www.ros.org/wiki/xacro
     <child link="wrist_roll_link"/>
     <origin xyz="0.0 0.0081 -.248" rpy="0 ${M_PI/2} ${M_PI}" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="2.6128806087" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -190,7 +190,7 @@ http://www.ros.org/wiki/xacro
     <child link="wrist_pitch_link"/>
     <origin xyz="0.0 0.0 0.0001" rpy="0 ${M_PI/2} 0" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-1.5953400194" upper="1.98394848567" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -217,7 +217,7 @@ http://www.ros.org/wiki/xacro
     <child link="gripper_roll_link"/>
     <origin xyz="0 0 0.080" rpy="${1.5*M_PI} -${.5*M_PI} 0" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="2.6128806087" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -237,7 +237,7 @@ http://www.ros.org/wiki/xacro
     <child link="l_gripper_aft_link"/>
     <origin xyz="0.026 .017 0" rpy="${1.04*M_PI} ${M_PI/2} ${34.58*M_PI/180}" />
     <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14"/>
+    <limit effort="300" velocity="1" lower="${0*M_PI/180}" upper="${-53*M_PI/180}" />
     <dynamics damping="50" friction="1"/>
   </joint>
 
@@ -251,163 +251,5 @@ http://www.ros.org/wiki/xacro
       <material name="Grey" />
     </visual>
   </link>  
-
-  <joint name="r_gripper_aft_link_joint" type="revolute">
-    <parent link="gripper_roll_link"/>
-    <child link="r_gripper_aft_link"/>
-    <origin xyz="0.026 -0.011  0" rpy="${1.345*M_PI} ${M_PI/2} ${34.58*M_PI/180}" />
-    <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14" />
-    <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0.0" />
-    <dynamics damping="50" friction="1"/>
-  </joint>
-
-  <!-- RIGHT GRIPPER AFT LINK -->
-  <link name="r_gripper_aft_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />  
-      <geometry>
-	<mesh filename="package://clam_description/stl/r_gripper_aft_link.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Grey" />
-    </visual>
-  </link>
-
-  <joint name="l_gripper_fwd_link_joint" type="revolute">
-    <parent link="gripper_roll_link"/>
-    <child link="l_gripper_fwd_link"/>
-    <origin xyz="0.05 0.008 0.007" rpy="${M_PI*(1+.04)} ${M_PI/2} ${214.58*M_PI/180}" />
-    <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14" />
-    <mimic joint="l_gripper_aft_joint" multiplier="1.0" offset="0" />
-    <dynamics damping="50" friction="1"/>
-  </joint>
-
-  <!-- LEFT GRIPPER FWD LINK -->
-  <link name="l_gripper_fwd_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />  
-      <geometry>
-	<mesh filename="package://clam_description/stl/l_gripper_fwd_link.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Grey" />
-    </visual>
-  </link>  
-
-  <joint name="r_gripper_fwd_link_joint" type="revolute">
-    <parent link="gripper_roll_link"/>
-    <child link="r_gripper_fwd_link"/>
-    <origin xyz="0.05 -0.0014 0.007" rpy="${M_PI*(1-.04)} ${M_PI/2} ${145.42*M_PI/180}" />
-    <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14" />
-    <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0" />
-    <dynamics damping="50" friction="1"/>
-  </joint>
-
-  <!-- RIGHT GRIPPER FWD LINK -->
-  <link name="r_gripper_fwd_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />  
-      <geometry>
-	<mesh filename="package://clam_description/stl/r_gripper_fwd_link.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Grey" />
-    </visual>
-  </link>
-
-  <joint name="l_gripper_aft_pincher_joint" type="continuous">
-    <parent link="l_gripper_aft_link"/>
-    <child link="l_gripper_pincher"/>
-    <origin xyz="-0.0032 0 -0.0508" rpy="${203.27*M_PI/180-.3150*M_PI} 0 0" />
-    <axis xyz="1 0 0" />
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14" />
-    <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0" />
-    <dynamics damping="50" friction="1"/>
-  </joint>
-
-  <!-- LEFT GRIPPER PINCHER -->
-  <link name="l_gripper_pincher">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
-      <geometry>
-	<mesh filename="package://clam_description/stl/l_gripper_pincher.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Black" />
-    </visual>
-  </link>
-
-  <joint name="r_gripper_aft_pincher_joint" type="revolute">
-    <parent link="r_gripper_aft_link"/>
-    <child link="r_gripper_pincher"/>
-    <origin xyz="0 0 -0.0508" rpy="${23.27*M_PI/180-.3150*M_PI} ${M_PI} 0" />
-    <axis xyz="1 0 0" />
-
-    <limit effort="300" velocity="1" lower="-3.14" upper="3.14" />
-    <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0" />
-    <dynamics damping="50" friction="1"/>
-  </joint>
-
-  <!-- RIGHT GRIPPER PINCHER -->
-  <link name="r_gripper_pincher">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 ${M_PI}" />
-      <geometry>
-	<mesh filename="package://clam_description/stl/r_gripper_pincher.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Black" />
-    </visual>
-  </link>
-
-  <!-- TABLETOP MODEL -->
-  <!--joint name="tabletop_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="base_link"/>
-    <child link="tabletop_link"/>
-  </joint>
-
-  <link name="tabletop_link">
-    <visual>
-      <origin rpy="${.5*M_PI} 0 ${.5*M_PI}" xyz=" 0 0 -0.017"/>
-      <geometry>
-	<mesh filename="package://clam_description/stl/tabletop.STL" scale="1 1 1" />
-      </geometry>
-      <material name="Brown" />
-    </visual>
-  </link-->
-
-  <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP  -->
-  <joint name="gripper_link_joint" type="fixed">
-    <!--origin xyz="0.012 -0.11 0.020" rpy="0 0 0" /-->
-    <origin xyz="0.1795 0 0" rpy="0 0 0" />
-    <parent link="gripper_roll_link"/>
-    <child link="gripper_link" />
-  </joint>
-
-  <link name="gripper_link" >
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-	<sphere radius=".001"/>
-      </geometry>
-    </visual>
-  </link>
-
-  <!-- KINECT LINK - Not Needed! -->
-<!--
-  <joint name="base_kinect_joint" type="fixed">
-    <origin xyz="0.769541 -0.0539292 0.836631" rpy="0 0 0" />
-    <parent link="base_link"/>
-    <child link="camera_link"/>
-  </joint>
-
-  <link name="camera_link">
-    <visual>
-      <origin rpy="0 0 0" xyz=" 0 0 0 "/>
-      <geometry>
-	<sphere radius=".005"/>
-      </geometry>
-    </visual>
-  </link>
--->
 
 </robot>

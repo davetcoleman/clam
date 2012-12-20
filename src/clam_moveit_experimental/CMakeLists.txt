@@ -56,14 +56,13 @@ link_directories(${catkin_LIBRARY_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(clam_moveit_experimental_node src/clam_moveit_experimental_node.cpp)
-
+add_executable(coverage_test src/coverage_test.cpp)
 
 ## Add dependencies to the executable
-add_dependencies(clam_moveit_experimental_node ${catkin_LIBRARIES})
+add_dependencies(coverage_test ${catkin_LIBRARIES})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(clam_moveit_experimental_node ${catkin_LIBRARIES})
+target_link_libraries(coverage_test ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -5,25 +5,50 @@ project(clam_controller)
 find_package(catkin REQUIRED COMPONENTS 
   roscpp 
   rospy 
+  std_msgs
+  actionlib 
   dynamixel_hardware_interface 
   std_msgs 
-  sensor_msgs)
-include_directories(${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
+  sensor_msgs
+)
+
+## Declare ROS messages and services
+add_action_files(DIRECTORY action FILES
+  ClamArmAction
+)
+
+generate_messages(DEPENDENCIES
+  std_msgs
+  actionlib_msgs
+)
 
 # Declare a catkin package
 catkin_package(
   CATKIN_DEPENDS 
-    rospy 
     roscpp 
+    rospy 
+    std_msgs
+    actionlib 
     dynamixel_hardware_interface 
     std_msgs 
     sensor_msgs
 #  INCLUDE_DIRS include
+#  LIBRARIES ${PROJECT_NAME}
 )
+
+## Build 
+include_directories(
+  include 
+  ${catkin_INCLUDE_DIRS}
+)
+link_directories(${catkin_LIBRARY_DIRS})
 
 #include_directories(${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 
 add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
 target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
+
+add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
+target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
+
