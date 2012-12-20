@@ -83,8 +83,8 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Open gripper
-  ROS_INFO("[coverage test] Opening gripper");
-  clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+  ROS_INFO("[coverage test] Closeing gripper");
+  clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
   if( !clam_arm_client_.getState().isDone() ||
       !clam_arm_client_.getResult()->success )
   {
-    ROS_ERROR("[coverage test] Timeout: Unable to open end effector");
+    ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
     return 2;
   }
 
@@ -100,13 +100,14 @@ int main(int argc, char **argv)
   // Move arm
   move_group_interface::MoveGroup group(GROUP_NAME);
 
-  double z = 0.01;
+  double z = 0.1;
 
   // Save results to file
   std::ofstream data_file;
   data_file.open(DATA_FILE_OUTPUT.c_str());
 
   group.setStartStateToCurrentState();
+  group.setEndEffectorLink("gripper_fake_tip_link");
   //  group.setEndEffectorLink("camera_calibration_link");
   //group.setEndEffectorLink("l_gripper_aft_link");
 
@@ -144,23 +145,39 @@ int main(int argc, char **argv)
         ROS_INFO("[coverage test] Executing...");
         group.execute(plan);
 
+        /*
         // -----------------------------------------------------------------------------------------
         // Close Gripper
         if( gripperOpen )
         {
-          ROS_INFO("[coverage test] Closing gripper");
-          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
-          gripperOpen = false;
+        ROS_INFO("[coverage test] Closing gripper");
+        clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+        gripperOpen = false;
         }
         else
         {
-          ROS_INFO("[coverage test] Opening gripper");
-          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
-          gripperOpen = true;
+        ROS_INFO("[coverage test] Opening gripper");
+        clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+        gripperOpen = true;
         }
         clam_arm_client_.sendGoal(clam_arm_goal_);
         while(!clam_arm_client_.getState().isDone() && ros::ok())
-          ros::Duration(0.1).sleep();
+        ros::Duration(0.1).sleep();
+        */
+
+        ros::Duration(1.0).sleep();
+
+        // -----------------------------------------------------------------------------------------------
+        // Go to home position
+        ROS_WARN("[coverage test] Resetting arm to home position");
+        clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+        clam_arm_client_.sendGoal(clam_arm_goal_);
+        clam_arm_client_.waitForResult(ros::Duration(20.0));
+        if(!clam_arm_client_.getState().isDone())
+        {
+          ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
+          return 2;
+        }
 
       }
       else
