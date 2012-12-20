@@ -17,3 +17,6 @@ devel/
 
 # Python stuff
 *.pyc
+
+# Data files
+*.dat

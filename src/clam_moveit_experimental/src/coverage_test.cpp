@@ -100,7 +100,7 @@ int main(int argc, char **argv)
   // Move arm
   move_group_interface::MoveGroup group(GROUP_NAME);
 
-  double z = 0.2;
+  double z = 0.01;
 
   // Save results to file
   std::ofstream data_file;
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
       //group.setStartState( start_state );
       //  group.setPositionTarget(0.22222, 0, 0.2);
       group.setPositionTarget(x, y, z);
-      group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+      //group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
       ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
       //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
       //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
