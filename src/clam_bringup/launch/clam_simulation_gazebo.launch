@@ -1,0 +1,12 @@
+<launch>
+  
+  <!-- run gazebo -->
+  <include file="$(find gazebo_worlds)/launch/empty_world.launch" />
+
+  <!-- send table urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find clam_description)/urdf/clam.xacro" />
+
+  <!-- push table_description to factory and spawn robot in gazebo -->
+  <node name="spawn_clam_arm" pkg="gazebo" type="spawn_model" args="-urdf -param robot_description -x 0.0 -y 0.0 -z 0.0 -model clam" respawn="false" output="screen" />
+</launch>
+
