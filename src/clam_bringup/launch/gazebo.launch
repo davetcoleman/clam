@@ -1,0 +1,18 @@
+<launch>
+
+  <!-- run gazebo -->  <!--args="$(find gazebo_worlds)/worlds/empty.world" -->
+  <node name="gazebo" pkg="gazebo" type="gazebo" args="$(find clam_description)/gazebo/clam.world" 
+	respawn="false" output="screen"/>
+
+  <!-- start gui -->
+  <node name="gazebo_gui" pkg="gazebo" type="gui" respawn="false" output="screen"/>
+
+  <!-- send ClamArm urdf to param server -->
+  <!--param name="gazebo_robot_description" command="cat /home/dave/ros/gazebo/gazebo_models/clam_arm/clam.sdf" /-->
+
+  <!-- push robot_description to factory and spawn robot in gazebo -->
+  <!--node name="spawn_clam_arm" pkg="gazebo" type="spawn_model" 
+	args="-gazebo -file /home/dave/ros/gazebo/gazebo_models/clam_arm/clam.sdf -model clam" 
+	respawn="false" output="screen" /-->
+</launch>
+

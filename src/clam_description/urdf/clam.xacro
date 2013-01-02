@@ -31,49 +31,49 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   <property name="M_SCALE" value="0.001 0.001 0.001"/>
   <property name="M_PI" value="3.14159"/>
 
-  <!-- Add a Gazebo plugin controller -->
-  <gazebo>
-    <controller:gazebo_ros_actuator_array
-        name="actuator_array_controller"
-        plugin="libgazebo_ros_actuator_array.so">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>50.0</updateRate>
-      <robotParam>robot_description</robotParam>
-      <joint>
-        <name>joint1</name>
-        <home>0.0</home>
-        <p>10.0</p>
-        <i>0.0</i>
-        <d>0.0</d>
-        <iClamp>0.0</iClamp>
-      </joint>
-      <joint>
-        <name>joint2</name>
-        <home>2.094395102</home>
-        <p>10.0</p>
-        <i>0.0</i>
-        <d>0.0</d>
-        <iClamp>0.0</iClamp>
-      </joint>
-      <joint>
-        <name>joint3</name>
-        <home>1.483529864</home>
-        <p>10.0</p>
-        <i>0.0</i>
-        <d>0.0</d>
-        <iClamp>0.0</iClamp>
-      </joint>
-      <joint>
-        <name>joint4</name>
-        <home>0.0</home>
-        <p>10.0</p>
-        <i>0.0</i>
-        <d>0.0</d>
-        <iClamp>0.0</iClamp>
-      </joint>
-    </controller:gazebo_ros_actuator_array>
-  </gazebo>
-
+  <!-- Add a Gazebo plugin controller
+       <gazebo>
+       <controller:gazebo_ros_actuator_array
+       name="actuator_array_controller"
+       plugin="libgazebo_ros_actuator_array.so">
+       <alwaysOn>true</alwaysOn>
+       <updateRate>50.0</updateRate>
+       <robotParam>robot_description</robotParam>
+       <joint>
+       <name>joint1</name>
+       <home>0.0</home>
+       <p>10.0</p>
+       <i>0.0</i>
+       <d>0.0</d>
+       <iClamp>0.0</iClamp>
+       </joint>
+       <joint>
+       <name>joint2</name>
+       <home>2.094395102</home>
+       <p>10.0</p>
+       <i>0.0</i>
+       <d>0.0</d>
+       <iClamp>0.0</iClamp>
+       </joint>
+       <joint>
+       <name>joint3</name>
+       <home>1.483529864</home>
+       <p>10.0</p>
+       <i>0.0</i>
+       <d>0.0</d>
+       <iClamp>0.0</iClamp>
+       </joint>
+       <joint>
+       <name>joint4</name>
+       <home>0.0</home>
+       <p>10.0</p>
+       <i>0.0</i>
+       <d>0.0</d>
+       <iClamp>0.0</iClamp>
+       </joint>
+       </controller:gazebo_ros_actuator_array>
+       </gazebo>
+  -->
   <!-- TABLETOP LINK -->
   <joint name="tabletop_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
@@ -107,7 +107,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="tabletop_link">
-    <material>Gazebo/WoodFloor</material>
+    <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
 
