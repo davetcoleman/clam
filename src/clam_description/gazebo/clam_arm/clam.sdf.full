@@ -1,241 +1,18 @@
 <?xml version="1.0" ?>
-<!-- Simulation Description Format of CLAM arm
-Dave Coleman - davetcoleman@gmail.com
-1/2/2013
-
-Documentation:
-
-SDF
-http://gazebosim.org/sdf/1.3.html
-
--->
 
 <sdf version="1.3">
   <model name="clam">
 
-    <!-- TABLETOP LINK -->
-    <joint name="tabletop_joint" type="fixed">
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <parent link="base_link"/>
-      <child link="tabletop_link"/>
-    </joint>
-
-    <link name="tabletop_link">
-
-      <inertial>
-        <pose>1.570795 0 1.570795 0 0 -0.017</pose>
-        <inertia>
-          <ixx>1.11</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>100.11</iyy>
-          <iyz>0</iyz>
-          <izz>1.01</izz>
-        </inertia>
-        <mass>101.0</mass>
-      </inertial>
-
-      <visual>
-        <pose>1.570795 0 1.570795 0 0 -0.017</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/tabletop.STL" scale="1 1 1"/>
-        </geometry>
-        <material>
-          <script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Blue</name></script>
-        </material>
-      </visual>
-
-      <visual>
-        <pose>1.570795 0 0 0 0 0</pose>
-        <!-- rotate PI/2 -->
-        <geometry>
-          <mesh filename="package://clam_description/stl/base_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Grey"/>
-      </visual>
-
-      <collision>
-        <pose>1.570795 0 1.570795 0 0 -0.017</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/tabletop.STL" scale="1 1 1"/>
-        </geometry>
-      </collision>
-    </link>
-
-<!-- I stopped here because this is too much work -->
 
 
-    <!-- BASE LINK -->
-    <link name="base_link">
-      <inertial>
-        <origin xyz="0 0 0"/>
-        <mass value="1.0"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <visual>
-        <pose>1.570795 0 0 0 0 0</pose>
-        <!-- rotate PI/2 -->
-        <geometry>
-          <mesh filename="package://clam_description/stl/base_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Grey"/>
-      </visual>
-      <collision>
-        <pose>1.570795 0 0 0 0 0</pose>
-        <!-- rotate PI/2 -->
-        <geometry>
-          <mesh filename="package://clam_description/stl/base_link_simple.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-      </collision>
-    </link>
-    <gazebo reference="base_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
-    <joint name="shoulder_pan_joint" type="revolute">
-      <parent link="base_link"/>
-      <child link="shoulder_pan_link"/>
-      <pose>0 1.570795 0.00 0 0.05</pose>
-      <axis xyz="-1 0 0"/>
-      <limit effort="300" lower="-2.61799387799" upper="1.98394848567" velocity="1"/>
-      <dynamics damping="50" friction="1"/>
-    </joint>
-    <transmission name="shoulder_pan_controller" type="pr2_mechanism_model/SimpleTransmission">
-      <actuator name="shoulder_pan_actuator"/>
-      <joint name="shoulder_pan_joint"/>
-      <mechanicalReduction>1</mechanicalReduction>
-      <motorTorqueConstant>1</motorTorqueConstant>
-    </transmission>
-    <!-- SHOULDER PAN LINK -->
-    <link name="shoulder_pan_link">
-      <inertial>
-        <origin xyz="0 0 0"/>
-        <mass value="1.0"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <visual>
-        <pose>0 0 1.570795 0 0 0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/shoulder_pan_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Orange"/>
-      </visual>
-      <collision>
-        <pose>0 0 1.570795 0 0 0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/shoulder_pan_link_simple.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-      </collision>
-    </link>
-    <gazebo reference="shoulder_pan_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
-    <joint name="shoulder_pitch_joint" type="revolute">
-      <parent link="shoulder_pan_link"/>
-      <child link="shoulder_pitch_link"/>
-      <pose>-1.570795 0 1.570795 -0.041 0.0021 0.0</pose>
-      <axis xyz="1 0 0"/>
-      <limit effort="300" lower="-1.19962513147" upper="1.89994105047" velocity="1"/>
-      <dynamics damping="50" friction="1"/>
-    </joint>
-    <!-- SHOULDER PITCH LINK -->
-    <link name="shoulder_pitch_link">
-      <inertial>
-        <origin xyz="-0.002 0 -0.000"/>
-        <mass value="1.0"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <visual>
-        <pose>1.570795 3.14159 1.570795 -0.002 0 -0.000</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/shoulder_pitch_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Grey"/>
-      </visual>
-      <collision>
-        <pose>1.570795 3.14159 1.570795 -0.002 0 -0.000</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/shoulder_pitch_link_simple.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-      </collision>
-    </link>
-    <gazebo reference="shoulder_pitch_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
-    <joint name="elbow_roll_joint" type="revolute">
-      <parent link="shoulder_pitch_link"/>
-      <child link="elbow_roll_link"/>
-      <pose>3.14159 1.570795 0 -0.002 0 0.1206</pose>
-      <axis xyz="-1 0 0"/>
-      <limit effort="300" lower="-2.61799387799" upper="0.705631162427" velocity="1"/>
-      <dynamics damping="50" friction="1"/>
-    </joint>
-    <!-- ELBOW ROLL LINK -->
-    <link name="elbow_roll_link">
-      <inertial>
-        <origin xyz="-0.035 0.0 0.0"/>
-        <mass value="1.0"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <visual>
-        <pose>3.14159 1.570795 1.570795 -0.035 0.0 0.0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/elbow_roll_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Black"/>
-      </visual>
-      <collision>
-        <pose>3.14159 1.570795 1.570795 -0.035 0.0 0.0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/elbow_roll_link_simple.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-      </collision>
-    </link>
-    <gazebo reference="elbow_roll_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
-    <joint name="elbow_pitch_joint" type="revolute">
-      <parent link="elbow_roll_link"/>
-      <child link="elbow_pitch_link"/>
-      <pose>0.055 1.570795 0 -0.035 0 0.0</pose>
-      <axis xyz="1 0 0"/>
-      <limit effort="300" lower="-1.5953400194" upper="1.93281579274" velocity="1"/>
-      <dynamics damping="50" friction="1"/>
-    </joint>
-    <!-- ELBOW PITCH LINK -->
-    <link name="elbow_pitch_link">
-      <inertial>
-        <origin xyz="0.0 0 0"/>
-        <mass value="1.0"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <visual>
-        <pose>1.570795 0 4.712385 0.0 0 0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/elbow_pitch_link.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="Orange"/>
-      </visual>
-      <collision>
-        <pose>1.570795 0 4.712385 0.0 0 0</pose>
-        <geometry>
-          <mesh filename="package://clam_description/stl/elbow_pitch_link_simple.STL" scale="0.001 0.001 0.001"/>
-        </geometry>
-      </collision>
-    </link>
-    <gazebo reference="elbow_pitch_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
+
+
     <joint name="wrist_roll_joint" type="revolute">
       <parent link="elbow_pitch_link"/>
       <child link="wrist_roll_link"/>
-      <pose>0 1.570795 3.14159 0.0 0.0081 -.248</pose>
+      <pose> 0.0 0.0081 -.248 0 1.570795 3.14159</pose>
       <axis xyz="1 0 0"/>
-      <limit effort="300" lower="-2.61799387799" upper="2.6128806087" velocity="1"/>
+      <limit effort="300" lower="" upper="2.6128806087" velocity="1"/>
       <dynamics damping="50" friction="1"/>
     </joint>
     <!-- WRIST ROLL LINK -->
@@ -246,27 +23,35 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 1.570795 1.570795 0 0 0</pose>
+        <pose> 0 0 0 0 1.570795 1.570795</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/wrist_roll_link.STL" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="Black"/>
       </visual>
       <collision>
-        <pose>0 1.570795 1.570795 0 0 0</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/wrist_roll_link_simple.STL" scale="0.001 0.001 0.001"/>
         </geometry>
       </collision>
     </link>
-    <gazebo reference="wrist_roll_link">
-      <material>Gazebo/Blue</material>
-      <turnGravityOff>false</turnGravityOff>
-    </gazebo>
+
+
+
+
+
+
+
+
+
+
+
+
+    
     <joint name="wrist_pitch_joint" type="revolute">
       <parent link="wrist_roll_link"/>
       <child link="wrist_pitch_link"/>
-      <pose>0 1.570795 0 0.0 0.0 0.0001</pose>
+      <pose> 0.0 0.0 0.0001 0 1.570795 0</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-1.5953400194" upper="1.98394848567" velocity="1"/>
       <dynamics damping="50" friction="1"/>
@@ -279,14 +64,13 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>3.14159 -1.570795 0 0 0 0</pose>
+        <pose> 0 0 0 3.14159 -1.570795 0</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/wrist_pitch_link.STL" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="Grey"/>
       </visual>
       <collision>
-        <pose>3.14159 -1.570795 0 0 0 0</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/wrist_pitch_link_simple.STL" scale="0.001 0.001 0.001"/>
         </geometry>
@@ -299,7 +83,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="gripper_roll_joint" type="revolute">
       <parent link="wrist_pitch_link"/>
       <child link="gripper_roll_link"/>
-      <pose>4.712385 -1.570795 0 0 0 0.080</pose>
+      <pose> 0 0 0.080 4.712385 -1.570795 0</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-2.61799387799" upper="2.6128806087" velocity="1"/>
       <dynamics damping="50" friction="1"/>
@@ -326,7 +110,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="l_gripper_aft_joint" type="revolute">
       <parent link="gripper_roll_link"/>
       <child link="l_gripper_aft_link"/>
-      <pose>3.2672536 1.570795 0.603534345556 0.026 .017 0</pose>
+      <pose> 0.026 .017 0 3.2672536 1.570795 0.603534345556</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-0.925023722222" upper="0.0" velocity="1"/>
       <dynamics damping="50" friction="1"/>
@@ -339,7 +123,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/l_gripper_aft_link.STL" scale="1 1 1"/>
         </geometry>
@@ -353,7 +137,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="r_gripper_aft_joint" type="revolute">
       <parent link="gripper_roll_link"/>
       <child link="r_gripper_aft_link"/>
-      <pose>4.22543855 1.570795 0.603534345556 0.026 -0.011  0</pose>
+      <pose> 0.026 -0.011  0 4.22543855 1.570795 0.603534345556</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
       <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0.0"/>
@@ -367,7 +151,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/r_gripper_aft_link.STL" scale="1 1 1"/>
         </geometry>
@@ -381,7 +165,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="l_gripper_fwd_joint" type="revolute">
       <parent link="gripper_roll_link"/>
       <child link="l_gripper_fwd_link"/>
-      <pose>3.2672536 1.570795 3.74512434556 0.05 0.008 0.007</pose>
+      <pose> 0.05 0.008 0.007 3.2672536 1.570795 3.74512434556</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="0" upper="1.57" velocity="1"/>
       <mimic joint="l_gripper_aft_joint" multiplier="1.0" offset="0"/>
@@ -395,7 +179,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/l_gripper_fwd_link.STL" scale="1 1 1"/>
         </geometry>
@@ -409,7 +193,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="r_gripper_fwd_joint" type="revolute">
       <parent link="gripper_roll_link"/>
       <child link="r_gripper_fwd_link"/>
-      <pose>3.0159264 1.570795 2.53805565444 0.05 -0.0014 0.007</pose>
+      <pose> 0.05 -0.0014 0.007 3.0159264 1.570795 2.53805565444</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-1.57" upper="0" velocity="1"/>
       <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0"/>
@@ -423,7 +207,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/r_gripper_fwd_link.STL" scale="1 1 1"/>
         </geometry>
@@ -437,7 +221,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="l_gripper_aft_pincher_joint" type="continuous">
       <parent link="l_gripper_aft_link"/>
       <child link="l_gripper_pincher_link"/>
-      <pose>2.55812692389 0 0 -0.0032 0 -0.0508</pose>
+      <pose> -0.0032 0 -0.0508 2.55812692389 0 0</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="-1.57" upper="1.57" velocity="1"/>
       <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0"/>
@@ -451,7 +235,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/l_gripper_pincher.STL" scale="1 1 1"/>
         </geometry>
@@ -465,7 +249,7 @@ http://gazebosim.org/sdf/1.3.html
     <joint name="r_gripper_aft_pincher_joint" type="revolute">
       <parent link="r_gripper_aft_link"/>
       <child link="r_gripper_pincher_link"/>
-      <pose>-0.583463076111 3.14159 0 0 0 -0.0508</pose>
+      <pose> 0 0 -0.0508 -0.583463076111 3.14159 0</pose>
       <axis xyz="1 0 0"/>
       <limit effort="300" lower="0" upper="1.57" velocity="1"/>
       <mimic joint="l_gripper_aft_joint" multiplier="-1.0" offset="0"/>
@@ -479,7 +263,7 @@ http://gazebosim.org/sdf/1.3.html
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
       </inertial>
       <visual>
-        <pose>0 0 3.14159 0 0 0</pose>
+        <pose> 0 0 0 0 0 3.14159</pose>
         <geometry>
           <mesh filename="package://clam_description/stl/r_gripper_pincher.STL" scale="1 1 1"/>
         </geometry>
@@ -492,7 +276,7 @@ http://gazebosim.org/sdf/1.3.html
     </gazebo>
     <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP -->
     <joint name="gripper_fake_tip_joint" type="fixed">
-      <pose>0 0 0 0.1795 0.002 0</pose>
+      <pose> 0.1795 0.002 0 0 0 0</pose>
       <parent link="gripper_roll_link"/>
       <child link="gripper_fake_tip_link"/>
     </joint>

@@ -1,0 +1,2 @@
+add something like this to your bashrc or whatever:
+export GAZEBO_MODEL_PATH=/home/dave/ros/clam/src/clam_description/gazebo
