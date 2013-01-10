@@ -63,7 +63,7 @@ JointTrajectoryActionController::~JointTrajectoryActionController()
 {
 }
 
-bool JointTrajectoryActionController::initialize(std::string name, std::vector<SingleJointController*> deps)
+bool JointTrajectoryActionController::initialize(std::string name, std::vector<boost::shared_ptr<controller::SingleJointController> > deps)
 {
   // Load the multi joint controller that this class inherits from. This loads the list of joint_names_
   if (!MultiJointController::initialize(name, deps))

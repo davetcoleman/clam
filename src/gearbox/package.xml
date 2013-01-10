@@ -16,6 +16,8 @@
   <license>BSD</license>
   <url type="website">http://ros.org/wiki/gearbox</url>
 
+  <buildtool_depend>catkin</buildtool_depend>
+
   <export>
     <cpp cflags="-I${prefix}/gearbox/include" lflags="-L${prefix}/gearbox/lib64/gearbox -Wl,-rpath,${prefix}/gearbox/lib64/gearbox -lflexiport -L${prefix}/gearbox/lib -Wl,-rpath,${prefix}/gearbox/lib"/>
   </export>

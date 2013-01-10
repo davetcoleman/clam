@@ -127,11 +127,11 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </gazebo>
   <!-- BASE LINK -->
   <link name="base_link">
-    <inertial>
+    <!--inertial>
       <origin xyz="0 0 0"/>
       <mass value="1.0"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-    </inertial>
+    </inertial-->
     <visual>
       <origin rpy="1.570795 0 0" xyz="0 0 0"/>
       <!-- rotate PI/2 -->

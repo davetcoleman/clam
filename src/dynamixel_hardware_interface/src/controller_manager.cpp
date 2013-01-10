@@ -167,19 +167,21 @@ ControllerManager::~ControllerManager()
     delete diagnostics_thread_;
   }
 
-  std::map<std::string, dynamixel_hardware_interface::SerialProxy*>::iterator sp_it;
+  /*
+    std::map<std::string, dynamixel_hardware_interface::SerialProxy*>::iterator sp_it;
 
-  for (sp_it = serial_proxies_.begin(); sp_it != serial_proxies_.end(); ++sp_it)
-  {
+    for (sp_it = serial_proxies_.begin(); sp_it != serial_proxies_.end(); ++sp_it)
+    {
     delete sp_it->second;
-  }
+    }
 
-  std::map<std::string, controller::SingleJointController*>::iterator c_it;
+    std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::iterator c_it;
 
-  for (c_it = sj_controllers_.begin(); c_it != sj_controllers_.end(); ++c_it)
-  {
+    for (c_it = sj_controllers_.begin(); c_it != sj_controllers_.end(); ++c_it)
+    {
     delete c_it->second;
-  }
+    }
+  */
 }
 
 bool ControllerManager::startController(std::string name, std::string port)
@@ -230,20 +232,22 @@ bool ControllerManager::startController(std::string name, std::string port)
       return false;
     }
 
-    controller::SingleJointController* c = NULL;
+    boost::shared_ptr<controller::SingleJointController> sjc; // = NULL;
     ROS_DEBUG("Constructing controller '%s' of type '%s'", name.c_str(), type.c_str());
 
     try
     {
-      c = sjc_loader_->createClassInstance(type, true);
+      //      c = sjc_loader_->createClassInstance(type, true);
+      sjc = sjc_loader_->createInstance(type);
     }
-    catch (const std::runtime_error &ex)
+    catch(pluginlib::PluginlibException& ex)
     {
-      ROS_ERROR("Could not load class %s: %s", type.c_str(), ex.what());
+      //handle the class failing to load
+      ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
     }
 
     // checks if controller was constructed
-    if (c == NULL)
+    if (sjc == NULL)
     {
       if (type == "")
       {
@@ -263,7 +267,7 @@ bool ControllerManager::startController(std::string name, std::string port)
 
     try
     {
-      initialized = c->initialize(name, port, serial_proxies_[port]->getSerialPort());
+      initialized = sjc->initialize(name, port, serial_proxies_[port]->getSerialPort());
     }
     catch(std::exception &e)
     {
@@ -278,14 +282,14 @@ bool ControllerManager::startController(std::string name, std::string port)
 
     if (!initialized)
     {
-      delete c;
+      //      delete sjc;
       ROS_ERROR("Initializing controller '%s' failed", name.c_str());
       return false;
     }
 
-    c->start();
+    sjc->start();
 
-    sj_controllers_[name] = c;
+    sj_controllers_[name] = sjc;
     ROS_DEBUG("Initialized controller '%s' succesful", name.c_str());
   }
   else
@@ -338,8 +342,8 @@ bool ControllerManager::stopController(std::string name)
   boost::mutex::scoped_lock c_guard(controllers_lock_);
   ROS_DEBUG("Will stop controller '%s'", name.c_str());
 
-  std::map<std::string, controller::SingleJointController*>::iterator sit;
-  std::map<std::string, controller::MultiJointController*>::iterator mit;
+  std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::iterator sit;
+  std::map<std::string, boost::shared_ptr<controller::MultiJointController> >::iterator mit;
 
   sit = sj_controllers_.find(name);
   mit = mj_controllers_.find(name);
@@ -355,11 +359,11 @@ bool ControllerManager::stopController(std::string name)
     }
     else
     {
-      controller::MultiJointController* c = mit->second;
+      boost::shared_ptr<controller::MultiJointController>  mjc = mit->second;
       ROS_DEBUG("stopping multi-joint controller %s", name.c_str());
-      c->stop();
+      mjc->stop();
       mj_controllers_.erase(mit);
-      delete c;
+      //delete c;
     }
   }
   // trying to stop a single-joint controller
@@ -367,12 +371,12 @@ bool ControllerManager::stopController(std::string name)
   {
     // first check if any of the loaded multi-joint controllers require this
     // single-joint controller (i.e. have it in their dependencies list)
-    std::map<std::string, controller::MultiJointController*>::iterator it;
+    std::map<std::string, boost::shared_ptr<controller::MultiJointController> >::iterator it;
 
     for (it = mj_controllers_.begin(); it != mj_controllers_.end(); ++it)
     {
       // get dependencies
-      std::vector<controller::SingleJointController*> deps = it->second->getDependencies();
+      std::vector<boost::shared_ptr<controller::SingleJointController> > deps = it->second->getDependencies();
 
       // go through the list and compare each dep name to passed in controller name
       for (size_t i = 0; i < deps.size(); ++i)
@@ -389,11 +393,11 @@ bool ControllerManager::stopController(std::string name)
       }
     }
 
-    controller::SingleJointController* c = sit->second;
+    boost::shared_ptr<controller::SingleJointController> sjc = sit->second;
     ROS_DEBUG("stopping single-joint controller %s", name.c_str());
-    c->stop();
+    sjc->stop();
     sj_controllers_.erase(sit);
-    delete c;
+    //delete c;
   }
 
   return true;
@@ -407,7 +411,7 @@ bool ControllerManager::restartController(std::string name)
 
   {
     boost::mutex::scoped_lock c_guard(controllers_lock_);
-    std::map<std::string, controller::SingleJointController*>::const_iterator sit;
+    std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::const_iterator sit;
     sit = sj_controllers_.find(name);
 
     // if not found in both single and multi-joint maps, it is not loaded and running
@@ -448,7 +452,7 @@ void ControllerManager::publishDiagnosticInformation()
     {
       boost::mutex::scoped_lock c_guard(controllers_lock_);
 
-      std::map<std::string, controller::SingleJointController*>::iterator it;
+      std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::iterator it;
 
       for (it = sj_controllers_.begin(); it != sj_controllers_.end(); ++it)
       {
@@ -480,7 +484,7 @@ void ControllerManager::publishDiagnosticInformation()
 void ControllerManager::checkDeps()
 {
   std::set<std::string> loaded_controllers;
-  std::map<std::string, controller::SingleJointController*>::iterator c_it;
+  std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::iterator c_it;
 
   for (c_it = sj_controllers_.begin(); c_it != sj_controllers_.end(); ++c_it)
   {
@@ -498,7 +502,7 @@ void ControllerManager::checkDeps()
     {
       ROS_DEBUG("All dependencies are loaded for multi-joint controller %s", name.c_str());
 
-      std::vector<controller::SingleJointController*> dependencies;
+      std::vector<boost::shared_ptr<controller::SingleJointController> > dependencies;
       std::set<std::string>::iterator d_it;
 
       for (d_it = deps.begin(); d_it != deps.end(); ++d_it)
@@ -506,7 +510,7 @@ void ControllerManager::checkDeps()
         dependencies.push_back(sj_controllers_[*d_it]);
       }
 
-      controller::MultiJointController* c = NULL;
+      boost::shared_ptr<controller::MultiJointController>  mjc; // = NULL;
       std::string type;
 
       if (nh_.getParam(name + "/type", type))
@@ -515,16 +519,18 @@ void ControllerManager::checkDeps()
 
         try
         {
-          c = mjc_loader_->createClassInstance(type, true);
+          //          c = mjc_loader_->createClassInstance(type, true);
+          mjc = mjc_loader_->createInstance(type);
         }
-        catch (const std::runtime_error &ex)
+        catch(pluginlib::PluginlibException& ex)
         {
-          ROS_ERROR("Could not load class %s: %s", type.c_str(), ex.what());
+          //handle the class failing to load
+          ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
         }
       }
 
       // checks if controller was constructed
-      if (c == NULL)
+      if (mjc == NULL)
       {
         if (type == "")
         {
@@ -545,7 +551,7 @@ void ControllerManager::checkDeps()
 
       try
       {
-        initialized = c->initialize(name, dependencies);
+        initialized = mjc->initialize(name, dependencies);
       }
       catch(std::exception &e)
       {
@@ -560,15 +566,14 @@ void ControllerManager::checkDeps()
 
       if (!initialized)
       {
-        delete c;
         ROS_ERROR("Initializing controller '%s' failed", name.c_str());
         ++it;
         continue;
       }
 
-      c->start();
+      mjc->start();
 
-      mj_controllers_[name] = c;
+      mj_controllers_[name] = mjc;
       mj_waiting_controllers_.erase(name);
       waiting_mjcs_.erase(it++);
 
@@ -689,7 +694,7 @@ bool ControllerManager::listControllersSrv(dynamixel_hardware_interface::ListCon
 
   /*
   // Insert single joint controllers
-  for (std::map<std::string, controller::SingleJointController*>::const_iterator it =
+  for (std::map<std::string, boost::shared_ptr<controller::SingleJointController> >::const_iterator it =
   sj_controllers_.begin(); it != sj_controllers_.end() ; ++it)
   {
   std::cout << "Controller = " << it->first << std::endl;
@@ -702,7 +707,7 @@ bool ControllerManager::listControllersSrv(dynamixel_hardware_interface::ListCon
   */
 
   // Insert multi joint controllers
-  for (std::map<std::string, controller::MultiJointController*>::const_iterator it =
+  for (std::map<std::string, boost::shared_ptr<controller::MultiJointController> >::const_iterator it =
          mj_controllers_.begin(); it != mj_controllers_.end() ; ++it)
   {
     res.controllers[i] = std::string(it->first);

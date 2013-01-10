@@ -12,4 +12,6 @@
 
   <author>Dave Coleman</author>
 
+  <buildtool_depend>catkin</buildtool_depend>
+
 </package>

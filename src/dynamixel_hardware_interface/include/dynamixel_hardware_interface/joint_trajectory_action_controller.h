@@ -33,7 +33,7 @@ public:
   JointTrajectoryActionController();
   virtual ~JointTrajectoryActionController();
 
-  bool initialize(std::string name, std::vector<SingleJointController*> deps);
+  bool initialize(std::string name, std::vector<boost::shared_ptr<controller::SingleJointController> > deps);
 
   void start();
   void stop();

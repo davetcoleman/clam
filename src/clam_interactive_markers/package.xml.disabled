@@ -27,6 +27,6 @@
   <run_depend>dynamixel_hardware_interface</run_depend>
   <run_depend>actionlib</run_depend>
 
-
+  <buildtool_depend>catkin</buildtool_depend>
 
 </package>

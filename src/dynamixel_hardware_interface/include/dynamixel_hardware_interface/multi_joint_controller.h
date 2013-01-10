@@ -49,7 +49,7 @@ public:
   MultiJointController() {};
   virtual ~MultiJointController() {};
 
-  virtual bool initialize(std::string name, std::vector<SingleJointController*> deps)
+  virtual bool initialize(std::string name, std::vector<boost::shared_ptr<controller::SingleJointController> > deps)
   {
     name_ = name;
     deps_ = deps;
@@ -105,21 +105,21 @@ public:
   virtual void start() = 0;
   virtual void stop() = 0;
 
-  const std::vector<SingleJointController*>& getDependencies() { return deps_; }
+  const std::vector<boost::shared_ptr<controller::SingleJointController> >& getDependencies() { return deps_; }
 
 protected:
   ros::NodeHandle nh_;
   ros::NodeHandle c_nh_;
 
   std::string name_;
-  std::vector<SingleJointController*> deps_;
+  std::vector<boost::shared_ptr<controller::SingleJointController> > deps_;
 
   size_t num_joints_;
 
   std::vector<std::string> joint_names_;
   std::map<std::string, int> joint_to_idx_;
 
-  std::map<std::string, SingleJointController*> joint_to_controller_;
+  std::map<std::string, boost::shared_ptr<controller::SingleJointController> > joint_to_controller_;
   std::map<std::string, std::vector<std::string> > port_to_joints_;
   std::map<std::string, dynamixel_hardware_interface::DynamixelIO*> port_to_io_;
   std::map<std::string, const dynamixel_hardware_interface::JointState*> joint_states_;

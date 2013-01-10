@@ -36,4 +36,6 @@
   <run_depend>cv_bridge</run_depend>
   <run_depend>eigen</run_depend>
 
+  <buildtool_depend>catkin</buildtool_depend>
+
 </package>

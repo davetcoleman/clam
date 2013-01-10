@@ -38,6 +38,8 @@
   <run_depend>angles</run_depend>
   <run_depend>dynamixel_hardware_interface</run_depend>
 
+  <buildtool_depend>catkin</buildtool_depend>
+
   <export>
     <moveit_core plugin="${prefix}/clam_moveit_controller_manager_plugin_description.xml"/> 
   </export>
