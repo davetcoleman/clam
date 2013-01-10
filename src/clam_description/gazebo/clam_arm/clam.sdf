@@ -6,12 +6,55 @@ Dave Coleman - davetcoleman@gmail.com
 Documentation:
 
 SDF
-http://gazebosim.org/sdf/1.3.html
+http://gazebosim.org/sdf/1.2.html
+// http://gazebosim.org/sdf/1.3.html
 
 -->
 <gazebo version="1.2">
   <model name="clam_arm">
     <static>0</static>
+
+
+
+    <!--
+        <plugin name="actuator_array_controller" filename="libgazebo_ros_actuator_array.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>50.0</updateRate>
+        <robotParam>robot_description</robotParam>
+        <joint>
+        <name>shoulder_pan_joint</name>
+        <home>0.0</home>
+        <p>10.0</p>
+        <i>0.0</i>
+        <d>0.0</d>
+        <iClamp>0.0</iClamp>
+        </joint>
+        <joint>
+        <name>joint2</name>
+        <home>2.094395102</home>
+        <p>10.0</p>
+        <i>0.0</i>
+        <d>0.0</d>
+        <iClamp>0.0</iClamp>
+        </joint>
+        <joint>
+        <name>joint3</name>
+        <home>1.483529864</home>
+        <p>10.0</p>
+        <i>0.0</i>
+        <d>0.0</d>
+        <iClamp>0.0</iClamp>
+        </joint>
+        <joint>
+        <name>joint4</name>
+        <home>0.0</home>
+        <p>10.0</p>
+        <i>0.0</i>
+        <d>0.0</d>
+        <iClamp>0.0</iClamp>
+        </joint>
+        </plugin>  -->
+
 
     <!-- tabletop ||||||||||||||||||||||||||||||||||||||||||||||||| -->
 
@@ -190,8 +233,8 @@ http://gazebosim.org/sdf/1.3.html
       <pose>0.0 0.0 0.0 0.0 1.570795 0</pose>
       <axis>
         <limit>
-              <lower>-1.19962513147</lower>
-              <upper>1.89994105047</upper>
+          <lower>-1.19962513147</lower>
+          <upper>1.89994105047</upper>
         </limit>
         <xyz>1 0 0</xyz>
         <dynamics>
@@ -249,8 +292,8 @@ http://gazebosim.org/sdf/1.3.html
       <pose>0 0 0 3.14159 1.570795 0</pose>
       <axis>
         <limit>
-              <lower>-2.61799387799</lower>
-              <upper>0.705631162427</upper>
+          <lower>-2.61799387799</lower>
+          <upper>0.705631162427</upper>
         </limit>
         <xyz>0 0 1</xyz>
         <dynamics>
@@ -426,6 +469,7 @@ http://gazebosim.org/sdf/1.3.html
 
     </link>
 
+    <plugin name="animate_joints" filename="libanimate_joints.so"/>
 
   </model>
 </gazebo>
