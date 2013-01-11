@@ -1,5 +1,9 @@
 <!-- -*- mode: XML -*- -->
 <launch>
+
+  <!-- chmod the usb ports -->
+  <node name="change_usb_port_permissions" pkg="clam_bringup" type="change_usb_port_permissions.sh" />
+
   <!-- Startup the arm controller -->
   <include file="$(find clam_controller)/launch/clam_controller.launch" />
 
