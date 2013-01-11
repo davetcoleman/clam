@@ -5,8 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /ClamArm1
       Splitter Ratio: 0.392982
-    Tree Height: 557
+    Tree Height: 556
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -61,7 +62,7 @@ Visualization Manager:
       Value: true
     - Alpha: 1
       Class: rviz/RobotModel
-      Collision Enabled: false
+      Collision Enabled: true
       Enabled: true
       Links:
         base_link:
@@ -84,42 +85,17 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        l_gripper_aft_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_gripper_fwd_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_gripper_pincher:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_aft_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_fwd_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_pincher:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         shoulder_pan_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         shoulder_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tabletop_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -139,7 +115,7 @@ Visualization Manager:
       TF Prefix: ""
       Update Interval: 0
       Value: true
-      Visual Enabled: true
+      Visual Enabled: false
     - Class: rviz/InteractiveMarkers
       Enabled: true
       Name: Move Arm Control
@@ -282,11 +258,11 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.59015
+      Distance: 2.68306
       Focal Point:
-        X: 1.1628
-        Y: -0.0372567
-        Z: -1.62166e-06
+        X: 0.675281
+        Y: -0.806413
+        Z: -1.74087e-06
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 0.270203
@@ -302,9 +278,9 @@ Window Geometry:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001fd000003bdfc0200000003fb000000100044006900730070006c0061007900730100000041000002d4000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073010000031b000000e3000000b000ffffff0000057d000003bd00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001fd000003bcfc0200000003fb000000100044006900730070006c0061007900730100000041000002d3000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073010000031a000000e3000000b000ffffff0000057b000003bc00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1920
-  X: 1896
-  Y: -452
+  X: 1895
+  Y: -480
