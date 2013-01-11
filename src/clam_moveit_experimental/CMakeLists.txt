@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(clam_moveit_experimental)
 
 find_package(Eigen REQUIRED)
-find_package(Boost REQUIRED thread date_time system filesystem program_options python)
+nfind_package(Boost REQUIRED thread date_time system filesystem program_options python)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
