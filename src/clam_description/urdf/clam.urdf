@@ -110,14 +110,14 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <visual>
       <origin rpy="1.570795 0 1.570795" xyz=" 0 0 -0.017"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/tabletop.STL" scale="1 1 1"/>
+        <mesh filename="package://clam_description/stl/tabletop_link_simple.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="Brown"/>
     </visual>
     <collision>
       <origin rpy="1.570795 0 1.570795" xyz=" 0 0 -0.017"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/tabletop_link_simple.STL" scale="1 1 1"/>
+        <mesh filename="package://clam_description/stl/tabletop_link_simple.STL" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
