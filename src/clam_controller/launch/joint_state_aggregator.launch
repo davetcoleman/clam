@@ -7,7 +7,6 @@
             controllers:
                 - shoulder_pan_controller
                 - gripper_roll_controller
-                - l_gripper_aft_controller
                 - shoulder_pitch_controller
                 - elbow_roll_controller
                 - elbow_pitch_controller

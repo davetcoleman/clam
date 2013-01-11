@@ -22,8 +22,7 @@
         args="--manager=clam_controller_manager
               --port=port_ttl
               shoulder_pan_controller
-              gripper_roll_controller
-              l_gripper_aft_controller"
+              gripper_roll_controller"
         output="screen"/>
 
   <node name="clam_controller_spawner_rs485" pkg="dynamixel_hardware_interface" type="controller_spawner.py"

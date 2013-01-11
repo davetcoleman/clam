@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Open gripper
-  ROS_INFO("[coverage test] Closeing gripper");
+  ROS_INFO("[coverage test] Closing gripper");
   clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
   data_file.open(DATA_FILE_OUTPUT.c_str());
 
   group.setStartStateToCurrentState();
-  group.setEndEffectorLink("gripper_fake_tip_link");
+  //group.setEndEffectorLink("gripper_fake_tip_link");
   //  group.setEndEffectorLink("camera_calibration_link");
   //group.setEndEffectorLink("l_gripper_aft_link");
 
@@ -119,13 +119,14 @@ int main(int argc, char **argv)
   // Loop through x and y range
   for( x = 0.1; x < 0.5; x += 0.05 )
   {
-    for( z = 0.4; x > 0; z -= 0.05 )
+    for( y = 0.2; y > -0.2; y -= 0.05 )
     {
       // -------------------------------------------------------------------------------------------
       // Create start and goal
 
       //group.setStartState( start_state );
       //  group.setPositionTarget(0.22222, 0, 0.2);
+      ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
       group.setPositionTarget(x, y, z);
       group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
       ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);

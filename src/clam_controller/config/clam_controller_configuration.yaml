@@ -68,13 +68,3 @@ gripper_roll_controller:
           min: 0
           max: 1023
 
-l_gripper_aft_controller:
-    type: dynamixel_hardware_interface/JointPositionController
-    joint: l_gripper_aft_joint
-    max_velocity: 2.0
-    motors:
-        - id: 7
-          init: 424
-          min: 240
-          max: 424
-

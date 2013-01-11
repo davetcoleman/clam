@@ -1,16 +1,3 @@
-diff --git a/src/clam_moveit_config/launch/move_group.launch b/src/clam_moveit_config/launch/move_group.launch
-index 930baf3..8902412 100644
---- a/src/clam_moveit_config/launch/move_group.launch
-+++ b/src/clam_moveit_config/launch/move_group.launch
-@@ -11,7 +11,7 @@
- 
-   <arg name="allow_trajectory_execution" default="true"/>
-   <arg name="max_safe_path_cost" default="1"/>
--  <arg name="publish_monitored_planning_scene" default="false"/>
-+  <arg name="publish_monitored_planning_scene" default="true"/>
- 
-   <include ns="move_group" file="$(find clam_moveit_config)/launch/planning_pipeline.launch">
-     <arg name="pipeline" value="ompl" />
 diff --git a/src/clam_moveit_config/launch/moveit_rviz.launch b/src/clam_moveit_config/launch/moveit_rviz.launch
 index 07e6d90..1308d23 100644
 --- a/src/clam_moveit_config/launch/moveit_rviz.launch

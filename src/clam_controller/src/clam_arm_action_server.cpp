@@ -83,6 +83,9 @@ private:
 
   dynamixel_hardware_interface::JointState ee_status_;
 
+  // This disables the anything that uses a gripper
+  static const bool use_gripper_ = false;
+
 public:
   ClamArmServer(const std::string name) :
     nh_("~"),
@@ -90,12 +93,16 @@ public:
     action_name_(name)
   {
 
-    // Create publishers for servo positions
-    end_effector_pub_ = nh_.advertise< std_msgs::Float64 >(EE_POSITION_MSG_NAME, 1, true);
+    if( use_gripper_ )
+    {
+      // Create publishers for servo positions
+      end_effector_pub_ = nh_.advertise< std_msgs::Float64 >(EE_POSITION_MSG_NAME, 1, true);
 
-    // Get the position of the end effector
-    ROS_INFO("[clam arm] Reading end effector position");
-    end_effector_status_ = nh_.subscribe( EE_STATE_MSG_NAME, 1, &ClamArmServer::proccessEEStatus, this);
+      // Get the position of the end effector
+      ROS_INFO("[clam arm] Reading end effector position");
+      end_effector_status_ = nh_.subscribe( EE_STATE_MSG_NAME, 1, &ClamArmServer::proccessEEStatus, this);
+
+    }
 
     // Start up the trajectory client
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
@@ -125,15 +132,42 @@ public:
       break;
     case clam_controller::ClamArmGoal::END_EFFECTOR_OPEN:
       ROS_INFO("[clam arm] Received open end effector goal");
-      openEndEffector();
+      if( use_gripper_ )
+      {
+        openEndEffector();
+      }
+      else
+      {
+        ROS_INFO("[clam arm] Skipped gripper command");
+        result_.success = true;
+        action_server_.setSucceeded(result_);
+      }
       break;
     case clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE:
       ROS_INFO("[clam arm] Received close end effector goal");
-      closeEndEffector();
+      if( use_gripper_ )
+      {
+        closeEndEffector();
+      }
+      else
+      {
+        ROS_INFO("[clam arm] Skipped gripper command");
+        result_.success = true;
+        action_server_.setSucceeded(result_);
+      }
       break;
     case clam_controller::ClamArmGoal::END_EFFECTOR_SET:
       ROS_INFO("[clam arm] Received close end effector to setpoint goal");
-      setEndEffector(goal_->end_effector_setpoint);
+      if( use_gripper_ )
+      {
+        setEndEffector(goal_->end_effector_setpoint);
+      }
+      else
+      {
+        ROS_INFO("[clam arm] Skipped gripper command");
+        result_.success = true;
+        action_server_.setSucceeded(result_);
+      }
       break;
     case clam_controller::ClamArmGoal::SHUTDOWN:
       ROS_ERROR("[clam arm] not implemented");
@@ -430,11 +464,11 @@ public:
         ROS_INFO("Setting end effector setpoint to %f", joint_value.data);
         end_effector_pub_.publish(joint_value);
       }
-      
+
       // Debug output
       ROS_DEBUG_STREAM(joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
-                      ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE 
-                      << " -- LOAD: " << ee_status_.load );
+                       ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
+                       << " -- LOAD: " << ee_status_.load );
 
       ros::Duration(sleep_sec).sleep();
       timeout_sec -= sleep_sec;
