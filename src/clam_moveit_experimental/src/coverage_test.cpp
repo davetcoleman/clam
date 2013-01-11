@@ -37,166 +37,276 @@
    and plans to see if robot can reach each location
 */
 
+// MoveIt
 #include <moveit/move_group_interface/move_group.h>
+// ROS
 #include <ros/ros.h>
-#include <clam_controller/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
-
-#include <iostream> // For recording data
+// ClamArm
+#include <clam_controller/ClamArmAction.h> // for controlling the gripper
+// Rviz
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+// For recording data
+#include <iostream>
 #include <fstream>
+
+
+namespace coverage_test
+{
 
 // Constants
 static const std::string GROUP_NAME = "arm";
 static const std::string DATA_FILE_OUTPUT = "/home/dave/ros/clam/src/clam_moveit_experimental/data/coverage_test.dat";
 
-// Simple test program
-int main(int argc, char **argv)
+// *********************************************************************************************************
+// *********************************************************************************************************
+// Coverage testing class
+// *********************************************************************************************************
+// *********************************************************************************************************
+
+class CoverageTest
 {
-  // -----------------------------------------------------------------------------------------------
-  // Initialize node
-  ros::init(argc, argv, "clam_coverage_test", ros::init_options::AnonymousName);
-  ros::AsyncSpinner spinner(1);
-  spinner.start();
+private:
 
-  ROS_INFO_STREAM("[coverage test] Preparing to send command to group = " << GROUP_NAME);
+  // A ROS publisher
+  ros::Publisher marker_pub_;
 
-  // -----------------------------------------------------------------------------------------------
-  // Connect to ClamArm action server
-  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_("clam_arm", true);
-  clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
+  // A shared node handle
+  ros::NodeHandle n_;
 
-  while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
-    ROS_INFO("[coverage test] Waiting for the clam_arm action server");
-  }
-
-  // -----------------------------------------------------------------------------------------------
-  // Go to home position
-  ROS_INFO("[coverage test] Resetting arm to home position");
-  clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
-  clam_arm_client_.sendGoal(clam_arm_goal_);
-  clam_arm_client_.waitForResult(ros::Duration(20.0));
-  if(!clam_arm_client_.getState().isDone())
+public: 
+  // *********************************************************************************************************
+  // Constructor
+  // *********************************************************************************************************
+  CoverageTest()
   {
-    ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
-    return 2;
-  }
+    marker_pub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    ros::Duration(0.5).sleep();
 
-  // -----------------------------------------------------------------------------------------------
-  // Open gripper
-  ROS_INFO("[coverage test] Closing gripper");
-  clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
-  clam_arm_client_.sendGoal(clam_arm_goal_);
-  clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
+    ROS_INFO_STREAM("[coverage test] Preparing to send command to group = " << GROUP_NAME);
 
-  // Error check
-  if( !clam_arm_client_.getState().isDone() ||
-      !clam_arm_client_.getResult()->success )
-  {
-    ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
-    return 2;
-  }
+    // -----------------------------------------------------------------------------------------------
+    // Connect to ClamArm action server
+    actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_("clam_arm", true);
+    clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
 
-  // -----------------------------------------------------------------------------------------------
-  // Move arm
-  move_group_interface::MoveGroup group(GROUP_NAME);
+    while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
+      ROS_INFO("[coverage test] Waiting for the clam_arm action server");
+    }
 
-  double x = 0.0;
-  double y = 0.0;
-  double z = 0.1;
-
-  // Save results to file
-  std::ofstream data_file;
-  data_file.open(DATA_FILE_OUTPUT.c_str());
-
-  group.setStartStateToCurrentState();
-  //group.setEndEffectorLink("gripper_fake_tip_link");
-  //  group.setEndEffectorLink("camera_calibration_link");
-  //group.setEndEffectorLink("l_gripper_aft_link");
-
-  bool gripperOpen = true;
-
-  // -----------------------------------------------------------------------------------------------
-  // Loop through x and y range
-  for( x = 0.1; x < 0.5; x += 0.05 )
-  {
-    for( y = 0.2; y > -0.2; y -= 0.05 )
+    // -----------------------------------------------------------------------------------------------
+    // Go to home position
+    ROS_INFO("[coverage test] Resetting arm to home position");
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    clam_arm_client_.waitForResult(ros::Duration(20.0));
+    if(!clam_arm_client_.getState().isDone())
     {
-      // -------------------------------------------------------------------------------------------
-      // Create start and goal
+      ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
+    }
 
-      //group.setStartState( start_state );
-      //  group.setPositionTarget(0.22222, 0, 0.2);
-      ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
-      group.setPositionTarget(x, y, z);
-      group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
-      ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
-      //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
-      //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
+    // -----------------------------------------------------------------------------------------------
+    // Open gripper
+    ROS_INFO("[coverage test] Closing gripper");
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
 
-      // -------------------------------------------------------------------------------------------
-      // Plan
-      move_group_interface::MoveGroup::Plan plan;
+    // Error check
+    if( !clam_arm_client_.getState().isDone() ||
+        !clam_arm_client_.getResult()->success )
+    {
+      ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
+    }
 
-      if( group.plan(plan) )
+    // -----------------------------------------------------------------------------------------------
+    // Move arm
+    move_group_interface::MoveGroup group(GROUP_NAME);
+
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.1;
+
+    // Save results to file
+    std::ofstream data_file;
+    data_file.open(DATA_FILE_OUTPUT.c_str());
+
+    group.setStartStateToCurrentState();
+    //group.setEndEffectorLink("gripper_fake_tip_link");
+    //  group.setEndEffectorLink("camera_calibration_link");
+    //group.setEndEffectorLink("l_gripper_aft_link");
+
+    bool gripperOpen = true;
+
+    // -----------------------------------------------------------------------------------------------
+    // Loop through x and y range
+    for( x = 0.15; x < 0.5; x += 0.05 )
+    {
+      for( y = 0.2; y > -0.2; y -= 0.05 )
       {
-        // -----------------------------------------------------------------------------------------
-        // Save to file
-        data_file << x << "," << y <<  "," << z << "\n";
+        // -------------------------------------------------------------------------------------------
+        // Create start and goal
 
-        // -----------------------------------------------------------------------------------------
-        // Execute plan
-        ROS_INFO("[coverage test] Executing...");
-        group.execute(plan);
+        //group.setStartState( start_state );
+        //  group.setPositionTarget(0.22222, 0, 0.2);
+        ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
+        group.setPositionTarget(x, y, z);
+        group.setOrientationTarget( 0.00, 0.710502, -0.01755, 0.70346 );
+        ROS_INFO_STREAM("[coverage test] Planning for x:" << x << " y:" << y << " z:" << z);
+        //ROS_INFO_STREAM("End effector set to " << group.getEndEffectorLink());
+        //ROS_INFO_STREAM("Joint 0 has value " << group.getCurrentJointValues()[0]);
 
-        /*
-        // -----------------------------------------------------------------------------------------
-        // Close Gripper
-        if( gripperOpen )
+        publishMarker(x, y, z);
+
+
+        // -------------------------------------------------------------------------------------------
+        // Plan
+        move_group_interface::MoveGroup::Plan plan;
+
+        if( group.plan(plan) )
         {
-        ROS_INFO("[coverage test] Closing gripper");
-        clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
-        gripperOpen = false;
+          // -----------------------------------------------------------------------------------------
+          // Save to file
+          data_file << x << "," << y <<  "," << z << "\n";
+
+          // -----------------------------------------------------------------------------------------
+          // Execute plan
+          ROS_INFO("[coverage test] Executing...");
+          group.execute(plan);
+
+          /*
+          // -----------------------------------------------------------------------------------------
+          // Close Gripper
+          if( gripperOpen )
+          {
+          ROS_INFO("[coverage test] Closing gripper");
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+          gripperOpen = false;
+          }
+          else
+          {
+          ROS_INFO("[coverage test] Opening gripper");
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+          gripperOpen = true;
+          }
+          clam_arm_client_.sendGoal(clam_arm_goal_);
+          while(!clam_arm_client_.getState().isDone() && ros::ok())
+          ros::Duration(0.1).sleep();
+          */
+
+          ros::Duration(1.0).sleep();
+
+          // -----------------------------------------------------------------------------------------------
+          // Go to home position
+          ROS_WARN("[coverage test] Resetting arm to home position");
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+          clam_arm_client_.sendGoal(clam_arm_goal_);
+          clam_arm_client_.waitForResult(ros::Duration(20.0));
+          if(!clam_arm_client_.getState().isDone())
+          {
+            ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
+          }
+
         }
         else
         {
-        ROS_INFO("[coverage test] Opening gripper");
-        clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
-        gripperOpen = true;
+          ROS_WARN("[coverage test] Failed to find a plan");
         }
-        clam_arm_client_.sendGoal(clam_arm_goal_);
-        while(!clam_arm_client_.getState().isDone() && ros::ok())
-        ros::Duration(0.1).sleep();
-        */
-
-        ros::Duration(1.0).sleep();
-
-        // -----------------------------------------------------------------------------------------------
-        // Go to home position
-        ROS_WARN("[coverage test] Resetting arm to home position");
-        clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
-        clam_arm_client_.sendGoal(clam_arm_goal_);
-        clam_arm_client_.waitForResult(ros::Duration(20.0));
-        if(!clam_arm_client_.getState().isDone())
-        {
-          ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
-          return 2;
-        }
-
       }
-      else
-      {
-        ROS_WARN("[coverage test] Failed to find a plan");
-      }
-         }
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // Close down
+    data_file.close();
+
+
+    ROS_INFO("[coverage test] Node exiting");
   }
 
-  // -----------------------------------------------------------------------------------------------
-  // Close down
-  data_file.close();
+  // *********************************************************************************************************
+  // Deconstructor
+  // *********************************************************************************************************
+  ~CoverageTest()
+  {
+
+  }
+
+  // *********************************************************************************************************
+  // Helper Function
+  // *********************************************************************************************************
+  void publishMarker(double x, double y, double z)
+  {
+    visualization_msgs::Marker marker;
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "/base_link";
+    marker.header.stamp = ros::Time::now();
+
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    marker.ns = "ClamArm";
+
+    // Set the marker type.
+    marker.type = visualization_msgs::Marker::SPHERE_LIST;
+
+    // Set the marker action.  Options are ADD and DELETE
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.id = 0;
+
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+
+    marker.scale.x = 0.05;
+    marker.scale.y = 0.05;
+    marker.scale.z = 0.05;
+
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    // Make line color
+    std_msgs::ColorRGBA color;
+    color.r = 0.8;
+    color.g = 0.1;
+    color.b = 0.1;
+    color.a = 1.0;
 
 
-  ROS_INFO("[coverage test] Node exiting");
-  return 0;
-}
+    // Point
+    geometry_msgs::Point point_a;
+    point_a.x = x;
+    point_a.y = y;
+    point_a.z = z;
+    ROS_INFO_STREAM("Publishing marker \n" << point_a );
+
+    // Add the point pair to the line message
+    marker.points.push_back( point_a );
+    marker.colors.push_back( color );
 
 
+    marker_pub_.publish( marker );
+  }
+
+}; // end of class
+
+} // namespace
+  
+// Simple test program
+  int main(int argc, char **argv)
+  {
+    // -----------------------------------------------------------------------------------------------
+    // Initialize node
+    ros::init(argc, argv, "clam_coverage_test", ros::init_options::AnonymousName);
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
+
+    coverage_test::CoverageTest test;
+
+    return true;
+  }
