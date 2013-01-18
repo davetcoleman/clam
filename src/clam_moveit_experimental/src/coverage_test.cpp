@@ -128,8 +128,8 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Open gripper
-    ROS_INFO("[coverage test] Closing gripper");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+    ROS_INFO("[coverage test] Opening gripper");
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
 
@@ -137,7 +137,7 @@ public:
     if( !clam_arm_client_.getState().isDone() ||
         !clam_arm_client_.getResult()->success )
     {
-      ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
+      ROS_ERROR("[coverage test] Timeout: Unable to open end effector");
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ public:
     // Position
     double x = 0.0;
     double y = 0.0;
-    double z = 0.02;
+    double z = 0.03;
 
     // Orientation
     double qx = 0.00;
@@ -170,7 +170,7 @@ public:
     //group.setEndEffectorLink("l_gripper_aft_link");
 
     bool gripperOpen = true;
-    double x_offset = 0.18;
+    double x_offset = 0.15;
 
     //ROS_INFO_STREAM( group.getEndEffectorLink() << " name " << group.getEndEffector() << " pose " << group.getPoseReferenceFrame() );
 
@@ -192,11 +192,11 @@ public:
         pose.pose.orientation.z = qz;
         pose.pose.orientation.w = qw;
         double tolerance_pose = 1e-3; // default: 1e-3... meters
-        double tolerance_angle = 1; // default 1e-2... radians
-        moveit_msgs::Constraints g0 = 
-          kinematic_constraints::constructGoalConstraints("gripper_roll_link", pose, 
+        double tolerance_angle = 0.1; // default 1e-2... radians
+        moveit_msgs::Constraints g0 =
+          kinematic_constraints::constructGoalConstraints("gripper_roll_link", pose,
                                                           tolerance_pose, tolerance_angle);
-                                                          
+
 
         g0.position_constraints[0].target_point_offset.x = x_offset;
         g0.position_constraints[0].target_point_offset.y = 0.0;
@@ -225,7 +225,7 @@ public:
 
         publishSphere(x, y, z);
         publishMesh(x, y, z + x_offset, qx, qy, qz, qw );
- 
+
 
         // -------------------------------------------------------------------------------------------
         // Plan
@@ -240,6 +240,23 @@ public:
         if (movegroup_action.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
           ROS_INFO("It worked!");
+
+
+          /*
+          // -----------------------------------------------------------------------------------------------
+          // Close gripper
+          ROS_INFO("[coverage test] Closing gripper");
+          clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+          clam_arm_client_.sendGoal(clam_arm_goal_);
+          clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
+
+          // Error check
+          if( !clam_arm_client_.getState().isDone() ||
+          !clam_arm_client_.getResult()->success )
+          {
+          ROS_ERROR("[coverage test] Timeout: Unable to close end effector");
+          }
+          */
         }
         else
         {
@@ -432,5 +449,5 @@ int main(int argc, char **argv)
 
   coverage_test::CoverageTest test;
 
-  return true;
+  return 0;
 }

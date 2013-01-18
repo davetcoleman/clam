@@ -3,7 +3,7 @@
   <node name="calibrate_kinect_checkerboard" pkg="clam_vision" type="calibrate_kinect_checkerboard" output="screen">
     <param name="camera_frame" value="/camera_link" />
     <param name="fixed_frame" value="/base_link" />
-    <param name="tip_frame" value="/camera_calibration_link" />
+    <param name="tip_frame" value="/gripper_fake_tip_link" />
     <param name="gripper_tip_x" value="0.0" />
     <param name="gripper_tip_y" value="0.0" />
     <param name="gripper_tip_z" value="0.0" />

@@ -365,7 +365,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   // Lower the compliance margin and slope now then raise them back up after trajectory is completed
   // TODO: move this to configuration file
   int traj_compliance_margin = 1;
-  int traj_compliance_slope = 50;
+  int traj_compliance_slope = 30; // 50 is optimal for having "smooth" trajectory, but not good for accuracy.
   MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
 
 

@@ -39,3 +39,4 @@ if __name__ == '__main__':
             print 'Response from '+joint_name+':', response
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
+

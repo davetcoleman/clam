@@ -84,7 +84,7 @@ private:
   dynamixel_hardware_interface::JointState ee_status_;
 
   // This disables the anything that uses a gripper
-  static const bool use_gripper_ = false;
+  static const bool use_gripper_ = true;
 
 public:
   ClamArmServer(const std::string name) :
@@ -338,7 +338,7 @@ public:
     }
 
     // It worked!
-    //    ROS_INFO("[clam arm] Finished end effector action");
+    ROS_INFO("[clam arm] Finished end effector action");
     result_.success = true;
     action_server_.setSucceeded(result_);
   }

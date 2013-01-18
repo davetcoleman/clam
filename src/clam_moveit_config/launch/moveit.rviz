@@ -223,7 +223,8 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
-        {}
+        Mesh: true
+        Sphere: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -245,15 +246,15 @@ Visualization Manager:
       Class: rviz/Orbit
       Distance: 1.2458
       Focal Point:
-        X: 0.150712
-        Y: 0.127262
-        Z: 0.445307
+        X: 0.179339
+        Y: 0.107138
+        Z: 0.203017
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.104798
+      Pitch: -0.000202022
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.142234
+      Yaw: 0.107234
     Saved: ~
 Window Geometry:
   Displays:
@@ -273,5 +274,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3823
-  Y: -493
+  X: 3822
+  Y: -521
