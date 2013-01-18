@@ -28,49 +28,6 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   <property name="M_SCALE" value="0.001 0.001 0.001"/>
   <property name="M_PI" value="3.14159"/>
 
-  <!-- Add a Gazebo plugin controller
-       <gazebo>
-       <controller:gazebo_ros_actuator_array
-       name="actuator_array_controller"
-       plugin="libgazebo_ros_actuator_array.so">
-       <alwaysOn>true</alwaysOn>
-       <updateRate>50.0</updateRate>
-       <robotParam>robot_description</robotParam>
-       <joint>
-       <name>joint1</name>
-       <home>0.0</home>
-       <p>10.0</p>
-       <i>0.0</i>
-       <d>0.0</d>
-       <iClamp>0.0</iClamp>
-       </joint>
-       <joint>
-       <name>joint2</name>
-       <home>2.094395102</home>
-       <p>10.0</p>
-       <i>0.0</i>
-       <d>0.0</d>
-       <iClamp>0.0</iClamp>
-       </joint>
-       <joint>
-       <name>joint3</name>
-       <home>1.483529864</home>
-       <p>10.0</p>
-       <i>0.0</i>
-       <d>0.0</d>
-       <iClamp>0.0</iClamp>
-       </joint>
-       <joint>
-       <name>joint4</name>
-       <home>0.0</home>
-       <p>10.0</p>
-       <i>0.0</i>
-       <d>0.0</d>
-       <iClamp>0.0</iClamp>
-       </joint>
-       </controller:gazebo_ros_actuator_array>
-       </gazebo>
-  -->
   <!-- TABLETOP LINK -->
   <joint name="tabletop_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
@@ -407,7 +364,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://clam_description/stl/gripper_roll_link.STL" scale="${M_SCALE}" />
+        <mesh filename="package://clam_description/stl/gripper_base_link.STL" scale="${M_SCALE}" />
       </geometry>
       <material name="Orange" />
     </visual>
@@ -415,7 +372,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://clam_description/stl/gripper_roll_link_simple.STL" scale="${M_SCALE}" />
+        <mesh filename="package://clam_description/stl/gripper_base_link.STL" scale="${M_SCALE}" />
       </geometry>
     </collision>
 
@@ -426,5 +383,71 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
 
+  <!-- Gripper Fixed Finger -->
+  <joint name="gripper_fixed_finger_joint" type="fixed">
+    <origin xyz="0.055 0.0275 0.0" rpy="0 0 0" />  <!-- x=up to heaven  y=left to wall z=back towards motor houseing -->
+    <parent link="gripper_roll_link"/>
+    <child link="gripper_fixed_finger_link" />
+  </joint>
+
+  <link name="gripper_fixed_finger_link" >
+
+    <inertial>
+      <origin xyz="0 0 0" />
+      <mass value="0.01" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="${M_SCALE}" />
+      </geometry>
+      <material name="Grey" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="${M_SCALE}" />
+      </geometry>
+    </collision>
+
+  </link>
+
+  <!-- Gripper Moving Finger -->
+  <joint name="gripper_finger_joint" type="fixed">
+    <origin xyz="0.055 -0.0275 0.0" rpy="${M_PI} 0 0" />  <!-- x=up to heaven  y=left to wall z=back towards motor houseing -->
+    <parent link="gripper_roll_link"/>
+    <child link="gripper_finger_link" />
+    <axis xyz="0 1 0" />
+    <limit effort="300" velocity="1" lower="${-53*M_PI/180}" upper="${0*M_PI/180}"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <link name="gripper_finger_link" >
+
+    <inertial>
+      <origin xyz="0 0 0" />
+      <mass value="0.01" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="${M_SCALE}" />
+      </geometry>
+      <material name="Grey" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="${M_SCALE}" />
+      </geometry>
+    </collision>
+
+  </link>
 
 </robot>
