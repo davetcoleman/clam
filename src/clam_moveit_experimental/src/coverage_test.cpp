@@ -154,7 +154,7 @@ public:
     double y = 0.0;
     double z = 0.02;
 
-    // Pose
+    // Orientation
     double qx = 0.00;
     double qy = 0.710502;
     double qz = -0.01755;
@@ -191,7 +191,12 @@ public:
         pose.pose.orientation.y = qy;
         pose.pose.orientation.z = qz;
         pose.pose.orientation.w = qw;
-        moveit_msgs::Constraints g0 = kinematic_constraints::constructGoalConstraints("gripper_roll_link", pose);
+        double tolerance_pose = 1e-3; // default: 1e-3... meters
+        double tolerance_angle = 1; // default 1e-2... radians
+        moveit_msgs::Constraints g0 = 
+          kinematic_constraints::constructGoalConstraints("gripper_roll_link", pose, 
+                                                          tolerance_pose, tolerance_angle);
+                                                          
 
         g0.position_constraints[0].target_point_offset.x = x_offset;
         g0.position_constraints[0].target_point_offset.y = 0.0;
