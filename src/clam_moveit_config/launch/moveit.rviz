@@ -4,14 +4,13 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /MotionPlanning1/Planning Metrics1
         - /MotionPlanning1/Planned Path1
       Splitter Ratio: 0.5
-    Tree Height: 593
+    Tree Height: 557
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -73,42 +72,17 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_link:
+          gripper_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_fixed_finger_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
           gripper_roll_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_aft_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_fwd_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_pincher:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_aft_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_fwd_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_pincher:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -119,6 +93,11 @@ Visualization Manager:
             Show Trail: false
             Value: true
           shoulder_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          tabletop_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -147,6 +126,7 @@ Visualization Manager:
         Show Manipulability Index: false
         Show Weight Limit: false
       Planning Request:
+        Cartesian teleop: false
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
         Goal State Color: 0; 85; 255
@@ -183,42 +163,17 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_link:
+          gripper_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_fixed_finger_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
           gripper_roll_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_aft_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_fwd_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_pincher:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_aft_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_fwd_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_pincher:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -229,6 +184,11 @@ Visualization Manager:
             Show Trail: false
             Value: true
           shoulder_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          tabletop_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -258,6 +218,14 @@ Visualization Manager:
       Update Interval: 0
       Value: false
       Visual Enabled: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -282,10 +250,10 @@ Visualization Manager:
         Z: 0.445307
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.194798
+      Pitch: 0.104798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.75541
+      Yaw: 0.142234
     Saved: ~
 Window Geometry:
   Displays:
@@ -295,7 +263,7 @@ Window Geometry:
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002a200000434fc0200000006fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000041000002e0000000dd00fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003270000014e0000014300ffffff000000010000010f00000385fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004100000385000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000002bf00fffffffb0000000800540069006d00650100000000000004500000000000000000000003960000043400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002a200000434fc0200000006fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000041000002bc000000dd00fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000303000001720000016700ffffff000000010000010f00000385fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004100000385000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000002bf00fffffffb0000000800540069006d00650100000000000004500000000000000000000003960000043400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -305,5 +273,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3824
-  Y: -465
+  X: 3823
+  Y: -493

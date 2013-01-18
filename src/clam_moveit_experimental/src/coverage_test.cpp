@@ -312,7 +312,7 @@ public:
 
     // Set the marker type.
     marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker.mesh_resource = "package://clam_description/stl/gripper_roll_link_simple.STL";
+    marker.mesh_resource = "package://clam_description/stl/gripper_base_link.STL";
 
     // Set the marker action.  Options are ADD and DELETE
     marker.action = visualization_msgs::Marker::ADD;
