@@ -55,6 +55,7 @@
 #include <moveit/kinematic_state/kinematic_state.h>
 #include <moveit/planning_models_loader/kinematic_model_loader.h>
 #include <moveit/kinematic_state/conversions.h>
+#include <moveit/plan_execution/plan_execution.h>
 
 // Rviz
 #include <visualization_msgs/Marker.h>
@@ -269,6 +270,55 @@ public:
     return true;
   }
 
+
+  // Function for testing multiple directions
+  double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result, const std::string &ik_link, const Eigen::Vector3d &approach_direction,
+                                     double desired_approach_distance, double max_step, kinematic_state::KinematicState approach_state, plan_execution::PlanExecution &plan_execution)
+  {
+    double d_approach =
+      approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
+                                                                          ik_link,
+                                                                          approach_direction,
+                                                                          desired_approach_distance,
+                                                                          max_step);          // TODO approach_validCallback);
+    ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
+    ROS_INFO_STREAM("Approach distance: " << d_approach );
+    ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
+
+
+
+
+    /* execute the planned trajectory */
+    ROS_INFO("Executing trajectory");
+    plan_execution.getTrajectoryExecutionManager()->clear();
+    if(plan_execution.getTrajectoryExecutionManager()->push(approach_traj_result))
+    {
+      plan_execution.getTrajectoryExecutionManager()->execute();
+
+      /* wait for the trajectory to complete */
+      moveit_controller_manager::ExecutionStatus es = plan_execution.getTrajectoryExecutionManager()->waitForExecution();
+      if (es == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
+        ROS_INFO("Trajectory execution succeeded");
+      else
+        if (es == moveit_controller_manager::ExecutionStatus::PREEMPTED)
+            ROS_INFO("Trajectory execution preempted");
+        else
+          if (es == moveit_controller_manager::ExecutionStatus::TIMED_OUT)
+              ROS_INFO("Trajectory execution timed out");
+          else
+              ROS_INFO("Trajectory execution control failed");
+    }
+    else
+    {
+      ROS_INFO("Failed to push trajectory");
+      return -1;
+    }
+
+
+    sleep(5);
+    ROS_INFO("\n\n\n\n\n\nSleeping...");
+  }
+
   // Actually run the action
   void pickAndPlace(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
   {
@@ -327,13 +377,27 @@ public:
 
 
     // Planning Scene stuff
-    planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
-    planning_scene::PlanningScene &scene = *psm.getPlanningScene();
+    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
+    if (planning_scene_monitor->getPlanningScene() && planning_scene_monitor->getPlanningScene()->isConfigured())
+    {
+        planning_scene_monitor->startWorldGeometryMonitor();
+        planning_scene_monitor->startSceneMonitor();
+        planning_scene_monitor->startStateMonitor();
+    }
+    else
+    {
+        ROS_ERROR("Planning scene not configured");
+        return -1;
+    }
+    planning_scene::PlanningScene &scene = planning_scene_monitor->getPlanningScene();
+    plan_execution::PlanExecution plan_execution(planning_scene_monitor);    
+
 
     // Create a goal kinematic state (just hardcode grasp position
     kinematic_state::KinematicState approach_state = scene.getCurrentState();
-    approach_state.setToRandomValues(); // temp
+    //    approach_state.
     // TODO: use setFromIK in joint_state_group.h
+
 
     // Output state info
     ROS_INFO("\nState info: \n");
@@ -356,23 +420,19 @@ public:
     // Resolution of trajectory
     double max_step = 0.005; // The maximum distance in Cartesian space between consecutive points on the resulting path
 
+    /*
     // Check for kinematic solver
     if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
     {
-      // Set kinematic solver
-      const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators = 
-        approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
-
-      if( allocators.first)
-      {
-        ROS_INFO("Has IK Solver");
-
-      }
-      else
-      {
-        ROS_INFO("No has IK Solver");
-      }
+    // Set kinematic solver
+    const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators =
+    approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
+    if( allocators.first)
+    ROS_INFO("Has IK Solver");
+    else
+    ROS_INFO("No has IK Solver");
     }
+    */
 
     /** \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
         as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
@@ -386,15 +446,56 @@ public:
         ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
 
     ROS_WARN("Preparing to computer cartesian path");
-    double d_approach =
-      approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
-                                                                          ik_link,
-                                                                          approach_direction,
-                                                                          desired_approach_distance,
-                                                                          max_step);          // TODO approach_validCallback);
-    ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
-    ROS_INFO_STREAM("Approach distance: " << d_approach );
-    ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
+
+
+    approach_direction << -1,0,0;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
+    approach_direction << 1,0,0;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
+    approach_direction << 0,1,0;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
+    approach_direction << 0,-1,0;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
+    approach_direction << 0,0,1;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
+    approach_direction << 0,0,-1;
+
+    computeCartesianPathWrapper(approach_traj_result,
+                                ik_link,
+                                approach_direction,
+                                desired_approach_distance,
+                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
 
 
 

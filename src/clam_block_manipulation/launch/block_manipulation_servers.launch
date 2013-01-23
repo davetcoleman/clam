@@ -5,6 +5,7 @@
   </node>
 
   <node name="pick_place_action_server" pkg="clam_block_manipulation" type="pick_place_action_server" output="screen">
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/> <!-- this allows the computeCartesianPath() func to have an IK solver -->
   </node>
   
   <node name="interactive_manipulation_action_server" pkg="clam_block_manipulation" type="interactive_manipulation_action_server" output="screen">
