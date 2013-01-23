@@ -271,7 +271,7 @@ public:
     // -------------------------------------------------------------------------------------------
     // Plan
     movegroup_action_.sendGoal(goal);
-    sleep(5);
+    ros::Duration(5.0).sleep();
 
     if(!movegroup_action_.waitForResult(ros::Duration(5.0)))
     {
@@ -302,11 +302,18 @@ public:
                                                                           max_step);          // TODO approach_validCallback);
     ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
     ROS_INFO_STREAM("Approach distance: " << d_approach );
+
+
+    for(int i = 0; i < approach_traj_results.points.size(); ++i)
+    {
+      approach_traj_results.points[i].time_from_start = (double)i;
+    }
+
     ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
 
 
+
     ROS_INFO("\n\n\n\n\n\nSleeping...");
-    sleep(5);
 
 
     /* execute the planned trajectory */
@@ -335,7 +342,7 @@ public:
       return -1;
     }
 
-    sleep(5);
+   ros::Duration(4.0).sleep();
   }
 
   // Actually run the action
@@ -345,7 +352,6 @@ public:
 
     ROS_INFO("[pick place] PickAndPlace started");
 
-    /*
     // -----------------------------------------------------------------------------------------------
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
@@ -361,15 +367,15 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-    ros::Duration(0.1).sleep();
+      ros::Duration(0.1).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Hover over block
     ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
     desired_pose.position.z = 0.1;
     if(!sendPoseCommand(desired_pose))
-    return false;
-    */
+      return false;
+
 
 
 
@@ -421,7 +427,7 @@ public:
       //planning_scene_monitor->startSceneMonitor();
       //planning_scene_monitor->startStateMonitor();
 
-      sleep(1);
+      ros::Duration(0.1).sleep();
     }
     else
     {
@@ -433,16 +439,16 @@ public:
 
     while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
     {
-      usleep(10000);
-      ros::spin();
+      ros::Duration(0.1).sleep();
+
+      ros::spinOnce();
       ROS_INFO("Waiting for complete state...");
 
       planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
 
+      // Show unpublished joints
       for(int i = 0; i < missing_joints.size(); ++i)
-        ROS_INFO_STREAM(missing_joints[i]);
-
-      ROS_INFO("");
+        ROS_WARN_STREAM("Unpublished joints: " << missing_joints[i]);
     }
 
     const planning_scene::PlanningScenePtr scene = planning_scene_monitor->getPlanningScene();
@@ -455,7 +461,6 @@ public:
     // Output state info
     ROS_INFO("\nState info: \n");
     approach_state.printStateInfo();
-    return false;
 
 
     const trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager(new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor->getKinematicModel()));
@@ -515,6 +520,7 @@ public:
                                 approach_direction,
                                 desired_approach_distance,
                                 max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+
     /*
       approach_direction << 1,0,0;
 
@@ -557,7 +563,6 @@ public:
       max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
     */
-
 
 
     ROS_WARN("Done ------------------------------------------------------------------------------");
