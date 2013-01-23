@@ -433,7 +433,8 @@ public:
 
     while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
     {
-      sleep(2);
+      usleep(10000);
+      ros::spin();
       ROS_INFO("Waiting for complete state...");
 
       planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
