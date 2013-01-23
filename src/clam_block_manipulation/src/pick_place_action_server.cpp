@@ -1,32 +1,40 @@
-/*
- * Copyright (c) 2011, Vanadium Labs LLC
- * All Rights Reserved
+/*********************************************************************
+ * Software License Agreement (BSD License)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ *  Copyright (c) 2012, Dave Coleman
+ *  All rights reserved.
  *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of Vanadium Labs LLC nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL VANADIUM LABS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the Willow Garage nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
- * Author: Dave Coleman
- */
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
+
+/* Author: Dave Coleman
+   Desc:   Controls the movement of the arm, planning, trajectories, etc
+*/
 
 // ROS
 #include <ros/ros.h>
@@ -67,12 +75,10 @@ private:
   // A ROS publisher
   ros::Publisher marker_pub_;
 
-  // MoveGroup
-  //  move_group_interface::MoveGroup group_;
-
   // Action Servers and Clients
   actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> as_;
   actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_;
+  actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
   // Action messages
   clam_controller::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
@@ -91,15 +97,24 @@ private:
 
 public:
   PickPlaceServer(const std::string name) :
-    nh_("~"), as_(name, false),
-    //    group_("arm"),
-    clam_arm_client_("clam_arm", true)
+    //nh_("~"), 
+    as_(name, false),
+    clam_arm_client_("clam_arm", true),
+    movegroup_action_("move_group", true)
   {
 
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
     while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
       ROS_INFO("[pick place] Waiting for the clam_arm action server");
+    }
+
+    clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
+
+    // -----------------------------------------------------------------------------------------------
+    // Connect to move_group action server
+    while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
+      ROS_INFO("[pick place] Waiting for the move_group action server");      
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -152,11 +167,11 @@ public:
 
     start_pose.position.x = 0.2;
     start_pose.position.y = 0.0;
-    start_pose.position.z = 0.2;
+    start_pose.position.z = 0.1;
 
     end_pose.position.x = 0.2;
     end_pose.position.y = 0.1;
-    end_pose.position.z = 0.2;
+    end_pose.position.z = 0.1;
 
     pickAndPlace(start_pose, end_pose);
   }
@@ -175,21 +190,12 @@ public:
     as_.setPreempted();
   }
 
-  bool sendGoal(const geometry_msgs::Pose& pose)
+  bool sendPoseCommand(const geometry_msgs::Pose& pose)
   {
     // -----------------------------------------------------------------------------------------------
     // Planning Scene stuff
     planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
     planning_scene::PlanningScene &scene = *psm.getPlanningScene();
-
-
-    // -----------------------------------------------------------------------------------------------
-    // Connect to move_group movegroup_actionion server
-    actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action("move_group", false);
-    ROS_INFO("[pick place] Connecting to move_group action server");
-    movegroup_action.waitForServer();
-    ROS_INFO("[pick place] Connected");
-
 
 
     // -----------------------------------------------------------------------------------------------
@@ -249,7 +255,7 @@ public:
 
     //group.setStartState( start_state );
     //  group.setPositionTarget(0.22222, 0, 0.2);
-    ROS_INFO_STREAM("[pick place] Planning for x:" << x << " y:" << y << " z:" << z);
+    ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << x << " y:" << y << " z:" << z);
 
     publishSphere(x, y, z);
     publishMesh(x, y, z + x_offset, qx, qy, qz, qw );
@@ -258,26 +264,21 @@ public:
     // -------------------------------------------------------------------------------------------
     // Plan
     //move_group_interface::MoveGroup::Plan plan;
-    movegroup_action.sendGoal(goal);
+    movegroup_action_.sendGoal(goal);
     sleep(5);
 
-    if(!movegroup_action.waitForResult(ros::Duration(5.0)))
+    if(!movegroup_action_.waitForResult(ros::Duration(5.0)))
     {
-      ROS_INFO_STREAM("Apparently returned early");
+      ROS_INFO_STREAM("[pick place] Returned early?");
     }
-    if (movegroup_action.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("It worked!");
-
-
+      ROS_INFO("[pick place] It worked!");
     }
     else
     {
-      ROS_WARN_STREAM("Fail: " << movegroup_action.getState().toString() << ": " << movegroup_action.getState().getText());
+      ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
     }
-
-
-
 
     return true;
   }
@@ -309,17 +310,17 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Hover over block
-    ROS_INFO("[pick place] Sending arm to pre-grasp position");
-    desired_pose.position.z = 0.2;
-    if(!sendGoal(desired_pose))
+    ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
+    desired_pose.position.z = 0.1;
+    if(!sendPoseCommand(desired_pose))
       return;
 
     // ---------------------------------------------------------------------------------------------
     // Lower over block
-    ROS_INFO("[pick place] Sending arm to grasp position");
-    desired_pose.position.z = desired_pose.position.z - 0.1;
-    ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
-    if(!sendGoal(desired_pose))
+    ROS_INFO("[pick place] Sending arm to grasp position ----------------------------------------");
+    desired_pose.position.z -= 0.05; // lower
+    //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
+    if(!sendPoseCommand(desired_pose))
       return;
 
     // ---------------------------------------------------------------------------------------------
@@ -332,11 +333,11 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
-    ROS_INFO("[pick place] Sending arm to new position");
+    ROS_INFO("[pick place] Sending arm to new position ------------------------------------------");
     desired_pose = end_pose;
-    desired_pose.position.z = 0.2;
-    ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
-    if(!sendGoal(desired_pose))
+    desired_pose.position.z = 0.1;
+    //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
+    if(!sendPoseCommand(desired_pose))
       return;
 
     // ---------------------------------------------------------------------------------------------

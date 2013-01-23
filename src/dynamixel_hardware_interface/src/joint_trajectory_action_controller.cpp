@@ -105,26 +105,6 @@ bool JointTrajectoryActionController::initialize(std::string name, std::vector<b
 
 void JointTrajectoryActionController::start()
 {
-  // Subscribe to the set compliance slope and margin
-  /*
-    while (ros::ok() &&
-    !ros::service::waitForService(controller_manager_name_ + "/set_compliance_slope", ros::Duration(5.0))  &&
-    ++attempts < max_attempts)
-    {
-    ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/set_compliance_slope" << " to come up");
-    }
-    for( std::vector<std::string>::const_iterator joint_it = joint_names_.begin();
-    joint_it < joint_names_.end(); ++joint_it )
-    {
-    set_compliance_slope_ = c_nh_.serviceClient<dynamixel_hardware_interface::SetComplianceSlope>
-    (*joint_it + "/start_controller", true);
-    set_compliance_margin_ = c_nh_.serviceClient<dynamixel_hardware_interface::SetComplianceSlope>
-    (name_ + "/start_controller", true);
-    }
-  */
-
-
-
   command_sub_ = c_nh_.subscribe("command", 50, &JointTrajectoryActionController::processCommand, this);
   state_pub_ = c_nh_.advertise<control_msgs::FollowJointTrajectoryFeedback>("state", 50);
 

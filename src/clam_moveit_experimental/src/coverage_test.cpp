@@ -80,7 +80,7 @@ private:
   ros::Publisher marker_pub_;
 
   // A shared node handle
-  ros::NodeHandle n_;
+  ros::NodeHandle nh_;
 
 public:
   // *********************************************************************************************************
@@ -95,7 +95,7 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
-    marker_pub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
     ros::Duration(0.5).sleep();
 
     ROS_INFO_STREAM("[coverage test] Preparing to send command to group = " << GROUP_NAME);
@@ -112,8 +112,11 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group movegroup_actionion server
     actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action("move_group", false);
-    ROS_INFO("[coverage test] Connecting to move_group action server");
-    movegroup_action.waitForServer();
+    while(!movegroup_action.waitForServer(ros::Duration(5.0))){ // wait for server to start
+      ROS_INFO("[coverage test] Waiting for the move_group action server");
+    }
+    //    ROS_INFO("[coverage test] Connecting to move_group action server");
+    //    movegroup_action.waitForServer();
 
     // -----------------------------------------------------------------------------------------------
     // Go to home position

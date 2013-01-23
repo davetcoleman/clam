@@ -203,11 +203,12 @@ public:
       ros::shutdown();
     }
     else
-    {
+    {/*
       ROS_INFO(" ");
       ROS_INFO("Restarting Demo --------------------------------------------- ");
 
       resetArm();
+     */
     }
   }
 };

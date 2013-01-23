@@ -8,13 +8,13 @@ find_package(Boost REQUIRED thread date_time system filesystem program_options p
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+  roscpp 
   actionlib 
+  tf
+  clam_block_manipulation
   eigen_conversions 
   moveit_ros_planning 
   moveit_ros_planning_interface
-  roscpp 
-  tf
-  clam_block_manipulation
 )
 
 ###################################################
@@ -27,15 +27,14 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS 
      include
-#  LIBRARIES clam_moveit_experimental
    CATKIN_DEPENDS 
-     actionlib 
-     eigen_conversions 
-     moveit_ros_planning 
-     moveit_ros_planning_interface
-     roscpp 
-     tf
-     clam_block_manipulation
+      roscpp 
+      actionlib 
+      tf
+      clam_block_manipulation
+      eigen_conversions 
+      moveit_ros_planning 
+      moveit_ros_planning_interface
 #  DEPENDS system_lib
 )
 
