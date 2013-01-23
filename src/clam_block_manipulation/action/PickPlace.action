@@ -8,5 +8,6 @@ geometry_msgs/Pose place_pose
 string topic
 ---
 #result definition
+bool success                        # whether command worked successfully
 ---
 #feedback

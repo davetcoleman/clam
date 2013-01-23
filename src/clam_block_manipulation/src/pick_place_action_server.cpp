@@ -55,7 +55,14 @@
 #include <moveit/kinematic_state/kinematic_state.h>
 #include <moveit/planning_models_loader/kinematic_model_loader.h>
 #include <moveit/kinematic_state/conversions.h>
+#include <tf/transform_listener.h>
 #include <moveit/plan_execution/plan_execution.h>
+#include <moveit/plan_execution/plan_with_sensing.h>
+#include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <moveit/kinematics_planner/kinematics_planner.h>
+
 
 // Rviz
 #include <visualization_msgs/Marker.h>
@@ -77,7 +84,7 @@ private:
   ros::Publisher marker_pub_;
 
   // Action Servers and Clients
-  actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> as_;
+  actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> action_server_;
   actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_;
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
@@ -99,7 +106,7 @@ private:
 public:
   PickPlaceServer(const std::string name) :
     //nh_("~"),
-    as_(name, false),
+    action_server_(name, false),
     clam_arm_client_("clam_arm", true),
     movegroup_action_("move_group", true)
   {
@@ -125,9 +132,9 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and feeback callbacks
-    as_.registerGoalCallback(boost::bind(&PickPlaceServer::goalCB, this));
-    as_.registerPreemptCallback(boost::bind(&PickPlaceServer::preemptCB, this));
-    as_.start();
+    action_server_.registerGoalCallback(boost::bind(&PickPlaceServer::goalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&PickPlaceServer::preemptCB, this));
+    action_server_.start();
   }
 
   // Recieve Action Goal Function
@@ -135,7 +142,7 @@ public:
   {
     ROS_INFO("[pick place] Received goal -----------------------------------------------");
 
-    goal_ = as_.acceptNewGoal();
+    goal_ = action_server_.acceptNewGoal();
     arm_link = goal_->frame;
     gripper_open = goal_->gripper_open;
     gripper_closed = goal_->gripper_closed;
@@ -174,13 +181,25 @@ public:
     end_pose.position.y = 0.1;
     end_pose.position.z = 0.1;
 
-    pickAndPlace(start_pose, end_pose);
+    if( !pickAndPlace(start_pose, end_pose) )
+    {
+      ROS_ERROR("[pick place] Pick and place failed");
+      result_.success = false;
+      action_server_.setSucceeded(result_);
+    }
   }
 
   void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr& msg)
   {
     ROS_INFO("[pick place] Got goal from topic! %s", goal_->topic.c_str());
-    pickAndPlace(msg->poses[0], msg->poses[1]);
+
+    if( !pickAndPlace(msg->poses[0], msg->poses[1]) )
+    {
+      ROS_ERROR("[pick place] Pick and place failed");
+      result_.success = false;
+      action_server_.setSucceeded(result_);
+    }
+
     pick_place_sub_.shutdown();
   }
 
@@ -188,7 +207,7 @@ public:
   void preemptCB()
   {
     ROS_INFO("[pick place] Preempted");
-    as_.setPreempted();
+    action_server_.setPreempted();
   }
 
   bool sendPoseCommand(const geometry_msgs::Pose& pose)
@@ -286,6 +305,8 @@ public:
     ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
 
 
+    ROS_INFO("\n\n\n\n\n\nSleeping...");
+    sleep(5);
 
 
     /* execute the planned trajectory */
@@ -301,32 +322,30 @@ public:
         ROS_INFO("Trajectory execution succeeded");
       else
         if (es == moveit_controller_manager::ExecutionStatus::PREEMPTED)
-            ROS_INFO("Trajectory execution preempted");
+          ROS_INFO("Trajectory execution preempted");
         else
           if (es == moveit_controller_manager::ExecutionStatus::TIMED_OUT)
-              ROS_INFO("Trajectory execution timed out");
+            ROS_INFO("Trajectory execution timed out");
           else
-              ROS_INFO("Trajectory execution control failed");
+            ROS_INFO("Trajectory execution control failed");
     }
     else
     {
-      ROS_INFO("Failed to push trajectory");
+      ROS_ERROR("Failed to push trajectory");
       return -1;
     }
 
-
     sleep(5);
-    ROS_INFO("\n\n\n\n\n\nSleeping...");
   }
 
   // Actually run the action
-  void pickAndPlace(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
+  bool pickAndPlace(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
   {
     geometry_msgs::Pose desired_pose = start_pose;
 
-    // Wait for MoveArmAction to be ready ----------------------------------------------------------
     ROS_INFO("[pick place] PickAndPlace started");
 
+    /*
     // -----------------------------------------------------------------------------------------------
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
@@ -342,15 +361,15 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
+    ros::Duration(0.1).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Hover over block
     ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
     desired_pose.position.z = 0.1;
     if(!sendPoseCommand(desired_pose))
-      return;
-
+    return false;
+    */
 
 
 
@@ -376,32 +395,72 @@ public:
     */
 
 
+    /*
+      planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
+      planning_scene::PlanningScene &scene2 = *psm.getPlanningScene();
+      kinematic_state::KinematicState state = scene2.getCurrentState();
+      ROS_INFO("\nState info: \n");
+      state.printStateInfo();
+      ROS_WARN("\n\n\n\n");
+    */
+
+
+
     // Planning Scene stuff
-    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
+    boost::shared_ptr<tf::TransformListener> tf(new tf::TransformListener());
+    //planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
+    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf));
     if (planning_scene_monitor->getPlanningScene() && planning_scene_monitor->getPlanningScene()->isConfigured())
     {
-        planning_scene_monitor->startWorldGeometryMonitor();
-        planning_scene_monitor->startSceneMonitor();
-        planning_scene_monitor->startStateMonitor();
+      ROS_INFO("Planning scene configured");
+
+      planning_scene_monitor->startWorldGeometryMonitor();
+      planning_scene_monitor->startSceneMonitor("/move_group/monitored_planning_scene");
+      planning_scene_monitor->startStateMonitor("/joint_states", "/attached_collision_object");
+
+      //planning_scene_monitor->startSceneMonitor();
+      //planning_scene_monitor->startStateMonitor();
+
+      sleep(1);
     }
     else
     {
-        ROS_ERROR("Planning scene not configured");
-        return -1;
+      ROS_ERROR("Planning scene not configured");
+      return false;
     }
-    planning_scene::PlanningScene &scene = planning_scene_monitor->getPlanningScene();
-    plan_execution::PlanExecution plan_execution(planning_scene_monitor);    
 
+    std::vector<std::string> missing_joints;
+
+    while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
+    {
+      sleep(2);
+      ROS_INFO("Waiting for complete state...");
+
+      planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
+
+      for(int i = 0; i < missing_joints.size(); ++i)
+        ROS_INFO_STREAM(missing_joints[i]);
+
+      ROS_INFO("");
+    }
+
+    const planning_scene::PlanningScenePtr scene = planning_scene_monitor->getPlanningScene();
 
     // Create a goal kinematic state (just hardcode grasp position
-    kinematic_state::KinematicState approach_state = scene.getCurrentState();
-    //    approach_state.
+    kinematic_state::KinematicState approach_state = scene->getCurrentState();
+    //approach_state.setToCurrent();
     // TODO: use setFromIK in joint_state_group.h
-
 
     // Output state info
     ROS_INFO("\nState info: \n");
     approach_state.printStateInfo();
+    return false;
+
+
+    const trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager(new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor->getKinematicModel()));
+    plan_execution::PlanExecution plan_execution(planning_scene_monitor, trajectory_execution_manager);
+
+
 
     // this is the resulting generated trajectory
     moveit_msgs::RobotTrajectory approach_traj_result;
@@ -418,7 +477,7 @@ public:
     double desired_approach_distance = .025; // 25cm
 
     // Resolution of trajectory
-    double max_step = 0.005; // The maximum distance in Cartesian space between consecutive points on the resulting path
+    double max_step = 0.01; // The maximum distance in Cartesian space between consecutive points on the resulting path
 
     /*
     // Check for kinematic solver
@@ -455,48 +514,48 @@ public:
                                 approach_direction,
                                 desired_approach_distance,
                                 max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+    /*
+      approach_direction << 1,0,0;
 
-    approach_direction << 1,0,0;
+      computeCartesianPathWrapper(approach_traj_result,
+      ik_link,
+      approach_direction,
+      desired_approach_distance,
+      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+      approach_direction << 0,1,0;
 
-    approach_direction << 0,1,0;
+      computeCartesianPathWrapper(approach_traj_result,
+      ik_link,
+      approach_direction,
+      desired_approach_distance,
+      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+      approach_direction << 0,-1,0;
 
-    approach_direction << 0,-1,0;
+      computeCartesianPathWrapper(approach_traj_result,
+      ik_link,
+      approach_direction,
+      desired_approach_distance,
+      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+      approach_direction << 0,0,1;
 
-    approach_direction << 0,0,1;
+      computeCartesianPathWrapper(approach_traj_result,
+      ik_link,
+      approach_direction,
+      desired_approach_distance,
+      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
+      approach_direction << 0,0,-1;
 
-    approach_direction << 0,0,-1;
+      computeCartesianPathWrapper(approach_traj_result,
+      ik_link,
+      approach_direction,
+      desired_approach_distance,
+      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
 
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-
+    */
 
 
 
@@ -509,7 +568,7 @@ public:
     desired_pose.position.z -= 0.05; // lower
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendPoseCommand(desired_pose))
-    return;
+    return false;
 
     // ---------------------------------------------------------------------------------------------
     // Close gripper
@@ -526,7 +585,7 @@ public:
     desired_pose.position.z = 0.1;
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendPoseCommand(desired_pose))
-    return;
+    return false;
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -539,17 +598,19 @@ public:
     */
     // ---------------------------------------------------------------------------------------------
     // Reset
-    ROS_INFO("[pick place] Going to home position");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
+    /*
+      ROS_INFO("[pick place] Going to home position");
+      clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
+    */
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm
     ROS_INFO("[pick place] Finished ------------------------------------------------");
     ROS_INFO(" ");
-    as_.setSucceeded(result_);
+    action_server_.setSucceeded(result_);
   }
 
   // *********************************************************************************************************
