@@ -97,7 +97,7 @@ private:
 
 public:
   PickPlaceServer(const std::string name) :
-    //nh_("~"), 
+    //nh_("~"),
     as_(name, false),
     clam_arm_client_("clam_arm", true),
     movegroup_action_("move_group", true)
@@ -114,7 +114,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
-      ROS_INFO("[pick place] Waiting for the move_group action server");      
+      ROS_INFO("[pick place] Waiting for the move_group action server");
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -193,14 +193,7 @@ public:
   bool sendPoseCommand(const geometry_msgs::Pose& pose)
   {
     // -----------------------------------------------------------------------------------------------
-    // Planning Scene stuff
-    planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
-    planning_scene::PlanningScene &scene = *psm.getPlanningScene();
-
-
-    // -----------------------------------------------------------------------------------------------
     // Move arm
-    //    move_group_interface::MoveGroup group(GROUP_NAME);
     moveit_msgs::MoveGroupGoal goal;
     goal.request.group_name = GROUP_NAME;
     goal.request.num_planning_attempts = 1;
@@ -249,21 +242,14 @@ public:
     goal.request.goal_constraints[0] = g0;
 
     // -------------------------------------------------------------------------------------------
-    // Create start state
-    kinematic_state::KinematicState start = scene.getCurrentState();
-
-
-    //group.setStartState( start_state );
-    //  group.setPositionTarget(0.22222, 0, 0.2);
+    // Visualize goals
     ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << x << " y:" << y << " z:" << z);
-
     publishSphere(x, y, z);
     publishMesh(x, y, z + x_offset, qx, qy, qz, qw );
 
 
     // -------------------------------------------------------------------------------------------
     // Plan
-    //move_group_interface::MoveGroup::Plan plan;
     movegroup_action_.sendGoal(goal);
     sleep(5);
 
@@ -315,13 +301,114 @@ public:
     if(!sendPoseCommand(desired_pose))
       return;
 
+
+
+
+
+
+    // ---------------------------------------------------------------------------------------------
+    // Compute Straight Line Path
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+
+    ROS_INFO("[pick place] Compute Straight Line Path -------------------------------------------");
+    /*
+      const ManipulationPlanPtr &plan
+      plan->possible_goal_states_ is type kinematic_state::KinematicStatePtr
+
+
+
+      TODO
+      plan->ik_link_name_
+      -approach_direction,
+      plan->grasp_.desired_approach_distance,
+      max_step_,
+      approach_validCallback
+    */
+
+
+    // Planning Scene stuff
+    planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
+    planning_scene::PlanningScene &scene = *psm.getPlanningScene();
+
+    // Create a goal kinematic state (just hardcode grasp position
+    kinematic_state::KinematicState approach_state = scene.getCurrentState();
+    approach_state.setToRandomValues(); // temp
+    // TODO: use setFromIK in joint_state_group.h
+
+    // Output state info
+    ROS_INFO("\nState info: \n");
+    approach_state.printStateInfo();
+
+    // this is the resulting generated trajectory
+    moveit_msgs::RobotTrajectory approach_traj_result;
+
+    // End effector parent link
+    const std::string &ik_link = "gripper_roll_link"; // eef->getEndEffectorParentGroup().second;
+    // TODO: also try for ik_link "gripper_fixed_finger_link"... maybe?
+
+    // Approach direction
+    Eigen::Vector3d approach_direction;
+    approach_direction << 1, 0, 0; // TODO: test
+
+    // The distance the origin of a robot link needs to travel
+    double desired_approach_distance = .025; // 25cm
+
+    // Resolution of trajectory
+    double max_step = 0.005; // The maximum distance in Cartesian space between consecutive points on the resulting path
+
+    // Check for kinematic solver
+    if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
+    {
+      // Set kinematic solver
+      const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators = 
+        approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
+
+      if( allocators.first)
+      {
+        ROS_INFO("Has IK Solver");
+
+      }
+      else
+      {
+        ROS_INFO("No has IK Solver");
+      }
+    }
+
+    /** \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
+        as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
+        line, following the specified direction, for the desired \e distance. The resulting joint values are stored in the vector \e states,
+        one by one. The maximum distance in Cartesian space between consecutive points on the resulting path is specified by \e max_step.
+        If a \e validCallback is specified, this is passed to the internal call to setFromIK(). In case of failure, the computation of the path
+        stops and the value returned corresponds to the distance that was computed and for which corresponding states were added to the path.
+        At the end of the function call, the state of the group corresponds to the last attempted Cartesian pose
+
+        double computeCartesianPath(moveit_msgs::RobotTrajectory &traj, const std::string &link_name, const Eigen::Vector3d &direction,
+        ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
+
+    ROS_WARN("Preparing to computer cartesian path");
+    double d_approach =
+      approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
+                                                                          ik_link,
+                                                                          approach_direction,
+                                                                          desired_approach_distance,
+                                                                          max_step);          // TODO approach_validCallback);
+    ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
+    ROS_INFO_STREAM("Approach distance: " << d_approach );
+    ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
+
+
+
+
+    ROS_WARN("Done ------------------------------------------------------------------------------");
+    /*
+
     // ---------------------------------------------------------------------------------------------
     // Lower over block
     ROS_INFO("[pick place] Sending arm to grasp position ----------------------------------------");
     desired_pose.position.z -= 0.05; // lower
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendPoseCommand(desired_pose))
-      return;
+    return;
 
     // ---------------------------------------------------------------------------------------------
     // Close gripper
@@ -329,7 +416,7 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
+    ros::Duration(0.1).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
@@ -338,7 +425,7 @@ public:
     desired_pose.position.z = 0.1;
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendPoseCommand(desired_pose))
-      return;
+    return;
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -346,8 +433,9 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
+    ros::Duration(0.1).sleep();
 
+    */
     // ---------------------------------------------------------------------------------------------
     // Reset
     ROS_INFO("[pick place] Going to home position");

@@ -67,9 +67,10 @@ target_link_libraries(pick_place_action_server ${catkin_LIBRARIES})
 add_executable(block_manipulation_action_demo src/demo/block_manipulation_action_demo.cpp)
 target_link_libraries(block_manipulation_action_demo ${catkin_LIBRARIES})
 
-add_executable(coverage_test_temp src/coverage_test.cpp)
-target_link_libraries(coverage_test_temp ${catkin_LIBRARIES})
-
 #include_directories(${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+
+
+
+
 
