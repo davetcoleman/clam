@@ -39,30 +39,31 @@
 // ROS
 #include <ros/ros.h>
 #include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseArray.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 // ClamArm
 #include <clam_block_manipulation/PickPlaceAction.h>
 #include <clam_controller/ClamArmAction.h>
 
 // MoveIt
-//#include <moveit/move_group_interface/move_group.h>
 #include <moveit_msgs/MoveGroupAction.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+#include <moveit_msgs/RobotState.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/kinematic_state/kinematic_state.h>
-#include <moveit/planning_models_loader/kinematic_model_loader.h>
 #include <moveit/kinematic_state/conversions.h>
-#include <tf/transform_listener.h>
+#include <moveit/planning_models_loader/kinematic_model_loader.h>
 #include <moveit/plan_execution/plan_execution.h>
 #include <moveit/plan_execution/plan_with_sensing.h>
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 #include <moveit/kinematics_planner/kinematics_planner.h>
-
+#include <moveit/trajectory_processing/iterative_smoother.h>
 
 // Rviz
 #include <visualization_msgs/Marker.h>
@@ -291,9 +292,15 @@ public:
 
 
   // Function for testing multiple directions
-  double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result, const std::string &ik_link, const Eigen::Vector3d &approach_direction,
-                                     double desired_approach_distance, double max_step, kinematic_state::KinematicState approach_state, plan_execution::PlanExecution &plan_execution)
+  double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result,
+                                     const std::string &ik_link, const Eigen::Vector3d &approach_direction,
+                                     double desired_approach_distance, double max_step,
+                                     kinematic_state::KinematicState approach_state,
+                                     plan_execution::PlanExecution &plan_execution,
+                                     const planning_scene::PlanningScenePtr planning_scene)
   {
+    // -----------------------------------------------------------------------------------------------
+    // Compute Cartesian Path
     double d_approach =
       approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
                                                                           ik_link,
@@ -303,27 +310,73 @@ public:
     ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
     ROS_INFO_STREAM("Approach distance: " << d_approach );
 
+    // -----------------------------------------------------------------------------------------------
+    // Proccess Trajectory
+    //trajectory_processing::reverseTrajectory(approach_traj_result);
 
-    for(int i = 0; i < approach_traj_results.points.size(); ++i)
+    /* Add times
+    for(int i = 0; i < approach_traj_result.joint_trajectory.points.size(); ++i)
     {
-      approach_traj_results.points[i].time_from_start = (double)i;
+      approach_traj_result.joint_trajectory.points[i].time_from_start = ros::Duration((double)i + 1);
     }
+    */
 
+    // Output debu
     ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
 
+    // -----------------------------------------------------------------------------------------------
+    // Get current RobotState  (in order to specify all joints not in approach_traj_result)
+    moveit_msgs::RobotState robot_state;
+    kinematic_state::kinematicStateToRobotState( planning_scene->getCurrentState(), robot_state );
 
+    // -----------------------------------------------------------------------------------------------
+    // Now smooth the path
 
-    ROS_INFO("\n\n\n\n\n\nSleeping...");
+    // Vars
+    trajectory_processing::IterativeParabolicSmoother smoother_;
+    trajectory_msgs::JointTrajectory trajectory_out;
 
+    // Get the joint limits
+    const kinematic_model::JointModelGroup *joint_model_group =
+      planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
+    const std::vector<moveit_msgs::JointLimits> &joint_limits = joint_model_group->getVariableLimits();
 
-    /* execute the planned trajectory */
+    // Perform iterative parabolic smoothing
+    smoother_.smooth(approach_traj_result.joint_trajectory, trajectory_out, joint_limits, robot_state);
+
+    // Copy results to robot trajectory message:
+    approach_traj_result.joint_trajectory = trajectory_out;
+
+    ROS_INFO_STREAM("New trajectory\n" << approach_traj_result);
+
+    // -----------------------------------------------------------------------------------------------
+    // Display the path
+    ros::Publisher display_path_publisher_;
+    display_path_publisher_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 10, true);
+    ros::spinOnce();
+    ROS_WARN("Published trajectory to rviz, waiting 5 sec");
+    ros::Duration(5.0).sleep();
+
+    // Create the message
+    moveit_msgs::DisplayTrajectory disp;
+    disp.model_id = planning_scene->getKinematicModel()->getName();
+    disp.trajectory_start = robot_state;
+    disp.trajectory.resize(1, approach_traj_result);
+    display_path_publisher_.publish(disp);
+    ROS_INFO("Sent display trajectory message");
+
+    ROS_INFO("\n\n\nSleeping 1...\n\n");
+    ros::Duration(5.0).sleep();
+
+    // -----------------------------------------------------------------------------------------------
+    // execute the planned trajectory
     ROS_INFO("Executing trajectory");
     plan_execution.getTrajectoryExecutionManager()->clear();
     if(plan_execution.getTrajectoryExecutionManager()->push(approach_traj_result))
     {
       plan_execution.getTrajectoryExecutionManager()->execute();
 
-      /* wait for the trajectory to complete */
+      // wait for the trajectory to complete
       moveit_controller_manager::ExecutionStatus es = plan_execution.getTrajectoryExecutionManager()->waitForExecution();
       if (es == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
         ROS_INFO("Trajectory execution succeeded");
@@ -342,7 +395,7 @@ public:
       return -1;
     }
 
-   ros::Duration(4.0).sleep();
+    ros::Duration(4.0).sleep();
   }
 
   // Actually run the action
@@ -477,13 +530,13 @@ public:
 
     // Approach direction
     Eigen::Vector3d approach_direction;
-    approach_direction << 1, 0, 0; // TODO: test
+    approach_direction << 1, 0, 0;
 
     // The distance the origin of a robot link needs to travel
-    double desired_approach_distance = .025; // 25cm
+    double desired_approach_distance = .05; // 25cm
 
     // Resolution of trajectory
-    double max_step = 0.01; // The maximum distance in Cartesian space between consecutive points on the resulting path
+    double max_step = 0.001; // The maximum distance in Cartesian space between consecutive points on the resulting path
 
     /*
     // Check for kinematic solver
@@ -513,56 +566,15 @@ public:
     ROS_WARN("Preparing to computer cartesian path");
 
 
-    approach_direction << -1,0,0;
+    approach_direction << 0,0,-1;
 
     computeCartesianPathWrapper(approach_traj_result,
                                 ik_link,
                                 approach_direction,
                                 desired_approach_distance,
-                                max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-    /*
-      approach_direction << 1,0,0;
-
-      computeCartesianPathWrapper(approach_traj_result,
-      ik_link,
-      approach_direction,
-      desired_approach_distance,
-      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-      approach_direction << 0,1,0;
-
-      computeCartesianPathWrapper(approach_traj_result,
-      ik_link,
-      approach_direction,
-      desired_approach_distance,
-      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-      approach_direction << 0,-1,0;
-
-      computeCartesianPathWrapper(approach_traj_result,
-      ik_link,
-      approach_direction,
-      desired_approach_distance,
-      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-      approach_direction << 0,0,1;
-
-      computeCartesianPathWrapper(approach_traj_result,
-      ik_link,
-      approach_direction,
-      desired_approach_distance,
-      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-      approach_direction << 0,0,-1;
-
-      computeCartesianPathWrapper(approach_traj_result,
-      ik_link,
-      approach_direction,
-      desired_approach_distance,
-      max_step, approach_state, plan_execution);          // TODO approach_validCallback);
-
-    */
+                                max_step, approach_state,
+                                plan_execution,
+                                scene);          // TODO approach_validCallback);
 
 
     ROS_WARN("Done ------------------------------------------------------------------------------");
@@ -616,7 +628,11 @@ public:
     // Demo will automatically reset arm
     ROS_INFO("[pick place] Finished ------------------------------------------------");
     ROS_INFO(" ");
+
+    result_.success = true;
     action_server_.setSucceeded(result_);
+
+    return true;
   }
 
   // *********************************************************************************************************
@@ -748,7 +764,12 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "pick_place_action_server");
 
   clam_block_manipulation::PickPlaceServer server("pick_place");
-  ros::spin();
+
+  // Allow the action server to recieve and send ros messages
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+  
+  ros::spin(); // keep the action server alive
 
   return 0;
 }

@@ -267,6 +267,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
 
     seg.duration = durations[i];
 
+    ROS_DEBUG("Checking velocity");
     // Checks that the incoming segment has the right number of velocity elements
     if (!point.velocities.empty() && point.velocities.size() != num_joints_)
     {
@@ -281,6 +282,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       }
       return;
     }
+    ROS_DEBUG("Done checking velocity");
 
     // Checks that the incoming segment has the right number of position elements
     if (!point.positions.empty() && point.positions.size() != num_joints_)

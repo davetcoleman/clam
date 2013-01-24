@@ -44,7 +44,8 @@
               clam_arm_controller"
         output="screen"/>
 
-  <!-- Start the ClamArm action server to help run low level functions
+  <!-- Start the ClamArm action server to help run low level functions -->
   <node name="clam_arm_action_server" pkg="clam_controller" type="clam_arm_action_server" output="screen" />
- -->
+
+  
 </launch>

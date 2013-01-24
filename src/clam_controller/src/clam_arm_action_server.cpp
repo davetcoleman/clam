@@ -505,6 +505,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "clam_arm_action_server");
 
   clam_controller::ClamArmServer server("clam_arm");
+
   ros::spin();
 
   return 0;

@@ -1,23 +1,29 @@
 <!-- -*- mode: XML -*- -->
 <launch>
 
+  <!-- debug capability -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
   <!-- chmod the usb ports -->
   <node name="change_usb_port_permissions" pkg="clam_bringup" type="change_usb_port_permissions.sh" />
 
-  <!-- Startup the arm controller -->
-  <include file="$(find clam_controller)/launch/clam_controller.launch" />
+  <!-- Startup the arm controller, dynamixel manager, hardware interface, etc -->
+  <include file="$(find clam_controller)/launch/clam_controller.launch">
+    <arg name="debug" value="$(arg debug)" />
+  </include>
 
   <!-- Send robot XML description to param server -->
   <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
 
-  <!-- Combine all the joint info -->
+  <!-- Publish combined joint info -->
   <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
 
-  <!-- Publish the joint_states -->
+  <!-- Publish the robot state -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
   <!-- Launch fake joint state publisher -->
-  <!--node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output="screen"-->
   <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
     <rosparam param="source_list">[joint_states]</rosparam>
     <rosparam param="use_gui">FALSE</rosparam>
