@@ -9,6 +9,7 @@ cd /dev;
 find dynamixel_**;
 echo "-----------------------------------";
 echo "Changing permissions:";
+#gksudo -m "Input password" 
 sudo chmod 777 dynamixel_*;
 sudo chmod 777 ttyUSB*;
 echo "-----------------------------------";

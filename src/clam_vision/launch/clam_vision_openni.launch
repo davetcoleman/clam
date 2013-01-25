@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Launch vision stuff: -->
-  <!--include file="$(find openni_launch)/launch/openni.launch" /-->
+  <include file="$(find openni_launch)/launch/openni.launch" />
 
   <!-- This is highly dependent on the setup of the kinect in the lab -->
   <node name="clam_vision_frame" pkg="tf" type="static_transform_publisher" output="screen"

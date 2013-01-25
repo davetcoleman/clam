@@ -1,0 +1,8 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <!-- Launch visualizer -->
+  <node pkg="rviz" type="rviz" name="rviz" 
+	args="-d $(find clam_block_manipulation)/launch/block_manipulation.rviz" />
+
+</launch>
