@@ -12,17 +12,11 @@ find_package(catkin REQUIRED
   visualization_msgs 
   interactive_markers 
   clam_controller 
+  clam_msgs
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 
   moveit_ros_planning_interface
-)
-
-## Declare ROS messages and services
-add_action_files(DIRECTORY action FILES
-  BlockDetectionAction
-  InteractiveBlockManipulationAction
-  PickPlaceAction
 )
 
 generate_messages(DEPENDENCIES
@@ -38,6 +32,7 @@ catkin_package(DEPENDS
   visualization_msgs 
   interactive_markers 
   clam_controller 
+  clam_msgs
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 

@@ -38,7 +38,7 @@
 
 #include <moveit/move_group_interface/move_group.h>
 #include <ros/ros.h>
-#include <clam_controller/ClamArmAction.h> // for controlling the gripper
+#include <clam_msgs/ClamArmAction.h> // for controlling the gripper
 #include <actionlib/client/simple_action_client.h>
 
 #include <iostream> // For recording data
@@ -61,8 +61,8 @@ int main(int argc, char **argv)
 
   // -----------------------------------------------------------------------------------------------
   // Connect to ClamArm action server
-  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_("clam_arm", true);
-  clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_("clam_arm", true);
+  clam_msgs::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
 
   while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
     ROS_INFO("[gripper test] Waiting for the clam_arm action server");
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   // Go to home position
   ROS_INFO("[gripper test] Resetting arm to home position");
-  clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+  clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
   clam_arm_client_.sendGoal(clam_arm_goal_);
   clam_arm_client_.waitForResult(ros::Duration(20.0));
   if(!clam_arm_client_.getState().isDone())
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
       // -----------------------------------------------------------------------------------------------
       // Open gripper
       ROS_INFO("[gripper test] Opening gripper");
-      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
       clam_arm_client_.sendGoal(clam_arm_goal_);
       clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout
       
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
       // -----------------------------------------------------------------------------------------------
       // Close gripper
       ROS_INFO("[gripper test] Closing gripper");
-      clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE;
       //clam_arm_goal_.end_effector_setpoint = 0.0; // -0.1
       clam_arm_client_.sendGoal(clam_arm_goal_);
       clam_arm_client_.waitForResult(ros::Duration(10.0)); // has a timeout

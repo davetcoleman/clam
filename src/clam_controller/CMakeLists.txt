@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamixel_hardware_interface 
   std_msgs 
   sensor_msgs
+  clam_msgs
 )
 
 ## Declare ROS messages and services

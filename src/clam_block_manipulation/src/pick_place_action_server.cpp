@@ -47,8 +47,8 @@
 #include <Eigen/Geometry>
 
 // ClamArm
-#include <clam_block_manipulation/PickPlaceAction.h>
-#include <clam_controller/ClamArmAction.h>
+#include <clam_msgs/PickPlaceAction.h>
+#include <clam_msgs/ClamArmAction.h>
 
 // MoveIt
 #include <moveit_msgs/MoveGroupAction.h>
@@ -69,7 +69,7 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-namespace clam_block_manipulation
+namespace clam_msgs
 {
 
 static const std::string GROUP_NAME = "arm";
@@ -87,15 +87,15 @@ private:
   ros::Publisher marker_pub_;
 
   // Action Servers and Clients
-  actionlib::SimpleActionServer<clam_block_manipulation::PickPlaceAction> action_server_;
-  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_client_;
+  actionlib::SimpleActionServer<clam_msgs::PickPlaceAction> action_server_;
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
   // Action messages
-  clam_controller::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
-  clam_block_manipulation::PickPlaceFeedback     feedback_;
-  clam_block_manipulation::PickPlaceResult       result_;
-  clam_block_manipulation::PickPlaceGoalConstPtr goal_;
+  clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
+  clam_msgs::PickPlaceFeedback     feedback_;
+  clam_msgs::PickPlaceResult       result_;
+  clam_msgs::PickPlaceGoalConstPtr goal_;
 
   // Subscriber
   ros::Subscriber pick_place_sub_;
@@ -520,7 +520,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     clam_arm_client_.waitForResult(ros::Duration(20.0));
     //while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -529,7 +529,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Open gripper
     ROS_INFO("[pick place] Opening gripper");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -556,7 +556,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Close gripper
     ROS_INFO("[pick place] Closing gripper");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -597,7 +597,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Open gripper
     ROS_INFO("[pick place] Opening gripper");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -606,7 +606,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Reset
     ROS_INFO("[pick place] Going to home position");
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
@@ -750,7 +750,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "pick_place_action_server");
 
-  clam_block_manipulation::PickPlaceServer server("pick_place");
+  clam_msgs::PickPlaceServer server("pick_place");
 
   // Allow the action server to recieve and send ros messages
   ros::AsyncSpinner spinner(1);

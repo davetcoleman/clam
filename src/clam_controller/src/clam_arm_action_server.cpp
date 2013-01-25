@@ -36,7 +36,7 @@
   - TODO: shutdown: go to sleep position
 */
 
-#include <clam_controller/ClamArmAction.h>
+#include <clam_msgs/ClamArmAction.h>
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h> // For providing functionality
 #include <actionlib/client/simple_action_client.h> // For calling the joint trajectory action
@@ -67,11 +67,11 @@ private:
   ros::NodeHandle nh_;
 
   // Internal action server stuff
-  actionlib::SimpleActionServer<clam_controller::ClamArmAction> action_server_;
+  actionlib::SimpleActionServer<clam_msgs::ClamArmAction> action_server_;
   std::string action_name_;
-  clam_controller::ClamArmFeedback     feedback_;
-  clam_controller::ClamArmResult       result_;
-  clam_controller::ClamArmGoalConstPtr goal_;
+  clam_msgs::ClamArmFeedback     feedback_;
+  clam_msgs::ClamArmResult       result_;
+  clam_msgs::ClamArmGoalConstPtr goal_;
 
   // External publishers and services
   ros::Publisher end_effector_pub_; // publish joint values to servos
@@ -126,11 +126,11 @@ public:
 
     switch( goal_->command )
     {
-    case clam_controller::ClamArmGoal::RESET:
+    case clam_msgs::ClamArmGoal::RESET:
       ROS_INFO("[clam arm] Received reset arm goal");
       resetArm();
       break;
-    case clam_controller::ClamArmGoal::END_EFFECTOR_OPEN:
+    case clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN:
       ROS_INFO("[clam arm] Received open end effector goal");
       if( use_gripper_ )
       {
@@ -143,7 +143,7 @@ public:
         action_server_.setSucceeded(result_);
       }
       break;
-    case clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE:
+    case clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE:
       ROS_INFO("[clam arm] Received close end effector goal");
       if( use_gripper_ )
       {
@@ -156,7 +156,7 @@ public:
         action_server_.setSucceeded(result_);
       }
       break;
-    case clam_controller::ClamArmGoal::END_EFFECTOR_SET:
+    case clam_msgs::ClamArmGoal::END_EFFECTOR_SET:
       ROS_INFO("[clam arm] Received close end effector to setpoint goal");
       if( use_gripper_ )
       {
@@ -169,7 +169,7 @@ public:
         action_server_.setSucceeded(result_);
       }
       break;
-    case clam_controller::ClamArmGoal::SHUTDOWN:
+    case clam_msgs::ClamArmGoal::SHUTDOWN:
       ROS_ERROR("[clam arm] not implemented");
 
       break;

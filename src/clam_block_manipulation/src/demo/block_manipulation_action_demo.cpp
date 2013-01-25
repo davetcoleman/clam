@@ -36,10 +36,10 @@
 #include <ros/ros.h>
 
 #include <actionlib/client/simple_action_client.h>
-#include <clam_block_manipulation/BlockDetectionAction.h>
-#include <clam_block_manipulation/PickPlaceAction.h>
-#include <clam_block_manipulation/InteractiveBlockManipulationAction.h>
-#include <clam_controller/ClamArmAction.h>
+#include <clam_msgs/BlockDetectionAction.h>
+#include <clam_msgs/PickPlaceAction.h>
+#include <clam_msgs/InteractiveBlockManipulationAction.h>
+#include <clam_msgs/ClamArmAction.h>
 
 #include <string>
 #include <sstream>
@@ -47,7 +47,7 @@
 
 const std::string pick_place_topic = "/pick_place";
 
-namespace clam_block_manipulation
+namespace clam_msgs
 {
 
 class BlockManipulationAction
@@ -56,15 +56,15 @@ private:
   ros::NodeHandle nh_;
 
   // Actions
-  actionlib::SimpleActionClient<clam_block_manipulation::BlockDetectionAction> block_detection_action_;
-  actionlib::SimpleActionClient<clam_block_manipulation::InteractiveBlockManipulationAction> interactive_manipulation_action_;
-  actionlib::SimpleActionClient<clam_block_manipulation::PickPlaceAction> pick_place_action_;
-  actionlib::SimpleActionClient<clam_controller::ClamArmAction> clam_arm_action_;
+  actionlib::SimpleActionClient<clam_msgs::BlockDetectionAction> block_detection_action_;
+  actionlib::SimpleActionClient<clam_msgs::InteractiveBlockManipulationAction> interactive_manipulation_action_;
+  actionlib::SimpleActionClient<clam_msgs::PickPlaceAction> pick_place_action_;
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_action_;
 
-  clam_block_manipulation::BlockDetectionGoal block_detection_goal_;
-  clam_block_manipulation::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
-  clam_block_manipulation::PickPlaceGoal pick_place_goal_;
-  clam_controller::ClamArmGoal clam_arm_goal_;
+  clam_msgs::BlockDetectionGoal block_detection_goal_;
+  clam_msgs::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
+  clam_msgs::PickPlaceGoal pick_place_goal_;
+  clam_msgs::ClamArmGoal clam_arm_goal_;
 
   // Parameters
   std::string arm_link;
@@ -137,7 +137,7 @@ public:
   {
     ROS_INFO("1. Sending arm to home position (reseting)");
 
-    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
     clam_arm_action_.sendGoal(clam_arm_goal_,
                               boost::bind( &BlockManipulationAction::detectBlocks, this));
     //boost::bind( &BlockManipulationAction::skipPerception, this));
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "block_manipulation");
 
 
-  clam_block_manipulation::BlockManipulationAction manip;
+  clam_msgs::BlockManipulationAction manip;
 
   // everything is done in cloud callback, just spin
   ros::spin();

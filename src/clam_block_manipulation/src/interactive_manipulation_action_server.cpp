@@ -34,12 +34,12 @@
 #include <actionlib/server/simple_action_server.h>
 #include <interactive_markers/interactive_marker_server.h>
 
-#include <clam_block_manipulation/InteractiveBlockManipulationAction.h>
+#include <clam_msgs/InteractiveBlockManipulationAction.h>
 #include <geometry_msgs/PoseArray.h>
 
 using namespace visualization_msgs;
 
-namespace clam_block_manipulation
+namespace clam_msgs
 {
 
 class InteractiveManipulationServer
@@ -49,12 +49,12 @@ private:
 
   interactive_markers::InteractiveMarkerServer server_;
 
-  actionlib::SimpleActionServer<clam_block_manipulation::InteractiveBlockManipulationAction> as_;
+  actionlib::SimpleActionServer<clam_msgs::InteractiveBlockManipulationAction> as_;
   std::string action_name_;
 
-  clam_block_manipulation::InteractiveBlockManipulationFeedback     feedback_;
-  clam_block_manipulation::InteractiveBlockManipulationResult       result_;
-  clam_block_manipulation::InteractiveBlockManipulationGoalConstPtr goal_;
+  clam_msgs::InteractiveBlockManipulationFeedback     feedback_;
+  clam_msgs::InteractiveBlockManipulationResult       result_;
+  clam_msgs::InteractiveBlockManipulationGoalConstPtr goal_;
 
   ros::Subscriber block_sub_;
   ros::Publisher  pick_place_pub_;
@@ -248,7 +248,7 @@ int main(int argc, char** argv)
   // initialize node
   ros::init(argc, argv, "interactive_manipulation_action_server");
 
-  clam_block_manipulation::InteractiveManipulationServer manip("interactive_manipulation");
+  clam_msgs::InteractiveManipulationServer manip("interactive_manipulation");
 
   ros::spin();
 }

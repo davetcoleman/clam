@@ -42,7 +42,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <actionlib/server/simple_action_server.h>
-#include <clam_block_manipulation/BlockDetectionAction.h>
+#include <clam_msgs/BlockDetectionAction.h>
 
 #include <tf/transform_listener.h>
 
@@ -66,7 +66,7 @@
 
 //#include <iostream> // TODO: remove this dep
 
-namespace clam_block_manipulation
+namespace clam_msgs
 {
 
 class BlockDetectionServer
@@ -74,11 +74,11 @@ class BlockDetectionServer
 private:
 
     ros::NodeHandle nh_;
-    actionlib::SimpleActionServer<clam_block_manipulation::BlockDetectionAction> as_;
+    actionlib::SimpleActionServer<clam_msgs::BlockDetectionAction> as_;
     std::string action_name_;
-    clam_block_manipulation::BlockDetectionFeedback feedback_;
-    clam_block_manipulation::BlockDetectionResult result_;
-    clam_block_manipulation::BlockDetectionGoalConstPtr goal_;
+    clam_msgs::BlockDetectionFeedback feedback_;
+    clam_msgs::BlockDetectionResult result_;
+    clam_msgs::BlockDetectionGoalConstPtr goal_;
     ros::Subscriber point_cloud_sub_;
     ros::Publisher filtered_pub_; // filtered point cloud for testing the algorithms
     ros::Publisher plane_pub_; // points that were recognized as part of the table
@@ -371,7 +371,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "block_detection_action_server");
 
-    clam_block_manipulation::BlockDetectionServer server("block_detection");
+    clam_msgs::BlockDetectionServer server("block_detection");
     ros::spin();
 
     return 0;
