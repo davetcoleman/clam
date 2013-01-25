@@ -74,6 +74,8 @@ namespace clam_block_manipulation
 
 static const std::string GROUP_NAME = "arm";
 static const std::string ROBOT_DESCRIPTION="robot_description";
+static const std::string EE_LINK = "gripper_roll_link";
+static const double PREGRASP_Z_HEIGHT = 0.09;
 
 class PickPlaceServer
 {
@@ -118,8 +120,6 @@ public:
       ROS_INFO("[pick place] Waiting for the clam_arm action server");
     }
 
-    clam_controller::ClamArmGoal clam_arm_goal_; // sent to the clam_arm_client_server
-
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
@@ -129,16 +129,15 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-    ros::Duration(0.5).sleep();
 
     // ---------------------------------------------------------------------------------------------
-    // Register the goal and feeback callbacks
+    // Register the goal and preempt callbacks
     action_server_.registerGoalCallback(boost::bind(&PickPlaceServer::goalCB, this));
     action_server_.registerPreemptCallback(boost::bind(&PickPlaceServer::preemptCB, this));
     action_server_.start();
   }
 
-  // Recieve Action Goal Function
+  // Action server sends goals here
   void goalCB()
   {
     ROS_INFO("[pick place] Received goal -----------------------------------------------");
@@ -154,22 +153,28 @@ public:
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
-    /*
+
     // Check if our listener has recieved a goal from the topic yet
     if (goal_->topic.length() < 1)
     {
-    ROS_INFO("[pick place] Goal has already been recieved, start moving arm");
-    pickAndPlace(goal_->pickup_pose, goal_->place_pose); // yes, start moving arm
+      ROS_INFO("[pick place] Goal has already been recieved, start moving arm");
+
+      if( !pickAndPlace(goal_->pickup_pose, goal_->place_pose) ) // yes, start moving arm
+      {
+        ROS_ERROR("[pick place] Pick and place failed");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+      }
     }
     else
     {
-    ROS_INFO_STREAM("[pick place] Waiting for goal to be received on topic " << goal_->topic);
-    pick_place_sub_ = nh_.subscribe(goal_->topic, 1, // no, wait for topic
-    &PickPlaceServer::sendGoalFromTopic, this);
+      ROS_INFO_STREAM("[pick place] Waiting for goal to be received on topic " << goal_->topic);
+      pick_place_sub_ = nh_.subscribe(goal_->topic, 1, // no, wait for topic
+                                      &PickPlaceServer::sendGoalFromTopic, this);
     }
-    */
 
 
+    /*
     // Skip perception
     geometry_msgs::Pose start_pose;
     geometry_msgs::Pose end_pose;
@@ -178,18 +183,22 @@ public:
     start_pose.position.y = 0.0;
     start_pose.position.z = 0.1;
 
-    end_pose.position.x = 0.2;
-    end_pose.position.y = 0.1;
+    end_pose.position.x = 0.25;
+    end_pose.position.y = 0.15;
     end_pose.position.z = 0.1;
 
     if( !pickAndPlace(start_pose, end_pose) )
     {
-      ROS_ERROR("[pick place] Pick and place failed");
-      result_.success = false;
-      action_server_.setSucceeded(result_);
+    ROS_ERROR("[pick place] Pick and place failed");
+    result_.success = false;
+    action_server_.setSucceeded(result_);
     }
+    */
+
+
   }
 
+  // The goal is not actually recieved from ActionLib, but from a regular ros topic
   void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr& msg)
   {
     ROS_INFO("[pick place] Got goal from topic! %s", goal_->topic.c_str());
@@ -207,10 +216,13 @@ public:
   // Cancel the action
   void preemptCB()
   {
+    //TODO
+
     ROS_INFO("[pick place] Preempted");
     action_server_.setPreempted();
   }
 
+  // Moves the arm to a specified pose
   bool sendPoseCommand(const geometry_msgs::Pose& pose)
   {
     // -----------------------------------------------------------------------------------------------
@@ -219,7 +231,6 @@ public:
     goal.request.group_name = GROUP_NAME;
     goal.request.num_planning_attempts = 1;
     goal.request.allowed_planning_time = ros::Duration(5.0);
-
 
     // Position
     double x = pose.position.x;
@@ -233,9 +244,8 @@ public:
     double qz = -0.01755;
     double qw = 0.70346;
 
-    bool gripperOpen = true;
+    // Compensates for gripper size
     double x_offset = 0.15;
-
 
     // -------------------------------------------------------------------------------------------
     // Create goal state
@@ -249,25 +259,24 @@ public:
     goal_pose.pose.orientation.z = qz;
     goal_pose.pose.orientation.w = qw;
     double tolerance_pose = 1e-3; // default: 1e-3... meters
-    double tolerance_angle = 0.1; // default 1e-2... radians
-    moveit_msgs::Constraints g0 =
+    double tolerance_angle = 1e-2; // default 1e-2... radians
+    moveit_msgs::Constraints goal_constraint0 =
       kinematic_constraints::constructGoalConstraints("gripper_roll_link", goal_pose,
                                                       tolerance_pose, tolerance_angle);
 
-
-    g0.position_constraints[0].target_point_offset.x = x_offset;
-    g0.position_constraints[0].target_point_offset.y = 0.0;
-    g0.position_constraints[0].target_point_offset.z = 0.0;
-
+    // Create offset constraint
+    goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
+    goal_constraint0.position_constraints[0].target_point_offset.y = 0.0;
+    goal_constraint0.position_constraints[0].target_point_offset.z = 0.0;
+    // Add offset constraint
     goal.request.goal_constraints.resize(1);
-    goal.request.goal_constraints[0] = g0;
+    goal.request.goal_constraints[0] = goal_constraint0;
 
     // -------------------------------------------------------------------------------------------
-    // Visualize goals
+    // Visualize goals in rviz
     ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << x << " y:" << y << " z:" << z);
     publishSphere(x, y, z);
     publishMesh(x, y, z + x_offset, qx, qy, qz, qw );
-
 
     // -------------------------------------------------------------------------------------------
     // Plan
@@ -291,38 +300,135 @@ public:
   }
 
 
-  // Function for testing multiple directions
-  double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result,
-                                     const std::string &ik_link, const Eigen::Vector3d &approach_direction,
-                                     double desired_approach_distance, double max_step,
-                                     kinematic_state::KinematicState approach_state,
-                                     plan_execution::PlanExecution &plan_execution,
-                                     const planning_scene::PlanningScenePtr planning_scene)
+  /* Function for testing multiple directions
+   * \param approach_direction - direction to move end effector straight
+   * \param desired_approach_distance - distance the origin of a robot link needs to travel
+   */
+  bool computeStraightLinePath( Eigen::Vector3d approach_direction, double desired_approach_distance )
+
+
   {
+    /*
+      double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result,
+      const std::string &ik_link, const Eigen::Vector3d &approach_direction,
+      double desired_approach_distance, double max_step,
+      kinematic_state::KinematicState approach_state,
+      plan_execution::PlanExecution &plan_execution,
+      const planning_scene::PlanningScenePtr planning_scene)
+      {
+    */
+
+    // ---------------------------------------------------------------------------------------------
+    // Get planning scene monitor
+    boost::shared_ptr<tf::TransformListener> tf(new tf::TransformListener());
+    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf));
+    if (planning_scene_monitor->getPlanningScene() && planning_scene_monitor->getPlanningScene()->isConfigured())
+    {
+      ROS_INFO("Planning scene configured");
+
+      planning_scene_monitor->startWorldGeometryMonitor();
+      planning_scene_monitor->startSceneMonitor("/move_group/monitored_planning_scene");
+      planning_scene_monitor->startStateMonitor("/joint_states", "/attached_collision_object");
+    }
+    else
+    {
+      ROS_ERROR("Planning scene not configured");
+      return false;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Wait for complete state to be recieved
+    std::vector<std::string> missing_joints;
+
+    while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
+    {
+      ros::Duration(0.1).sleep();
+      ros::spinOnce();
+      ROS_INFO("Waiting for complete state...");
+
+      // Show unpublished joints
+      planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
+      for(int i = 0; i < missing_joints.size(); ++i)
+        ROS_WARN_STREAM("Unpublished joints: " << missing_joints[i]);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Get planning scene
+    const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor->getPlanningScene();
+    kinematic_state::KinematicState approach_state = planning_scene->getCurrentState();
+
+    // Output state info
+    //ROS_INFO("\nState info: \n");
+    //approach_state.printStateInfo();
+
+    // ---------------------------------------------------------------------------------------------
+    // Create a trajectory execution manager
+    const trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager(new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor->getKinematicModel()));
+    plan_execution::PlanExecution plan_execution(planning_scene_monitor, trajectory_execution_manager);
+
+    // ---------------------------------------------------------------------------------------------
+    // Settings for computeCartesianPath
+
+    moveit_msgs::RobotTrajectory approach_traj_result; // create resulting generated trajectory (result)
+
+    // End effector parent link
+    const std::string &ik_link = EE_LINK; // eef->getEndEffectorParentGroup().second;
+
+    // Resolution of trajectory
+    double max_step = 0.001; // The maximum distance in Cartesian space between consecutive points on the resulting path
+
+    // Check for kinematic solver
+    if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
+    {
+      // Set kinematic solver
+      const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators =
+        approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
+      if( !allocators.first)
+        ROS_ERROR("No IK Solver loaded - make sure moveit_config/kinamatics.yaml is loaded in this namespace");
+    }
+
     // -----------------------------------------------------------------------------------------------
     // Compute Cartesian Path
+    ROS_INFO("Preparing to computer cartesian path");
+
+    /** \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
+        as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
+        line, following the specified direction, for the desired \e distance. The resulting joint values are stored in the vector \e states,
+        one by one. The maximum distance in Cartesian space between consecutive points on the resulting path is specified by \e max_step.
+        If a \e validCallback is specified, this is passed to the internal call to setFromIK(). In case of failure, the computation of the path
+        stops and the value returned corresponds to the distance that was computed and for which corresponding states were added to the path.
+        At the end of the function call, the state of the group corresponds to the last attempted Cartesian pose
+
+        double computeCartesianPath(moveit_msgs::RobotTrajectory &traj, const std::string &link_name, const Eigen::Vector3d &direction,
+        ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
+
     double d_approach =
       approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
                                                                           ik_link,
                                                                           approach_direction,
                                                                           desired_approach_distance,
                                                                           max_step);          // TODO approach_validCallback);
-    ROS_WARN("Cartesian path computed! ----------------------------------------------------------");
     ROS_INFO_STREAM("Approach distance: " << d_approach );
+    if( d_approach == 0 )
+    {
+      ROS_ERROR("Failed to computer cartesian path: distance is 0");
+      return false;
+    }
 
     // -----------------------------------------------------------------------------------------------
     // Proccess Trajectory
+
     //trajectory_processing::reverseTrajectory(approach_traj_result);
 
     /* Add times
-    for(int i = 0; i < approach_traj_result.joint_trajectory.points.size(); ++i)
-    {
-      approach_traj_result.joint_trajectory.points[i].time_from_start = ros::Duration((double)i + 1);
-    }
+       for(int i = 0; i < approach_traj_result.joint_trajectory.points.size(); ++i)
+       {
+       approach_traj_result.joint_trajectory.points[i].time_from_start = ros::Duration((double)i + 1);
+       }
     */
 
-    // Output debu
-    ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
+    // Output debug
+    //ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
 
     // -----------------------------------------------------------------------------------------------
     // Get current RobotState  (in order to specify all joints not in approach_traj_result)
@@ -330,19 +436,18 @@ public:
     kinematic_state::kinematicStateToRobotState( planning_scene->getCurrentState(), robot_state );
 
     // -----------------------------------------------------------------------------------------------
-    // Now smooth the path
+    // Smooth the path and add velocities/accelerations
 
-    // Vars
-    trajectory_processing::IterativeParabolicSmoother smoother_;
+    trajectory_processing::IterativeParabolicSmoother iterative_smoother;
     trajectory_msgs::JointTrajectory trajectory_out;
 
-    // Get the joint limits
+    // Get the joint limits of planning group
     const kinematic_model::JointModelGroup *joint_model_group =
       planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
     const std::vector<moveit_msgs::JointLimits> &joint_limits = joint_model_group->getVariableLimits();
 
     // Perform iterative parabolic smoothing
-    smoother_.smooth(approach_traj_result.joint_trajectory, trajectory_out, joint_limits, robot_state);
+    iterative_smoother.smooth(approach_traj_result.joint_trajectory, trajectory_out, joint_limits, robot_state);
 
     // Copy results to robot trajectory message:
     approach_traj_result.joint_trajectory = trajectory_out;
@@ -350,27 +455,31 @@ public:
     ROS_INFO_STREAM("New trajectory\n" << approach_traj_result);
 
     // -----------------------------------------------------------------------------------------------
-    // Display the path
+    // Display the path in rviz
+
+    // Create publisher
     ros::Publisher display_path_publisher_;
     display_path_publisher_ = nh_.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 10, true);
     ros::spinOnce();
-    ROS_WARN("Published trajectory to rviz, waiting 5 sec");
-    ros::Duration(5.0).sleep();
+    ros::Duration(0.1).sleep();
 
     // Create the message
-    moveit_msgs::DisplayTrajectory disp;
-    disp.model_id = planning_scene->getKinematicModel()->getName();
-    disp.trajectory_start = robot_state;
-    disp.trajectory.resize(1, approach_traj_result);
-    display_path_publisher_.publish(disp);
+    moveit_msgs::DisplayTrajectory rviz_display;
+    rviz_display.model_id = planning_scene->getKinematicModel()->getName();
+    rviz_display.trajectory_start = robot_state;
+    rviz_display.trajectory.resize(1, approach_traj_result);
+
+    // Publish message
+    display_path_publisher_.publish(rviz_display);
     ROS_INFO("Sent display trajectory message");
 
-    ROS_INFO("\n\n\nSleeping 1...\n\n");
-    ros::Duration(5.0).sleep();
+    ROS_INFO("Sleeping 1...\n\n");
+    ros::Duration(1.0).sleep();
 
     // -----------------------------------------------------------------------------------------------
-    // execute the planned trajectory
+    // Execute the planned trajectory
     ROS_INFO("Executing trajectory");
+
     plan_execution.getTrajectoryExecutionManager()->clear();
     if(plan_execution.getTrajectoryExecutionManager()->push(approach_traj_result))
     {
@@ -381,6 +490,7 @@ public:
       if (es == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
         ROS_INFO("Trajectory execution succeeded");
       else
+      {
         if (es == moveit_controller_manager::ExecutionStatus::PREEMPTED)
           ROS_INFO("Trajectory execution preempted");
         else
@@ -388,14 +498,16 @@ public:
             ROS_INFO("Trajectory execution timed out");
           else
             ROS_INFO("Trajectory execution control failed");
+        return false;
+      }
     }
     else
     {
       ROS_ERROR("Failed to push trajectory");
-      return -1;
+      return false;
     }
 
-    ros::Duration(4.0).sleep();
+    return true;
   }
 
   // Actually run the action
@@ -425,168 +537,21 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Hover over block
     ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
-    desired_pose.position.z = 0.1;
+    desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
     if(!sendPoseCommand(desired_pose))
       return false;
-
-
-
-
-
-
-    // ---------------------------------------------------------------------------------------------
-    // Compute Straight Line Path
-    // try to compute a straight line path that arrives at the goal using the specified approach direction
-
-    ROS_INFO("[pick place] Compute Straight Line Path -------------------------------------------");
-    /*
-      const ManipulationPlanPtr &plan
-      plan->possible_goal_states_ is type kinematic_state::KinematicStatePtr
-
-
-
-      TODO
-      plan->ik_link_name_
-      -approach_direction,
-      plan->grasp_.desired_approach_distance,
-      max_step_,
-      approach_validCallback
-    */
-
-
-    /*
-      planning_scene_monitor::PlanningSceneMonitor psm(ROBOT_DESCRIPTION);
-      planning_scene::PlanningScene &scene2 = *psm.getPlanningScene();
-      kinematic_state::KinematicState state = scene2.getCurrentState();
-      ROS_INFO("\nState info: \n");
-      state.printStateInfo();
-      ROS_WARN("\n\n\n\n");
-    */
-
-
-
-    // Planning Scene stuff
-    boost::shared_ptr<tf::TransformListener> tf(new tf::TransformListener());
-    //planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
-    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf));
-    if (planning_scene_monitor->getPlanningScene() && planning_scene_monitor->getPlanningScene()->isConfigured())
-    {
-      ROS_INFO("Planning scene configured");
-
-      planning_scene_monitor->startWorldGeometryMonitor();
-      planning_scene_monitor->startSceneMonitor("/move_group/monitored_planning_scene");
-      planning_scene_monitor->startStateMonitor("/joint_states", "/attached_collision_object");
-
-      //planning_scene_monitor->startSceneMonitor();
-      //planning_scene_monitor->startStateMonitor();
-
-      ros::Duration(0.1).sleep();
-    }
-    else
-    {
-      ROS_ERROR("Planning scene not configured");
-      return false;
-    }
-
-    std::vector<std::string> missing_joints;
-
-    while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
-    {
-      ros::Duration(0.1).sleep();
-
-      ros::spinOnce();
-      ROS_INFO("Waiting for complete state...");
-
-      planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
-
-      // Show unpublished joints
-      for(int i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM("Unpublished joints: " << missing_joints[i]);
-    }
-
-    const planning_scene::PlanningScenePtr scene = planning_scene_monitor->getPlanningScene();
-
-    // Create a goal kinematic state (just hardcode grasp position
-    kinematic_state::KinematicState approach_state = scene->getCurrentState();
-    //approach_state.setToCurrent();
-    // TODO: use setFromIK in joint_state_group.h
-
-    // Output state info
-    ROS_INFO("\nState info: \n");
-    approach_state.printStateInfo();
-
-
-    const trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager(new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor->getKinematicModel()));
-    plan_execution::PlanExecution plan_execution(planning_scene_monitor, trajectory_execution_manager);
-
-
-
-    // this is the resulting generated trajectory
-    moveit_msgs::RobotTrajectory approach_traj_result;
-
-    // End effector parent link
-    const std::string &ik_link = "gripper_roll_link"; // eef->getEndEffectorParentGroup().second;
-    // TODO: also try for ik_link "gripper_fixed_finger_link"... maybe?
-
-    // Approach direction
-    Eigen::Vector3d approach_direction;
-    approach_direction << 1, 0, 0;
-
-    // The distance the origin of a robot link needs to travel
-    double desired_approach_distance = .05; // 25cm
-
-    // Resolution of trajectory
-    double max_step = 0.001; // The maximum distance in Cartesian space between consecutive points on the resulting path
-
-    /*
-    // Check for kinematic solver
-    if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
-    {
-    // Set kinematic solver
-    const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators =
-    approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
-    if( allocators.first)
-    ROS_INFO("Has IK Solver");
-    else
-    ROS_INFO("No has IK Solver");
-    }
-    */
-
-    /** \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
-        as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
-        line, following the specified direction, for the desired \e distance. The resulting joint values are stored in the vector \e states,
-        one by one. The maximum distance in Cartesian space between consecutive points on the resulting path is specified by \e max_step.
-        If a \e validCallback is specified, this is passed to the internal call to setFromIK(). In case of failure, the computation of the path
-        stops and the value returned corresponds to the distance that was computed and for which corresponding states were added to the path.
-        At the end of the function call, the state of the group corresponds to the last attempted Cartesian pose
-
-        double computeCartesianPath(moveit_msgs::RobotTrajectory &traj, const std::string &link_name, const Eigen::Vector3d &direction,
-        ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
-
-    ROS_WARN("Preparing to computer cartesian path");
-
-
-    approach_direction << 0,0,-1;
-
-    computeCartesianPathWrapper(approach_traj_result,
-                                ik_link,
-                                approach_direction,
-                                desired_approach_distance,
-                                max_step, approach_state,
-                                plan_execution,
-                                scene);          // TODO approach_validCallback);
-
-
-    ROS_WARN("Done ------------------------------------------------------------------------------");
-    /*
 
     // ---------------------------------------------------------------------------------------------
     // Lower over block
-    ROS_INFO("[pick place] Sending arm to grasp position ----------------------------------------");
-    desired_pose.position.z -= 0.05; // lower
-    //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
-    if(!sendPoseCommand(desired_pose))
-    return false;
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO("[pick place] Lowering over block -------------------------------------------");
+
+    Eigen::Vector3d approach_direction; // Approach direction (negative z axis)
+    approach_direction << 0, 0, -1;
+    double desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+
+    computeStraightLinePath(approach_direction, desired_approach_distance);
+    ros::Duration(1.0).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Close gripper
@@ -594,16 +559,40 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_CLOSE;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-    ros::Duration(0.1).sleep();
+      ros::Duration(0.1).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Lifting block
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO("[pick place] Lifting block -------------------------------------------");
+
+    approach_direction << 0, 0, 1; // Approach direction (negative z axis)
+    desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+
+    computeStraightLinePath(approach_direction, desired_approach_distance);
+    ros::Duration(1.0).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
     ROS_INFO("[pick place] Sending arm to new position ------------------------------------------");
     desired_pose = end_pose;
-    desired_pose.position.z = 0.1;
+    desired_pose.position.z = PREGRASP_Z_HEIGHT;
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendPoseCommand(desired_pose))
-    return false;
+      return false;
+    ros::Duration(1.0).sleep();
+
+
+    // ---------------------------------------------------------------------------------------------
+    // Lower block
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO("[pick place] Lifting block -------------------------------------------");
+
+    approach_direction << 0, 0, -1; // Approach direction (negative z axis)
+    desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+
+    computeStraightLinePath(approach_direction, desired_approach_distance);
+    ros::Duration(1.0).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -611,18 +600,16 @@ public:
     clam_arm_goal_.command = clam_controller::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
-    ros::Duration(0.1).sleep();
+      ros::Duration(0.1).sleep();
+    ros::Duration(2.0).sleep();
 
-    */
     // ---------------------------------------------------------------------------------------------
     // Reset
-    /*
-      ROS_INFO("[pick place] Going to home position");
-      clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
-      clam_arm_client_.sendGoal(clam_arm_goal_);
-      while(!clam_arm_client_.getState().isDone() && ros::ok())
+    ROS_INFO("[pick place] Going to home position");
+    clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
-    */
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm
@@ -768,7 +755,7 @@ int main(int argc, char** argv)
   // Allow the action server to recieve and send ros messages
   ros::AsyncSpinner spinner(1);
   spinner.start();
-  
+
   ros::spin(); // keep the action server alive
 
   return 0;

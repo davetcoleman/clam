@@ -1,11 +1,19 @@
 <launch>
 
   <!-- Launch vision stuff: -->
-  <include file="$(find openni_launch)/launch/openni.launch" />
+  <!--include file="$(find openni_launch)/launch/openni.launch" /-->
 
   <!-- This is highly dependent on the setup of the kinect in the lab -->
   <node name="clam_vision_frame" pkg="tf" type="static_transform_publisher" output="screen"
-	args="0.751453 -0.1000048 0.659977 3.04582 0.844943 -0.20587 base_link /camera_link 100"/>
-
-
+        args="0.715453 -0.0890048 0.659977 3.05082 0.844943 -0.20587 base_link /camera_link 100"/>
+  <!--  args= x        y          z        roll    pitch    yall -->
+  <!--        0.751453 -0.1000048 0.659977 3.04582 0.844943 -0.20587 -->
+  <!-- KEY:
+       x - x
+       y - the greater the closer to the wall
+       z
+       r - origin is camera, turns it on z axis
+       p
+       y
+  -->
 </launch>

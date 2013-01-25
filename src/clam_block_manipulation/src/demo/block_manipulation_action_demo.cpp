@@ -139,15 +139,15 @@ public:
 
     clam_arm_goal_.command = clam_controller::ClamArmGoal::RESET;
     clam_arm_action_.sendGoal(clam_arm_goal_,
-                              //                               boost::bind( &BlockManipulationAction::detectBlocks, this));
-                               boost::bind( &BlockManipulationAction::skipPerception, this));
+                              boost::bind( &BlockManipulationAction::detectBlocks, this));
+    //boost::bind( &BlockManipulationAction::skipPerception, this));
   }
 
   void skipPerception()
   {
     ROS_INFO("1.1 Skipping perception, sending goal");
     pick_place_action_.sendGoal(pick_place_goal_,
-                                    boost::bind( &BlockManipulationAction::finish, this, _1, _2));
+                                boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 
   void detectBlocks()
@@ -187,28 +187,28 @@ public:
       ros::shutdown();
     }
     pick_place_action_.sendGoal(pick_place_goal_,
-                                    boost::bind( &BlockManipulationAction::finish, this, _1, _2));
+                                boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 
   void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
-      ROS_INFO("5. Picked and place commands successfull");
+      ROS_INFO("5. Pick and place commands successfull");
     else
       ROS_ERROR("6. Pick and place did not succeed: %s",  state.toString().c_str());
 
+       ROS_INFO(" here");
     if (once)
     {
       ROS_INFO("Shutting down");
-      ros::shutdown();
+      //ros::shutdown();
     }
     else
-    {/*
-      ROS_INFO(" ");
-      ROS_INFO("Restarting Demo --------------------------------------------- ");
+    {
+       ROS_INFO(" ");
+       ROS_INFO("Restarting Demo --------------------------------------------- ");
 
-      resetArm();
-     */
+       resetArm();
     }
   }
 };

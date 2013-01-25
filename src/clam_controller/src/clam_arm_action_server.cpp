@@ -56,7 +56,7 @@ static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
 static const double END_EFFECTOR_POSITION_TOLERANCE = 0.02;
 static const double END_EFFECTOR_VELOCITY = 0.6;
 static const double END_EFFECTOR_SLOW_VELOCITY = 0.1;
-static const double END_EFFECTOR_LOAD_SETPOINT = -0.3;
+static const double END_EFFECTOR_LOAD_SETPOINT = -0.35; // when less than this number, stop closing. original value: -0.3
 static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
 static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
 static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
@@ -106,10 +106,10 @@ public:
 
     // Start up the trajectory client
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
-    while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
+    /*    while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
     {
       ROS_WARN("[clam arm] Waiting for the joint_trajectory_action server");
-    }
+      }*/
 
     //register the goal and feeback callbacks
     action_server_.registerGoalCallback(boost::bind(&ClamArmServer::goalCB, this));
