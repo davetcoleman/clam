@@ -152,7 +152,8 @@ public:
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
-
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
     // Check if our listener has recieved a goal from the topic yet
     if (goal_->topic.length() < 1)
@@ -222,9 +223,30 @@ public:
     action_server_.setPreempted();
   }
 
-  // Moves the arm to a specified pose
-  bool sendPoseCommand(const geometry_msgs::Pose& pose)
+
+  bool sendGraspPoseCommand(const geometry_msgs::Pose& pose)
   {
+    geometry_msgs::Pose goal_pose;
+    goal_pose.position = pose.position;
+    // Set a straight verticle orientation
+    goal_pose.orientation.x = 0.00;
+    goal_pose.orientation.y = 0.710502;
+    goal_pose.orientation.z = -0.01755;
+    goal_pose.orientation.w = 0.70346;
+
+    // Compensates for gripper size
+    double x_offset = 0.15;
+    sendPoseCommand( goal_pose, x_offset );
+  }
+ 
+  // Moves the arm to a specified pose
+  bool sendPoseCommand(const geometry_msgs::Pose& pose, double x_offset = 0.0)
+  {
+    // -----------------------------------------------------------------------------------------------
+    // Make a stamped version of the pose
+    geometry_msgs::PoseStamped goal_pose;
+    goal_pose.pose = pose;
+
     // -----------------------------------------------------------------------------------------------
     // Move arm
     moveit_msgs::MoveGroupGoal goal;
@@ -232,37 +254,16 @@ public:
     goal.request.num_planning_attempts = 1;
     goal.request.allowed_planning_time = ros::Duration(5.0);
 
-    // Position
-    double x = pose.position.x;
-    double y = pose.position.y;
-    double z = pose.position.z;
-    ROS_INFO_STREAM("[pick place] Planning for x:" << x << " y:" << y << " z:" << z);
-
-    // Orientation
-    double qx = 0.00;
-    double qy = 0.710502;
-    double qz = -0.01755;
-    double qw = 0.70346;
-
-    // Compensates for gripper size
-    double x_offset = 0.15;
-
     // -------------------------------------------------------------------------------------------
     // Create goal state
-    geometry_msgs::PoseStamped goal_pose;
     goal_pose.header.frame_id = "base_link";
-    goal_pose.pose.position.x = x;
-    goal_pose.pose.position.y = y;
-    goal_pose.pose.position.z = z;
-    goal_pose.pose.orientation.x = qx;
-    goal_pose.pose.orientation.y = qy;
-    goal_pose.pose.orientation.z = qz;
-    goal_pose.pose.orientation.w = qw;
     double tolerance_pose = 1e-3; // default: 1e-3... meters
     double tolerance_angle = 1e-2; // default 1e-2... radians
     moveit_msgs::Constraints goal_constraint0 =
-      kinematic_constraints::constructGoalConstraints("gripper_roll_link", goal_pose,
+      kinematic_constraints::constructGoalConstraints(EE_LINK, goal_pose,
                                                       tolerance_pose, tolerance_angle);
+
+    ROS_WARN_STREAM("Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
 
     // Create offset constraint
     goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
@@ -274,9 +275,14 @@ public:
 
     // -------------------------------------------------------------------------------------------
     // Visualize goals in rviz
-    ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << x << " y:" << y << " z:" << z);
-    publishSphere(x, y, z);
-    publishMesh(x, y, z + x_offset, qx, qy, qz, qw );
+    ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x << 
+                    " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
+    publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
+    publishMesh(goal_pose.pose.position.x, 
+                goal_pose.pose.position.y, 
+                goal_pose.pose.position.z + x_offset, 
+                goal_pose.pose.orientation.x, goal_pose.pose.orientation.y, 
+                goal_pose.pose.orientation.z, goal_pose.pose.orientation.w );
 
     // -------------------------------------------------------------------------------------------
     // Plan
@@ -358,8 +364,9 @@ public:
     kinematic_state::KinematicState approach_state = planning_scene->getCurrentState();
 
     // Output state info
-    //ROS_INFO("\nState info: \n");
-    //approach_state.printStateInfo();
+    ROS_INFO("\nState info: \n");
+    approach_state.printStateInfo();
+    approach_state.printTransforms();
 
     // ---------------------------------------------------------------------------------------------
     // Create a trajectory execution manager
@@ -520,11 +527,18 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
+    /*
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     clam_arm_client_.waitForResult(ros::Duration(20.0));
+    */
+    ROS_WARN("SENDING HOME");
+    sendHome();
     //while(!clam_arm_client_.getState().isDone() && ros::ok())
     //  ros::Duration(0.1).sleep();
+
+
+    sleep(2);
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -538,7 +552,7 @@ public:
     // Hover over block
     ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
     desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
-    if(!sendPoseCommand(desired_pose))
+    if(!sendGraspPoseCommand(desired_pose))
       return false;
 
     // ---------------------------------------------------------------------------------------------
@@ -578,7 +592,7 @@ public:
     desired_pose = end_pose;
     desired_pose.position.z = PREGRASP_Z_HEIGHT;
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
-    if(!sendPoseCommand(desired_pose))
+    if(!sendGraspPoseCommand(desired_pose))
       return false;
     ros::Duration(1.0).sleep();
 
@@ -606,10 +620,13 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Reset
     ROS_INFO("[pick place] Going to home position");
+    /*
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
+    */
+    sendHome();
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm
@@ -740,6 +757,22 @@ public:
 
 
     marker_pub_.publish( marker );
+  }
+
+  bool sendHome()
+  {
+    geometry_msgs::Pose home_pose;
+
+    home_pose.position.x = 0.104262;
+    home_pose.position.y = -0.00158531;
+    home_pose.position.z = 0.493924;
+
+    home_pose.orientation.x = -3.36429e-05;
+    home_pose.orientation.y = -0.00208705;
+    home_pose.orientation.z = -0.00766653;
+    home_pose.orientation.w = 0.999968;
+
+    return sendPoseCommand(home_pose);
   }
 
 }; // end of class

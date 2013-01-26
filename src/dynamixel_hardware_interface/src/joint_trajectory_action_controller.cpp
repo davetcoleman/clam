@@ -54,6 +54,10 @@ PLUGINLIB_DECLARE_CLASS(dynamixel_hardware_interface,
 namespace controller
 {
 
+
+static const double ACCEPTABLE_BOUND = 0.05; // amount two positions can vary without being considered different positions
+
+
 JointTrajectoryActionController::JointTrajectoryActionController()
 {
   terminate_ = false;
@@ -314,19 +318,17 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
 
   // Check if this trajectory goal is already fullfilled by robot's current position
   bool outside_bounds = false; // flag for remembing if a different position was found
-  double acceptable_bound = 0.05; // amount two positions can vary without being considered different positions
   Segment* last_segment = &trajectory[trajectory.size()-1];
   for( std::size_t i = 0; i < last_segment->positions.size(); ++i)
   {
     std::string joint_name = joint_names_[i];
 
-    ROS_WARN_STREAM("Checking for similarity on joint " << joint_name << " with real position " << joint_states_[ joint_name ]->position);
-    ROS_WARN_STREAM("    Iterator id = " << i << " size " << last_segment->positions.size() );
-    ROS_WARN_STREAM("    Goal position: " << last_segment->positions[i] );
+    ROS_DEBUG_STREAM("Checking for similarity on joint " << joint_name << " with real position " << joint_states_[ joint_name ]->position);
+    ROS_DEBUG_STREAM("    Iterator id = " << i << " size " << last_segment->positions.size() << "    Goal position: " << last_segment->positions[i] );
 
     // Test if outside acceptable bounds, meaning we should continue trajectory as normal
-    if( last_segment->positions[i] > (joint_states_[ joint_name ]->position + acceptable_bound) ||
-        last_segment->positions[i] < (joint_states_[ joint_name ]->position - acceptable_bound) )
+    if( last_segment->positions[i] > (joint_states_[ joint_name ]->position + ACCEPTABLE_BOUND) ||
+        last_segment->positions[i] < (joint_states_[ joint_name ]->position - ACCEPTABLE_BOUND) )
     {
       outside_bounds = true;
       break;
@@ -544,7 +546,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
       error_msg = "Aborting because " + joint_names_[i] +
         " joint wound up outside the goal constraints. The position error " +
-        boost::lexical_cast<std::string>(msg_.error.positions[i]) +
+        boost::lexical_cast<std::string>(abs(msg_.error.positions[i])) +
         " is larger than the goal constraints " + boost::lexical_cast<std::string>(goal_constraints_[i]);
       ROS_ERROR("%s", error_msg.c_str());
       if (is_action)

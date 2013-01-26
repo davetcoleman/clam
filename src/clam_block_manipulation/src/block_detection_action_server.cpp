@@ -169,15 +169,24 @@ public:
         }
 
         // Limit to things we think are roughly at the table height ------------------------------------
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filteredZ(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::PassThrough<pcl::PointXYZRGB> pass;
         pass.setInputCloud(cloud_transformed);
         pass.setFilterFieldName("z");
         pass.setFilterLimits(table_height - 0.05, table_height + block_size + 0.05);
         //pass.setFilterLimits(table_height - 0.01, table_height + block_size + 0.02); // DTC
-        pass.filter(*cloud_filtered);
+        pass.filter(*cloud_filteredZ);
 
-        // Check if more points remain
+
+        // Limit to things in front of the robot ---------------------------------------------------
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pass.setInputCloud(cloud_filteredZ);
+        pass.setFilterFieldName("x");
+        pass.setFilterLimits(.1,.5);
+        pass.filter(*cloud_filtered);        
+
+
+        // Check if any points remain
         if( cloud_filtered->points.size() == 0 )
         {
             ROS_ERROR("0 points left");

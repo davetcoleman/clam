@@ -13,22 +13,23 @@ clam_arm_controller:
         min_velocity: 0.0
         constraints:
             goal_time: 0.3
+# original goal amount was 0.045 but controllers kept aborting
             shoulder_pan_joint:
-                goal: 0.045
+                goal: 0.075
             gripper_roll_joint:
-                goal: 0.045
+                goal: 0.075
 #            l_gripper_aft_joint:
-#                goal: 0.045
+#                goal: 0.075
             shoulder_pitch_joint:
-                goal: 0.045
+                goal: 0.075
             elbow_roll_joint:
-                goal: 0.045
+                goal: 0.075
             elbow_pitch_joint:
-                goal: 0.045
+                goal: 0.075
             wrist_roll_joint:
-                goal: 0.045
+                goal: 0.075
             wrist_pitch_joint:
-                goal: 0.045
+                goal: 0.075
 
 
 
