@@ -428,7 +428,7 @@ public:
     if( dead_time_ > TIME_DECLARE_MOTOR_DEAD && state.alive )
     {
       // assume power went down
-      ROS_WARN_STREAM("Suspected power loss. Reinitializing " << name_ << " after dead time " << dead_time_);
+      ROS_WARN_STREAM("Suspected " << dead_time_ << "s power loss. Reinitializing " << name_);
       setVelocity(current_velocity_);
     }
 

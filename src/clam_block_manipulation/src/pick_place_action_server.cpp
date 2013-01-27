@@ -49,6 +49,7 @@
 // ClamArm
 #include <clam_msgs/PickPlaceAction.h>
 #include <clam_msgs/ClamArmAction.h>
+#include <clam_msgs/SendHomeService.h>
 
 // MoveIt
 #include <moveit_msgs/MoveGroupAction.h>
@@ -72,11 +73,13 @@
 namespace clam_msgs
 {
 
+// Static const vars
 static const std::string GROUP_NAME = "arm";
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_LINK = "gripper_roll_link";
 static const double PREGRASP_Z_HEIGHT = 0.09;
 
+// Class
 class PickPlaceServer
 {
 private:
@@ -91,11 +94,23 @@ private:
   actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
+  // Service
+  ros::ServiceServer home_service_;
+
   // Action messages
   clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
   clam_msgs::PickPlaceFeedback     feedback_;
   clam_msgs::PickPlaceResult       result_;
   clam_msgs::PickPlaceGoalConstPtr goal_;
+
+  // MoveIt Components
+  boost::shared_ptr<tf::TransformListener> tf_;
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager_;
+  boost::shared_ptr<plan_execution::PlanExecution> plan_execution_;
+
+  // Remember properties of the robot
+  moveit_msgs::MoveGroupGoal send_home_goal_; // only compute this once
 
   // Subscriber
   ros::Subscriber pick_place_sub_;
@@ -107,8 +122,15 @@ private:
   double z_up;
 
 public:
+
+  // Called when a send_home service call is made
+  bool sendHomeService(clam_msgs::SendHomeService::Request &req, clam_msgs::SendHomeService::Response &res)
+  {
+    return sendHome();
+  }
+
+  // Constructor
   PickPlaceServer(const std::string name) :
-    //nh_("~"),
     action_server_(name, false),
     clam_arm_client_("clam_arm", true),
     movegroup_action_("move_group", true)
@@ -129,6 +151,52 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+
+    // ---------------------------------------------------------------------------------------------
+    // Create planning scene monitor
+    tf_.reset(new tf::TransformListener());
+    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf_));
+
+    // ---------------------------------------------------------------------------------------------
+    // Check planning scene monitor
+    if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
+    {
+      //ROS_INFO("Planning scene configured");
+      planning_scene_monitor_->startWorldGeometryMonitor();
+      planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
+      planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+    }
+    else
+    {
+      ROS_ERROR("[pick place] Planning scene not configured");
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Create a trajectory execution manager
+    trajectory_execution_manager_.reset(new trajectory_execution_manager::TrajectoryExecutionManager
+                                        (planning_scene_monitor_->getKinematicModel()));
+    plan_execution_.reset(new plan_execution::PlanExecution(planning_scene_monitor_, trajectory_execution_manager_));
+
+    // ---------------------------------------------------------------------------------------------
+    // Wait for complete state to be recieved
+    ros::Duration(0.25).sleep();
+
+    std::vector<std::string> missing_joints;
+    while( !planning_scene_monitor_->getStateMonitor()->haveCompleteState() )
+    {
+      ros::Duration(0.1).sleep();
+      ros::spinOnce();
+      ROS_INFO("[pick place] Waiting for complete state...");
+
+      // Show unpublished joints
+      planning_scene_monitor_->getStateMonitor()->haveCompleteState( missing_joints );
+      for(int i = 0; i < missing_joints.size(); ++i)
+        ROS_WARN_STREAM("[pick place] Unpublished joints: " << missing_joints[i]);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Create the go home service
+    home_service_ = nh_.advertiseService("send_home", &PickPlaceServer::sendHomeService, this);
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -238,7 +306,7 @@ public:
     double x_offset = 0.15;
     sendPoseCommand( goal_pose, x_offset );
   }
- 
+
   // Moves the arm to a specified pose
   bool sendPoseCommand(const geometry_msgs::Pose& pose, double x_offset = 0.0)
   {
@@ -263,7 +331,7 @@ public:
       kinematic_constraints::constructGoalConstraints(EE_LINK, goal_pose,
                                                       tolerance_pose, tolerance_angle);
 
-    ROS_WARN_STREAM("Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
+    ROS_WARN_STREAM("[pick place] Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
 
     // Create offset constraint
     goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
@@ -275,13 +343,13 @@ public:
 
     // -------------------------------------------------------------------------------------------
     // Visualize goals in rviz
-    ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x << 
+    ROS_INFO_STREAM("[pick place] Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x <<
                     " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
     publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
-    publishMesh(goal_pose.pose.position.x, 
-                goal_pose.pose.position.y, 
-                goal_pose.pose.position.z + x_offset, 
-                goal_pose.pose.orientation.x, goal_pose.pose.orientation.y, 
+    publishMesh(goal_pose.pose.position.x,
+                goal_pose.pose.position.y,
+                goal_pose.pose.position.z + x_offset,
+                goal_pose.pose.orientation.x, goal_pose.pose.orientation.y,
                 goal_pose.pose.orientation.z, goal_pose.pose.orientation.w );
 
     // -------------------------------------------------------------------------------------------
@@ -314,53 +382,9 @@ public:
 
 
   {
-    /*
-      double computeCartesianPathWrapper(moveit_msgs::RobotTrajectory &approach_traj_result,
-      const std::string &ik_link, const Eigen::Vector3d &approach_direction,
-      double desired_approach_distance, double max_step,
-      kinematic_state::KinematicState approach_state,
-      plan_execution::PlanExecution &plan_execution,
-      const planning_scene::PlanningScenePtr planning_scene)
-      {
-    */
-
-    // ---------------------------------------------------------------------------------------------
-    // Get planning scene monitor
-    boost::shared_ptr<tf::TransformListener> tf(new tf::TransformListener());
-    planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf));
-    if (planning_scene_monitor->getPlanningScene() && planning_scene_monitor->getPlanningScene()->isConfigured())
-    {
-      ROS_INFO("Planning scene configured");
-
-      planning_scene_monitor->startWorldGeometryMonitor();
-      planning_scene_monitor->startSceneMonitor("/move_group/monitored_planning_scene");
-      planning_scene_monitor->startStateMonitor("/joint_states", "/attached_collision_object");
-    }
-    else
-    {
-      ROS_ERROR("Planning scene not configured");
-      return false;
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // Wait for complete state to be recieved
-    std::vector<std::string> missing_joints;
-
-    while( !planning_scene_monitor->getStateMonitor()->haveCompleteState() )
-    {
-      ros::Duration(0.1).sleep();
-      ros::spinOnce();
-      ROS_INFO("Waiting for complete state...");
-
-      // Show unpublished joints
-      planning_scene_monitor->getStateMonitor()->haveCompleteState( missing_joints );
-      for(int i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM("Unpublished joints: " << missing_joints[i]);
-    }
-
     // ---------------------------------------------------------------------------------------------
     // Get planning scene
-    const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor->getPlanningScene();
+    const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
     kinematic_state::KinematicState approach_state = planning_scene->getCurrentState();
 
     // Output state info
@@ -368,10 +392,7 @@ public:
     approach_state.printStateInfo();
     approach_state.printTransforms();
 
-    // ---------------------------------------------------------------------------------------------
-    // Create a trajectory execution manager
-    const trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager(new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor->getKinematicModel()));
-    plan_execution::PlanExecution plan_execution(planning_scene_monitor, trajectory_execution_manager);
+
 
     // ---------------------------------------------------------------------------------------------
     // Settings for computeCartesianPath
@@ -384,6 +405,7 @@ public:
     // Resolution of trajectory
     double max_step = 0.001; // The maximum distance in Cartesian space between consecutive points on the resulting path
 
+    // ---------------------------------------------------------------------------------------------
     // Check for kinematic solver
     if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
     {
@@ -487,13 +509,13 @@ public:
     // Execute the planned trajectory
     ROS_INFO("Executing trajectory");
 
-    plan_execution.getTrajectoryExecutionManager()->clear();
-    if(plan_execution.getTrajectoryExecutionManager()->push(approach_traj_result))
+    plan_execution_->getTrajectoryExecutionManager()->clear();
+    if(plan_execution_->getTrajectoryExecutionManager()->push(approach_traj_result))
     {
-      plan_execution.getTrajectoryExecutionManager()->execute();
+      plan_execution_->getTrajectoryExecutionManager()->execute();
 
       // wait for the trajectory to complete
-      moveit_controller_manager::ExecutionStatus es = plan_execution.getTrajectoryExecutionManager()->waitForExecution();
+      moveit_controller_manager::ExecutionStatus es = plan_execution_->getTrajectoryExecutionManager()->waitForExecution();
       if (es == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
         ROS_INFO("Trajectory execution succeeded");
       else
@@ -528,9 +550,9 @@ public:
     // Go to home position
     ROS_INFO("[pick place] Resetting arm to home position");
     /*
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    clam_arm_client_.waitForResult(ros::Duration(20.0));
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      clam_arm_client_.waitForResult(ros::Duration(20.0));
     */
     ROS_WARN("SENDING HOME");
     sendHome();
@@ -621,9 +643,9 @@ public:
     // Reset
     ROS_INFO("[pick place] Going to home position");
     /*
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
     */
     sendHome();
@@ -759,20 +781,63 @@ public:
     marker_pub_.publish( marker );
   }
 
+
   bool sendHome()
   {
-    geometry_msgs::Pose home_pose;
 
-    home_pose.position.x = 0.104262;
-    home_pose.position.y = -0.00158531;
-    home_pose.position.z = 0.493924;
+    // -----------------------------------------------------------------------------------------------
+    // Create MoveGroupGoal if it has not already been created
 
-    home_pose.orientation.x = -3.36429e-05;
-    home_pose.orientation.y = -0.00208705;
-    home_pose.orientation.z = -0.00766653;
-    home_pose.orientation.w = 0.999968;
+    if( send_home_goal_.request.group_name.empty() ) // has not been created yet
+    {
+      send_home_goal_.request.group_name = GROUP_NAME;
+      send_home_goal_.request.num_planning_attempts = 1;
+      send_home_goal_.request.allowed_planning_time = ros::Duration(5.0);
 
-    return sendPoseCommand(home_pose);
+      // -----------------------------------------------------------------------------------------------
+      // Create the joint_state_group needed for creating the constraint
+      const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
+      const kinematic_model::JointModelGroup *joint_model_group = planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
+      kinematic_state::KinematicState kinematic_state = planning_scene->getCurrentState();
+
+      kinematic_state::JointStateGroup joint_state_group(&kinematic_state, joint_model_group);
+      joint_state_group.setToDefaultValues();  // sets to zeros
+      const double TOLERANCE_BELOW = 0.01;
+      const double TOLERANCE_ABOVE = 0.01;
+      moveit_msgs::Constraints goal_constraints =
+        kinematic_constraints::constructGoalConstraints(&joint_state_group, TOLERANCE_BELOW, TOLERANCE_ABOVE);
+
+      send_home_goal_.request.goal_constraints.resize(1);
+      send_home_goal_.request.goal_constraints[0] = goal_constraints;
+
+      //ROS_INFO_STREAM("goal_constraints:\n" << goal);
+    }
+    else
+    {
+      ROS_WARN("[pick place] Skipped re-creating send_home_goal_!");
+      sleep(10);
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Plan
+    ROS_INFO("[pick place] Sending arm to home position");
+    movegroup_action_.sendGoal(send_home_goal_);
+
+    ROS_WARN("[pick place] waiting 10 seconds?");
+    if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
+    {
+      ROS_INFO_STREAM("[pick place] Returned early?");
+    }
+    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      ROS_INFO("[pick place] Arm successfully went home.");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+    }
+
+    return true;
   }
 
 }; // end of class

@@ -3,11 +3,14 @@
   <!-- Low level stuff -->
   <include file="$(find clam_bringup)/launch/clam_lowlevel.launch" />
 
-  <!-- Interactive markers -->
-  <!-- include file="$(find clam_bringup)/launch/clam_interactive_markers.launch" / -->
+  <!-- MoveIt -->
+  <include file="$(find clam_moveit_config)/launch/move_group.launch" />
 
   <!-- Vision -->
   <include file="$(find clam_bringup)/launch/clam_vision.launch" />
+
+  <!-- Rviz -->
+  <include file="$(find clam_block_manipulation)/launch/block_manipulation_rviz.launch" />
 
   <!-- Block manipulation servers -->
   <include file="$(find clam_block_manipulation)/launch/block_manipulation_servers.launch" />

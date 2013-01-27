@@ -33,17 +33,20 @@
   servers.
 */
 
+// ROS
 #include <ros/ros.h>
-
 #include <actionlib/client/simple_action_client.h>
+
+// Clam Msgs
 #include <clam_msgs/BlockDetectionAction.h>
 #include <clam_msgs/PickPlaceAction.h>
 #include <clam_msgs/InteractiveBlockManipulationAction.h>
-#include <clam_msgs/ClamArmAction.h>
+//#include <clam_msgs/ClamArmAction.h>
+#include <clam_msgs/SendHomeService.h>
 
-#include <string>
-#include <sstream>
-
+// C++
+//#include <string>
+//#include <sstream>
 
 const std::string pick_place_topic = "/pick_place";
 
@@ -59,12 +62,15 @@ private:
   actionlib::SimpleActionClient<clam_msgs::BlockDetectionAction> block_detection_action_;
   actionlib::SimpleActionClient<clam_msgs::InteractiveBlockManipulationAction> interactive_manipulation_action_;
   actionlib::SimpleActionClient<clam_msgs::PickPlaceAction> pick_place_action_;
-  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_action_;
 
+  // Action Goals
   clam_msgs::BlockDetectionGoal block_detection_goal_;
   clam_msgs::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
   clam_msgs::PickPlaceGoal pick_place_goal_;
-  clam_msgs::ClamArmGoal clam_arm_goal_;
+
+  // Services
+  ros::ServiceClient home_service_;
+  clam_msgs::SendHomeService home_srv_;;
 
   // Parameters
   std::string arm_link;
@@ -80,8 +86,7 @@ public:
   BlockManipulationAction() :
     block_detection_action_("block_detection", true),
     interactive_manipulation_action_("interactive_manipulation", true),
-    pick_place_action_("pick_place", true),
-    clam_arm_action_("clam_arm", true)
+    pick_place_action_("pick_place", true)
   {
     // Load parameters -------------------------------------------------------------------
 
@@ -114,20 +119,24 @@ public:
     interactive_manipulation_goal_.block_size = block_size;
     interactive_manipulation_goal_.frame = arm_link;
 
+    // Send home
+    home_service_ = nh_.serviceClient<clam_msgs::SendHomeService>("/send_home");
+    home_srv_.request.sendHome = true;
+
     // Wait for servers -------------------------------------------------------------------
     ROS_INFO("Finished initializing, waiting for servers:");
 
+    ROS_INFO("- Waiting for block detection server.");
     block_detection_action_.waitForServer();
-    ROS_INFO("- Found block detection server.");
 
+    ROS_INFO("- Waiting for interactive manipulation.");
     interactive_manipulation_action_.waitForServer();
-    ROS_INFO("- Found interactive manipulation.");
 
+    ROS_INFO("- Waiting for pick and place server.");
     pick_place_action_.waitForServer();
-    ROS_INFO("- Found pick and place server.");
 
-    clam_arm_action_.waitForServer();
-    ROS_INFO("- Found clam arm server.");
+    ROS_INFO("- Waiting for send home service.");
+    home_service_.waitForExistence();
 
     ROS_INFO(" ");
     resetArm();
@@ -135,12 +144,17 @@ public:
 
   void resetArm()
   {
-    ROS_INFO("1. Sending arm to home position (reseting)");
-
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_action_.sendGoal(clam_arm_goal_,
-                              boost::bind( &BlockManipulationAction::detectBlocks, this));
-    //boost::bind( &BlockManipulationAction::skipPerception, this));
+    ROS_INFO("1. Resetting arm to home position");
+    if (home_service_.call(home_srv_))
+    {
+      detectBlocks();
+      //skipPerception();
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Failed to call service /send_home \n" << home_srv_.response);
+      return;
+    }
   }
 
   void skipPerception()
@@ -197,11 +211,10 @@ public:
     else
       ROS_ERROR("6. Pick and place did not succeed: %s",  state.toString().c_str());
 
-       ROS_INFO(" here");
     if (once)
     {
       ROS_INFO("Shutting down");
-      //ros::shutdown();
+      ros::shutdown();
     }
     else
     {
@@ -220,8 +233,7 @@ int main(int argc, char** argv)
   // initialize node
   ros::init(argc, argv, "block_manipulation");
 
-
-  clam_msgs::BlockManipulationAction manip;
+  clam_msgs::BlockManipulationAction demo;
 
   // everything is done in cloud callback, just spin
   ros::spin();
