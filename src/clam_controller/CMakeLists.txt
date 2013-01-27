@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs 
   sensor_msgs
   clam_msgs
+  moveit_ros_planning 
 )
 
 ## Declare ROS messages and services
@@ -36,6 +37,7 @@ catkin_package(
     dynamixel_hardware_interface 
     std_msgs 
     sensor_msgs
+    moveit_ros_planning 
 #  INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
 )

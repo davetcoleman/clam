@@ -36,14 +36,39 @@
   - TODO: shutdown: go to sleep position
 */
 
-#include <clam_msgs/ClamArmAction.h>
+
+// ROS
 #include <ros/ros.h>
-#include <actionlib/server/simple_action_server.h> // For providing functionality
-#include <actionlib/client/simple_action_client.h> // For calling the joint trajectory action
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
+#include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
+
+// Clam
+#include <clam_msgs/ClamArmAction.h>
+
+// Dynamixel
 #include <dynamixel_hardware_interface/SetVelocity.h> // For changing servo velocities using service call
 #include <dynamixel_hardware_interface/JointState.h> // For knowing the state of the end effector
+
+// Messages
 #include <control_msgs/FollowJointTrajectoryAction.h> // for sending arm to home position
 #include <std_msgs/Float64.h> // For sending end effector joint position commands
+
+// MoveIt
+#include <moveit_msgs/MoveGroupAction.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+//#include <moveit_msgs/RobotState.h>
+#include <moveit/kinematic_constraints/utils.h>
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/kinematic_state/kinematic_state.h>
+#include <moveit/kinematic_state/conversions.h>
+//#include <moveit/planning_models_loader/kinematic_model_loader.h>
+//#include <moveit/plan_execution/plan_execution.h>
+//#include <moveit/plan_execution/plan_with_sensing.h>
+//#include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
+//#include <moveit/kinematics_planner/kinematics_planner.h>
+//#include <moveit/trajectory_processing/iterative_smoother.h>
 
 namespace clam_controller
 {
@@ -60,6 +85,11 @@ static const double END_EFFECTOR_LOAD_SETPOINT = -0.35; // when less than this n
 static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
 static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
 static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
+
+// Constants for MoveIt
+static const std::string GROUP_NAME = "arm";
+static const std::string ROBOT_DESCRIPTION="robot_description";
+static const std::string EE_LINK = "gripper_roll_link";
 
 class ClamArmServer
 {
@@ -78,6 +108,9 @@ private:
   ros::ServiceClient velocity_client_; // change end_effector velocity
   ros::Subscriber end_effector_status_; // read the position of the end effector
 
+  // MoveIt
+  actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
+
   // Action client for the joint trajectory action used to trigger the arm movement action
   TrajClient* trajectory_client_;
 
@@ -86,13 +119,24 @@ private:
   // This disables the anything that uses a gripper
   static const bool use_gripper_ = true;
 
+  // Remember MoveGroupGoals
+  moveit_msgs::MoveGroupGoal send_home_goal_; // only compute this once
+  moveit_msgs::MoveGroupGoal send_sleep_goal_; // only compute this once
+
+  // MoveIt Components
+  boost::shared_ptr<tf::TransformListener> tf_;
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+
 public:
   ClamArmServer(const std::string name) :
-    nh_("~"),
+    //nh_("~"),
     action_server_(name, false),
+    movegroup_action_("move_group", true),
     action_name_(name)
   {
 
+    // -----------------------------------------------------------------------------------------------
+    // Setup gripper functionality
     if( use_gripper_ )
     {
       // Create publishers for servo positions
@@ -104,19 +148,90 @@ public:
 
     }
 
+    // -----------------------------------------------------------------------------------------------
     // Start up the trajectory client
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
-    /*    while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
+    while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
     {
       ROS_WARN("[clam arm] Waiting for the joint_trajectory_action server");
-      }*/
+    }
 
-    //register the goal and feeback callbacks
+    // -----------------------------------------------------------------------------------------------
+    // Connect to move_group action server
+    while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
+      ROS_INFO("[pick place] Waiting for the move_group action server");
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // Register the goal and feeback callbacks
     action_server_.registerGoalCallback(boost::bind(&ClamArmServer::goalCB, this));
     action_server_.registerPreemptCallback(boost::bind(&ClamArmServer::preemptCB, this));
+    action_server_.start();
 
-    action_server_.start(); // This service is ready
     ROS_INFO("[clam arm] ClamArm action server ready");
+  }
+
+
+  void generateMoveItGoals()
+  {
+
+    // ---------------------------------------------------------------------------------------------
+    // Create planning scene monitor
+    tf_.reset(new tf::TransformListener());
+    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf_));
+
+    // ---------------------------------------------------------------------------------------------
+    // Check planning scene monitor
+    if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
+    {
+      //ROS_INFO("Planning scene configured");
+      planning_scene_monitor_->startWorldGeometryMonitor();
+      planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
+      planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+    }
+    else
+    {
+      ROS_ERROR("[pick place] Planning scene not configured");
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Wait for complete state to be recieved
+    ros::Duration(0.25).sleep();
+
+    std::vector<std::string> missing_joints;
+    while( !planning_scene_monitor_->getStateMonitor()->haveCompleteState() )
+    {
+      ros::Duration(0.1).sleep();
+      ros::spinOnce();
+      ROS_INFO("[pick place] Waiting for complete state...");
+
+      // Show unpublished joints
+      planning_scene_monitor_->getStateMonitor()->haveCompleteState( missing_joints );
+      for(int i = 0; i < missing_joints.size(); ++i)
+        ROS_WARN_STREAM("[pick place] Unpublished joints: " << missing_joints[i]);
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // Create the joint_state_group needed for creating the constraint
+    const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
+    const kinematic_model::JointModelGroup *joint_model_group = planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
+    kinematic_state::KinematicState kinematic_state = planning_scene->getCurrentState();
+
+    kinematic_state::JointStateGroup joint_state_group(&kinematic_state, joint_model_group);
+
+    // -----------------------------------------------------------------------------------------------
+    // Create MoveGroupGoal for going home
+    joint_state_group.setToDefaultValues();  // sets to zeros
+    const double TOLERANCE_BELOW = 0.01;
+    const double TOLERANCE_ABOVE = 0.01;
+    moveit_msgs::Constraints goal_constraints =
+      kinematic_constraints::constructGoalConstraints(&joint_state_group, TOLERANCE_BELOW, TOLERANCE_ABOVE);
+
+    send_home_goal_.request.group_name = GROUP_NAME;
+    send_home_goal_.request.num_planning_attempts = 1;
+    send_home_goal_.request.allowed_planning_time = ros::Duration(5.0);
+    send_home_goal_.request.goal_constraints.resize(1);
+    send_home_goal_.request.goal_constraints[0] = goal_constraints;
   }
 
   // Recieve Action Goal Function
@@ -128,7 +243,18 @@ public:
     {
     case clam_msgs::ClamArmGoal::RESET:
       ROS_INFO("[clam arm] Received reset arm goal");
-      resetArm();
+      if( sendHome() )
+      {
+        ROS_INFO("[clam arm] Succeeded in sending arm home");
+        result_.success = true;
+        action_server_.setSucceeded(result_);
+      }
+      else
+      {
+        ROS_INFO("[clam arm] Failed to send arm home");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+      }
       break;
     case clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN:
       ROS_INFO("[clam arm] Received open end effector goal");
@@ -238,8 +364,34 @@ public:
     return trajectory_client_->getState();
   }
 
+  bool sendHome()
+  {
+    // -------------------------------------------------------------------------------------------
+    // Plan
+    ROS_INFO("[pick place] Sending arm to home position");
+    movegroup_action_.sendGoal(send_home_goal_);
+
+    ROS_WARN("[pick place] waiting 10 seconds?");
+    if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
+    {
+      ROS_INFO_STREAM("[pick place] Returned early?");
+    }
+    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      ROS_INFO("[pick place] Arm successfully went home.");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      return false;
+    }
+
+    return true;
+  }
+
+
   // Actually run the action
-  void resetArm()
+  bool sendHome_OnlyTrajectory()
   {
     control_msgs::FollowJointTrajectoryGoal goal = resetTrajectory();
 
@@ -255,9 +407,7 @@ public:
       ros::Duration(0.25).sleep();
     }
 
-    ROS_INFO("[clam arm] Finished resetting arm action");
-    result_.success = true;
-    action_server_.setSucceeded(result_);
+    return true;
   }
 
   bool endEffectorResponding()
@@ -451,7 +601,7 @@ public:
     double sleep_sec = 0.1;
     while( //ee_status_.moving == true &&
           ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
-          ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
+                                ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
           //          ros::ok() )
            )
     {

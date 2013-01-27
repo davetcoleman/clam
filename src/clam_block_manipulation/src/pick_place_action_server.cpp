@@ -49,7 +49,6 @@
 // ClamArm
 #include <clam_msgs/PickPlaceAction.h>
 #include <clam_msgs/ClamArmAction.h>
-#include <clam_msgs/SendHomeService.h>
 
 // MoveIt
 #include <moveit_msgs/MoveGroupAction.h>
@@ -94,8 +93,6 @@ private:
   actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
-  // Service
-  ros::ServiceServer home_service_;
 
   // Action messages
   clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
@@ -109,9 +106,6 @@ private:
   trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager_;
   boost::shared_ptr<plan_execution::PlanExecution> plan_execution_;
 
-  // Remember properties of the robot
-  moveit_msgs::MoveGroupGoal send_home_goal_; // only compute this once
-
   // Subscriber
   ros::Subscriber pick_place_sub_;
 
@@ -122,12 +116,6 @@ private:
   double z_up;
 
 public:
-
-  // Called when a send_home service call is made
-  bool sendHomeService(clam_msgs::SendHomeService::Request &req, clam_msgs::SendHomeService::Response &res)
-  {
-    return sendHome();
-  }
 
   // Constructor
   PickPlaceServer(const std::string name) :
@@ -193,10 +181,6 @@ public:
       for(int i = 0; i < missing_joints.size(); ++i)
         ROS_WARN_STREAM("[pick place] Unpublished joints: " << missing_joints[i]);
     }
-
-    // ---------------------------------------------------------------------------------------------
-    // Create the go home service
-    home_service_ = nh_.advertiseService("send_home", &PickPlaceServer::sendHomeService, this);
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -304,7 +288,7 @@ public:
 
     // Compensates for gripper size
     double x_offset = 0.15;
-    sendPoseCommand( goal_pose, x_offset );
+    return sendPoseCommand( goal_pose, x_offset );
   }
 
   // Moves the arm to a specified pose
@@ -331,7 +315,7 @@ public:
       kinematic_constraints::constructGoalConstraints(EE_LINK, goal_pose,
                                                       tolerance_pose, tolerance_angle);
 
-    ROS_WARN_STREAM("[pick place] Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
+    ROS_INFO_STREAM("[pick place] Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
 
     // Create offset constraint
     goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
@@ -363,7 +347,7 @@ public:
     }
     if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("[pick place] It worked!");
+      ROS_INFO("[pick place] Plan successful!");
     }
     else
     {
@@ -544,23 +528,19 @@ public:
   {
     geometry_msgs::Pose desired_pose = start_pose;
 
-    ROS_INFO("[pick place] PickAndPlace started");
+    ROS_INFO("[pick place] Pick and place started");
 
     // -----------------------------------------------------------------------------------------------
     // Go to home position
+    /* DELETED BECAUSE DEMO ALREADY DOES THIS 
     ROS_INFO("[pick place] Resetting arm to home position");
-    /*
-      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-      clam_arm_client_.sendGoal(clam_arm_goal_);
-      clam_arm_client_.waitForResult(ros::Duration(20.0));
-    */
-    ROS_WARN("SENDING HOME");
-    sendHome();
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    clam_arm_client_.waitForResult(ros::Duration(20.0));
+    ROS_WARN("Is this waiting long enough? which method?");
     //while(!clam_arm_client_.getState().isDone() && ros::ok())
     //  ros::Duration(0.1).sleep();
-
-
-    sleep(2);
+    */
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -572,7 +552,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Hover over block
-    ROS_INFO("[pick place] Sending arm to pre-grasp position ------------------------------------");
+    ROS_INFO("[pick place] Sending arm to pre-grasp position ----------------------------------");
     desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
     if(!sendGraspPoseCommand(desired_pose))
       return false;
@@ -641,14 +621,13 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Reset
+    /* DELETE BECAUSE DEMO ALREADY DOES THIS
     ROS_INFO("[pick place] Going to home position");
-    /*
-      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-      clam_arm_client_.sendGoal(clam_arm_goal_);
-      while(!clam_arm_client_.getState().isDone() && ros::ok())
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
     */
-    sendHome();
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm
@@ -782,63 +761,6 @@ public:
   }
 
 
-  bool sendHome()
-  {
-
-    // -----------------------------------------------------------------------------------------------
-    // Create MoveGroupGoal if it has not already been created
-
-    if( send_home_goal_.request.group_name.empty() ) // has not been created yet
-    {
-      send_home_goal_.request.group_name = GROUP_NAME;
-      send_home_goal_.request.num_planning_attempts = 1;
-      send_home_goal_.request.allowed_planning_time = ros::Duration(5.0);
-
-      // -----------------------------------------------------------------------------------------------
-      // Create the joint_state_group needed for creating the constraint
-      const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
-      const kinematic_model::JointModelGroup *joint_model_group = planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
-      kinematic_state::KinematicState kinematic_state = planning_scene->getCurrentState();
-
-      kinematic_state::JointStateGroup joint_state_group(&kinematic_state, joint_model_group);
-      joint_state_group.setToDefaultValues();  // sets to zeros
-      const double TOLERANCE_BELOW = 0.01;
-      const double TOLERANCE_ABOVE = 0.01;
-      moveit_msgs::Constraints goal_constraints =
-        kinematic_constraints::constructGoalConstraints(&joint_state_group, TOLERANCE_BELOW, TOLERANCE_ABOVE);
-
-      send_home_goal_.request.goal_constraints.resize(1);
-      send_home_goal_.request.goal_constraints[0] = goal_constraints;
-
-      //ROS_INFO_STREAM("goal_constraints:\n" << goal);
-    }
-    else
-    {
-      ROS_WARN("[pick place] Skipped re-creating send_home_goal_!");
-      sleep(10);
-    }
-
-    // -------------------------------------------------------------------------------------------
-    // Plan
-    ROS_INFO("[pick place] Sending arm to home position");
-    movegroup_action_.sendGoal(send_home_goal_);
-
-    ROS_WARN("[pick place] waiting 10 seconds?");
-    if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
-    {
-      ROS_INFO_STREAM("[pick place] Returned early?");
-    }
-    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-      ROS_INFO("[pick place] Arm successfully went home.");
-    }
-    else
-    {
-      ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
-    }
-
-    return true;
-  }
 
 }; // end of class
 

@@ -33,20 +33,17 @@
   servers.
 */
 
-// ROS
 #include <ros/ros.h>
-#include <actionlib/client/simple_action_client.h>
 
-// Clam Msgs
+#include <actionlib/client/simple_action_client.h>
 #include <clam_msgs/BlockDetectionAction.h>
 #include <clam_msgs/PickPlaceAction.h>
 #include <clam_msgs/InteractiveBlockManipulationAction.h>
-//#include <clam_msgs/ClamArmAction.h>
-#include <clam_msgs/SendHomeService.h>
+#include <clam_msgs/ClamArmAction.h>
 
-// C++
-//#include <string>
-//#include <sstream>
+#include <string>
+#include <sstream>
+
 
 const std::string pick_place_topic = "/pick_place";
 
@@ -62,15 +59,12 @@ private:
   actionlib::SimpleActionClient<clam_msgs::BlockDetectionAction> block_detection_action_;
   actionlib::SimpleActionClient<clam_msgs::InteractiveBlockManipulationAction> interactive_manipulation_action_;
   actionlib::SimpleActionClient<clam_msgs::PickPlaceAction> pick_place_action_;
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_action_;
 
-  // Action Goals
   clam_msgs::BlockDetectionGoal block_detection_goal_;
   clam_msgs::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
   clam_msgs::PickPlaceGoal pick_place_goal_;
-
-  // Services
-  ros::ServiceClient home_service_;
-  clam_msgs::SendHomeService home_srv_;;
+  clam_msgs::ClamArmGoal clam_arm_goal_;
 
   // Parameters
   std::string arm_link;
@@ -86,7 +80,8 @@ public:
   BlockManipulationAction() :
     block_detection_action_("block_detection", true),
     interactive_manipulation_action_("interactive_manipulation", true),
-    pick_place_action_("pick_place", true)
+    pick_place_action_("pick_place", true),
+    clam_arm_action_("clam_arm", true)
   {
     // Load parameters -------------------------------------------------------------------
 
@@ -98,8 +93,8 @@ public:
     nh_.param<double>("/block_manipulation_action_demo/block_size", block_size, 0.03);
     nh_.param<bool>("once", once, false);
 
-    ROS_INFO("Block size %f", block_size);
-    ROS_INFO("Table height %f", z_down);
+    //ROS_INFO("[demo] Block size %f", block_size);
+    //ROS_INFO("[demo] Table height %f", z_down);
 
     // Initialize goals -------------------------------------------------------------------
 
@@ -119,54 +114,45 @@ public:
     interactive_manipulation_goal_.block_size = block_size;
     interactive_manipulation_goal_.frame = arm_link;
 
-    // Send home
-    home_service_ = nh_.serviceClient<clam_msgs::SendHomeService>("/send_home");
-    home_srv_.request.sendHome = true;
-
     // Wait for servers -------------------------------------------------------------------
-    ROS_INFO("Finished initializing, waiting for servers:");
+    ROS_INFO("[demo] Finished initializing, waiting for servers:");
 
-    ROS_INFO("- Waiting for block detection server.");
     block_detection_action_.waitForServer();
+    ROS_INFO("[demo] - Found block detection server.");
 
-    ROS_INFO("- Waiting for interactive manipulation.");
     interactive_manipulation_action_.waitForServer();
+    ROS_INFO("[demo] - Found interactive manipulation.");
 
-    ROS_INFO("- Waiting for pick and place server.");
     pick_place_action_.waitForServer();
+    ROS_INFO("[demo] - Found pick and place server.");
 
-    ROS_INFO("- Waiting for send home service.");
-    home_service_.waitForExistence();
+    clam_arm_action_.waitForServer();
+    ROS_INFO("[demo] - Found clam arm server.");
 
-    ROS_INFO(" ");
+    ROS_INFO("[demo]  ");
     resetArm();
   }
 
   void resetArm()
   {
-    ROS_INFO("1. Resetting arm to home position");
-    if (home_service_.call(home_srv_))
-    {
-      detectBlocks();
-      //skipPerception();
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Failed to call service /send_home \n" << home_srv_.response);
-      return;
-    }
+    ROS_INFO("[demo] 1. Sending arm to home position (reseting)");
+
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+    clam_arm_action_.sendGoal(clam_arm_goal_,
+                              boost::bind( &BlockManipulationAction::detectBlocks, this));
+    //boost::bind( &BlockManipulationAction::skipPerception, this));
   }
 
   void skipPerception()
   {
-    ROS_INFO("1.1 Skipping perception, sending goal");
+    ROS_INFO("[demo] 1.1 Skipping perception, sending goal");
     pick_place_action_.sendGoal(pick_place_goal_,
                                 boost::bind( &BlockManipulationAction::finish, this, _1, _2));
   }
 
   void detectBlocks()
   {
-    ROS_INFO("2. Detecting blocks using PCL");
+    ROS_INFO("[demo] 2. Detecting blocks using PCL");
     block_detection_action_.sendGoal(block_detection_goal_,
                                      boost::bind( &BlockManipulationAction::addBlocks, this, _1, _2));
   }
@@ -176,10 +162,10 @@ public:
     geometry_msgs::Pose block;
 
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
-      ROS_INFO("3. Detected blocks, adding to Rviz. Waiting for user input.");
+      ROS_INFO("[demo] 3. Detected blocks, adding to Rviz. Waiting for user input.");
     else
     {
-      ROS_ERROR("3. Failed to detect blocks: %s",  state.toString().c_str());
+      ROS_ERROR("[demo] 3. Failed to detect blocks: %s",  state.toString().c_str());
       ros::shutdown();
     }
 
@@ -193,11 +179,11 @@ public:
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("4. Rviz interactive marker recieved, moving arm");
+      ROS_INFO("[demo] 4. Rviz interactive marker recieved, moving arm");
     }
     else
     {
-      ROS_ERROR("4. Rviz interactive marker input did not succeed: %s",  state.toString().c_str());
+      ROS_ERROR("[demo] 4. Rviz interactive marker input did not succeed: %s",  state.toString().c_str());
       ros::shutdown();
     }
     pick_place_action_.sendGoal(pick_place_goal_,
@@ -207,19 +193,19 @@ public:
   void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
-      ROS_INFO("5. Pick and place commands successfull");
+      ROS_INFO("[demo] 5. Pick and place commands successfull");
     else
-      ROS_ERROR("6. Pick and place did not succeed: %s",  state.toString().c_str());
+      ROS_ERROR("[demo] 6. Pick and place did not succeed: %s",  state.toString().c_str());
 
     if (once)
     {
-      ROS_INFO("Shutting down");
+      ROS_INFO("[demo] Shutting down");
       ros::shutdown();
     }
     else
     {
-       ROS_INFO(" ");
-       ROS_INFO("Restarting Demo --------------------------------------------- ");
+       ROS_INFO("[demo]  ");
+       ROS_INFO("[demo] Restarting Demo --------------------------------------------- ");
 
        resetArm();
     }

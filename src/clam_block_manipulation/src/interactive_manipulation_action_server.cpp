@@ -106,16 +106,13 @@ public:
     }
 
     // DTC - skip the interactive crap and just choose the first one
-    ROS_WARN_STREAM(msg_->poses[0]);
 
-
-
+    // End pose is just chosen place on board
     geometry_msgs::Pose end_pose;
     end_pose.orientation = msg_->poses[0].orientation; // keep the same orientation
     end_pose.position.x = 0.225;
     end_pose.position.y = 0.18;
     end_pose.position.z = msg_->poses[0].position.z; 
-
 
     moveBlock(msg_->poses[0], end_pose);
   }
@@ -147,7 +144,6 @@ public:
 
     msg_ = msg;
     initialized_ = true;
-
   }
 
   // Move the real block!
