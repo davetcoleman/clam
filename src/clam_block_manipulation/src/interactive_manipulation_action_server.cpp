@@ -107,14 +107,55 @@ public:
 
     // DTC - skip the interactive crap and just choose the first one
 
+
+    // --------------------------------------------------------------------------------------------
+    // Start pose - choose one that is preferrablt not in the goal region
+    geometry_msgs::Pose start_pose;
+    bool found_pose = false;
+
+    // Check if there is only 1 block detected
+    if( !msg_->poses.size() )
+    {
+      // no blocks, what to do?
+    }
+    else if( msg_->poses.size() == 1 )
+    {
+      start_pose = msg_->poses[0];
+      found_pose = true;
+    }
+    else
+    {
+      // Search for block that meets our criteria
+      for(int i = 0; i < msg_->poses.size(); ++i)
+      {
+        if( msg_->poses[i].position.y > -0.12 && msg_->poses[i].position.y < 0.2 ) // start of goal region
+        {
+          start_pose = msg_->poses[i];
+          found_pose = true;
+          break;
+        }
+      }
+      if( !found_pose )
+      {
+        start_pose = msg_->poses[0];
+        found_pose = true;
+      }
+    }
+
+    // --------------------------------------------------------------------------------------------
     // End pose is just chosen place on board
     geometry_msgs::Pose end_pose;
     end_pose.orientation = msg_->poses[0].orientation; // keep the same orientation
     end_pose.position.x = 0.225;
     end_pose.position.y = 0.18;
-    end_pose.position.z = msg_->poses[0].position.z; 
+    end_pose.position.z = msg_->poses[0].position.z;
 
-    moveBlock(msg_->poses[0], end_pose);
+    // --------------------------------------------------------------------------------------------
+    // Move that block
+    if( found_pose )
+    {
+      moveBlock(start_pose, end_pose);
+    }
   }
 
   void preemptCB()

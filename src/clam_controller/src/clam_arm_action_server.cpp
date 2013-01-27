@@ -1,32 +1,38 @@
-/*
- * Copyright (c) 2012, CU Boulder
- * All Rights Reserved
+/*********************************************************************
+ * Software License Agreement (BSD License)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ *  Copyright (c) 2013, CU Boulder
+ *  All rights reserved.
  *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of Vanadium Labs LLC nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL VANADIUM LABS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of CU Boulder nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
- * Author: Dave Coleman
- */
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
+
+/* Author: Dave Coleman */
 
 /*
   Allows you to perform various actions to the clam arm: (see clam_controller::ClamArmAction::command msg)
@@ -80,6 +86,7 @@ static const double END_EFFECTOR_OPEN_VALUE = -1.0;
 static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
 static const double END_EFFECTOR_POSITION_TOLERANCE = 0.02;
 static const double END_EFFECTOR_VELOCITY = 0.6;
+static const double END_EFFECTOR_MEDIUM_VELOCITY = 0.4;
 static const double END_EFFECTOR_SLOW_VELOCITY = 0.1;
 static const double END_EFFECTOR_LOAD_SETPOINT = -0.35; // when less than this number, stop closing. original value: -0.3
 static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
@@ -159,7 +166,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
-      ROS_INFO("[pick place] Waiting for the move_group action server");
+      ROS_INFO("[clam arm] Waiting for the move_group action server");
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -191,7 +198,7 @@ public:
     }
     else
     {
-      ROS_ERROR("[pick place] Planning scene not configured");
+      ROS_ERROR("[clam arm] Planning scene not configured");
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -203,12 +210,12 @@ public:
     {
       ros::Duration(0.1).sleep();
       ros::spinOnce();
-      ROS_INFO("[pick place] Waiting for complete state...");
+      ROS_INFO("[clam arm] Waiting for complete state...");
 
       // Show unpublished joints
       planning_scene_monitor_->getStateMonitor()->haveCompleteState( missing_joints );
       for(int i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM("[pick place] Unpublished joints: " << missing_joints[i]);
+        ROS_WARN_STREAM("[clam arm] Unpublished joints: " << missing_joints[i]);
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -260,7 +267,16 @@ public:
       ROS_INFO("[clam arm] Received open end effector goal");
       if( use_gripper_ )
       {
-        openEndEffector();
+        if( openEndEffector() )
+        {
+          result_.success = true;
+          action_server_.setSucceeded(result_);
+        }
+        else
+        {
+          result_.success = false;
+          action_server_.setSucceeded(result_);
+        }
       }
       else
       {
@@ -273,7 +289,16 @@ public:
       ROS_INFO("[clam arm] Received close end effector goal");
       if( use_gripper_ )
       {
-        closeEndEffector();
+        if( closeEndEffector() )
+        {
+          result_.success = true;
+          action_server_.setSucceeded(result_);
+        }
+        else
+        {
+          result_.success = false;
+          action_server_.setSucceeded(result_);
+        }
       }
       else
       {
@@ -368,21 +393,21 @@ public:
   {
     // -------------------------------------------------------------------------------------------
     // Plan
-    ROS_INFO("[pick place] Sending arm to home position");
+    ROS_INFO("[clam arm] Sending arm to home position");
     movegroup_action_.sendGoal(send_home_goal_);
 
-    ROS_WARN("[pick place] waiting 10 seconds?");
+    ROS_WARN("[clam arm] waiting 10 seconds?");
     if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
     {
-      ROS_INFO_STREAM("[pick place] Returned early?");
+      ROS_INFO_STREAM("[clam arm] Returned early?");
     }
     if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("[pick place] Arm successfully went home.");
+      ROS_INFO("[clam arm] Arm successfully went home.");
     }
     else
     {
-      ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      ROS_ERROR_STREAM("[clam arm] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
       return false;
     }
 
@@ -430,12 +455,12 @@ public:
   }
 
   // Open end effector
-  void openEndEffector()
+  bool openEndEffector()
   {
     // Error check - servos are alive and we've been recieving messages
     if( !endEffectorResponding() )
     {
-      return;
+      return false;
     }
 
     // Check if end effector is already open and arm is still
@@ -446,22 +471,23 @@ public:
     {
       // Consider the ee to already be in the corret position
       ROS_INFO("[clam arm] End effector open: already in position");
-      result_.success = true;
-      action_server_.setSucceeded(result_);
-      return;
+      return true;
     }
 
     // Set the velocity for the end effector servo
     ROS_INFO("[clam arm] Setting end effector servo velocity");
     velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
-    while(!velocity_client_.waitForExistence(ros::Duration(1.0)))
+    while(!velocity_client_.waitForExistence(ros::Duration(10.0)))
     {
+      ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
+      return false;
     }
     dynamixel_hardware_interface::SetVelocity set_velocity_srv;
     set_velocity_srv.request.velocity = END_EFFECTOR_VELOCITY;
     if( !velocity_client_.call(set_velocity_srv) )
     {
-      ROS_WARN("[clam arm] Failed to set the end effector servo velocity via service call");
+      ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
+      return false;
     }
 
     // Publish command to servos
@@ -481,16 +507,13 @@ public:
       if( timeout > 16 )  // wait 4 seconds
       {
         ROS_ERROR("[clam arm] Unable to open end effector: timeout on goal position");
-        result_.success = false;
-        action_server_.setSucceeded(result_);
-        return;
+        return false;
       }
     }
 
     // It worked!
     ROS_INFO("[clam arm] Finished end effector action");
-    result_.success = true;
-    action_server_.setSucceeded(result_);
+    return true;
   }
 
   // Close end effector to setpoint
@@ -557,84 +580,116 @@ public:
   }
 
   // Close end effector
-  void closeEndEffector()
+  bool closeEndEffector()
   {
     // Error check - servos are alive and we've been recieving messages
     if( !endEffectorResponding() )
     {
-      return;
+      return false;
     }
 
-    // Check if end effector is already close and arm is still
+    // Check if end effector is already close and arm is stil
     if( ee_status_.target_position == END_EFFECTOR_CLOSE_VALUE_MAX &&
         ee_status_.moving == false &&
         ee_status_.position > END_EFFECTOR_CLOSE_VALUE_MAX - END_EFFECTOR_POSITION_TOLERANCE &&
         ee_status_.position < END_EFFECTOR_CLOSE_VALUE_MAX + END_EFFECTOR_POSITION_TOLERANCE )
     {
-      // Consider the ee to already be in the corret position
-      ROS_INFO("[clam arm] End effector already closed completely, unable to close further");
-      result_.success = true;
-      action_server_.setSucceeded(result_);
-      return;
+      // Consider the ee to already be in the correct position
+      ROS_INFO("[clam arm] End effector already closed within tolerance, unable to close further");
+      return true;
     }
 
     // Set the velocity for the end effector to a low value
     ROS_INFO("[clam arm] Setting end effector servo velocity low");
     velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
-    while(!velocity_client_.waitForExistence(ros::Duration(1.0)))
+    if( !velocity_client_.waitForExistence(ros::Duration(5.0)) )
     {
+      ROS_ERROR("[clam arm] Timed out waiting for velocity client existance");
+      return false;
     }
+
     dynamixel_hardware_interface::SetVelocity set_velocity_srv;
-    set_velocity_srv.request.velocity = END_EFFECTOR_SLOW_VELOCITY;
+    set_velocity_srv.request.velocity = END_EFFECTOR_MEDIUM_VELOCITY;
     if( !velocity_client_.call(set_velocity_srv) )
     {
-      ROS_WARN("[clam arm] Failed to set the end effector servo velocity via service call");
+      ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
+      return false;
     }
 
-    // Publish command to servos
     std_msgs::Float64 joint_value;
-    joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
-    end_effector_pub_.publish(joint_value);
+    double timeout_sec = 10.0; // time before we declare an error
+    const double CHECK_INTERVAL = 0.1; // how often we check the load
+    const double FIRST_BACKOUT_AMOUNT = -0.25;
+    const double SECOND_BACKOUT_AMOUNT = -0.0075;
+    const double BACKOUT_AMOUNT[2] = {FIRST_BACKOUT_AMOUNT, SECOND_BACKOUT_AMOUNT};
 
-    // Wait until end effector is done moving
-    double timeout_sec = 10;
-    double sleep_sec = 0.1;
-    while( //ee_status_.moving == true &&
-          ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
-                                ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
-          //          ros::ok() )
-           )
+    // Grasp twice - to reduce amount of slips and ensure better grip
+    for(int i = 0; i < 2; ++i)
     {
-      ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
+      timeout_sec = 10; // reset timeout;
+      ROS_INFO_STREAM("[clam arm] Grasping with end effector - grasp number " << i + 1);
 
-      // Check if load has peaked
-      if( ee_status_.load < END_EFFECTOR_LOAD_SETPOINT ) // we have touched object!
+      // Tell servos to start closing slowly to max amount
+      joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
+      end_effector_pub_.publish(joint_value);
+
+      // Wait until end effector is done moving
+      while( ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
+                                   ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
       {
-        joint_value.data = ee_status_.position + 0.01; // update to current position and backout a little
-        ROS_INFO("Setting end effector setpoint to %f", joint_value.data);
-        end_effector_pub_.publish(joint_value);
-      }
+        ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
 
-      // Debug output
-      ROS_DEBUG_STREAM(joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
-                       ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
-                       << " -- LOAD: " << ee_status_.load );
+        // Check if load has peaked
+        if( ee_status_.load < END_EFFECTOR_LOAD_SETPOINT ) // we have touched object!
+        {
+          // Open the gripper back up a little to reduce the amount of load.
+          // the first time open it a lot to help with grasp quality
+          joint_value.data = ee_status_.position + BACKOUT_AMOUNT[i];
 
-      ros::Duration(sleep_sec).sleep();
-      timeout_sec -= sleep_sec;
-      if( timeout_sec <= 0 )
-      {
-        ROS_ERROR("[clam arm] Timeout: Unable to close end effector");
-        result_.success = false;
-        action_server_.setSucceeded(result_);
-        return;
+          // Check that we haven't passed the open limit
+          if( joint_value.data < END_EFFECTOR_OPEN_VALUE )
+            joint_value.data = END_EFFECTOR_OPEN_VALUE;
+
+          ROS_DEBUG("[clam arm] Setting end effector setpoint to %f when it was %f", joint_value.data, ee_status_.position);
+          end_effector_pub_.publish(joint_value);
+
+          if( i == 0 ) // give lots of time to pull out the first time
+          {
+            ros::Duration(1.00).sleep();
+            ROS_INFO_STREAM("Sleeping as we publish joint value " << joint_value.data);
+
+            set_velocity_srv.request.velocity = END_EFFECTOR_SLOW_VELOCITY;
+            if( !velocity_client_.call(set_velocity_srv) )
+            {
+              ROS_ERROR("[clam arm] Failed to set the end effector servo velocity via service call");
+              return false;
+            }
+            ros::Duration(1.0).sleep();
+          }
+          break;
+        }
+
+        // Debug output
+        ROS_DEBUG_STREAM("[clam arm] " << joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
+                         ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
+                         << " -- LOAD: " << ee_status_.load );
+
+        // Wait an interval before checking again
+        ros::Duration(CHECK_INTERVAL).sleep();
+
+        // Check if timeout has occured
+        timeout_sec -= CHECK_INTERVAL;
+        if( timeout_sec <= 0 )
+        {
+          ROS_ERROR("[clam arm] Timeout: Unable to close end effector");
+          return false;
+        }
       }
     }
 
     // DONE
-    //ROS_INFO("[clam arm] Finished end effector action --------------------------------------- \n");
-    result_.success = true;
-    action_server_.setSucceeded(result_);
+    ROS_INFO("[clam arm] Finished closing end effector action");
+    return true;
   }
 
   // Update status of end effector

@@ -546,7 +546,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
       error_msg = "Aborting because " + joint_names_[i] +
         " joint wound up outside the goal constraints. The position error " +
-        boost::lexical_cast<std::string>(abs(msg_.error.positions[i])) +
+        boost::lexical_cast<std::string>(fabs(msg_.error.positions[i])) +
         " is larger than the goal constraints " + boost::lexical_cast<std::string>(goal_constraints_[i]);
       ROS_ERROR("%s", error_msg.c_str());
       if (is_action)
