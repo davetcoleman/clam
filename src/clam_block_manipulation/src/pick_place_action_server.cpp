@@ -93,7 +93,6 @@ private:
   actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> movegroup_action_;
 
-
   // Action messages
   clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
   clam_msgs::PickPlaceFeedback     feedback_;
@@ -309,7 +308,7 @@ public:
     // -------------------------------------------------------------------------------------------
     // Create goal state
     goal_pose.header.frame_id = "base_link";
-    double tolerance_pose = 1e-3; // default: 1e-3... meters
+    double tolerance_pose = 1e-4; // default: 1e-3... meters
     double tolerance_angle = 1e-2; // default 1e-2... radians
     moveit_msgs::Constraints goal_constraint0 =
       kinematic_constraints::constructGoalConstraints(EE_LINK, goal_pose,
@@ -344,6 +343,7 @@ public:
     if(!movegroup_action_.waitForResult(ros::Duration(5.0)))
     {
       ROS_INFO_STREAM("[pick place] Returned early?");
+      return false;
     }
     if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
@@ -352,6 +352,7 @@ public:
     else
     {
       ROS_ERROR_STREAM("[pick place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      return false;
     }
 
     return true;
@@ -530,18 +531,6 @@ public:
 
     ROS_INFO("[pick place] Pick and place started");
 
-    // -----------------------------------------------------------------------------------------------
-    // Go to home position
-    /* DELETED BECAUSE DEMO ALREADY DOES THIS 
-    ROS_INFO("[pick place] Resetting arm to home position");
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    clam_arm_client_.waitForResult(ros::Duration(20.0));
-    ROS_WARN("Is this waiting long enough? which method?");
-    //while(!clam_arm_client_.getState().isDone() && ros::ok())
-    //  ros::Duration(0.1).sleep();
-    */
-
     // ---------------------------------------------------------------------------------------------
     // Open gripper
     ROS_INFO("[pick place] Opening gripper");
@@ -555,19 +544,25 @@ public:
     ROS_INFO("[pick place] Sending arm to pre-grasp position ----------------------------------");
     desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
     if(!sendGraspPoseCommand(desired_pose))
+    {
+      ROS_ERROR("[pick place] Failed to go to pre-grasp position");
       return false;
+    }
 
     // ---------------------------------------------------------------------------------------------
     // Lower over block
     // try to compute a straight line path that arrives at the goal using the specified approach direction
     ROS_INFO("[pick place] Lowering over block -------------------------------------------");
-
     Eigen::Vector3d approach_direction; // Approach direction (negative z axis)
     approach_direction << 0, 0, -1;
     double desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
-    computeStraightLinePath(approach_direction, desired_approach_distance);
-    ros::Duration(1.0).sleep();
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR("[pick place] Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Close gripper
@@ -585,8 +580,13 @@ public:
     approach_direction << 0, 0, 1; // Approach direction (negative z axis)
     desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
-    computeStraightLinePath(approach_direction, desired_approach_distance);
-    ros::Duration(1.0).sleep();
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR("[pick place] Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
+
 
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
@@ -595,7 +595,10 @@ public:
     desired_pose.position.z = PREGRASP_Z_HEIGHT;
     //ROS_INFO_STREAM("[pick place] Pose: \n" << desired_pose );
     if(!sendGraspPoseCommand(desired_pose))
+    {
+      ROS_ERROR("[pick place] Failed to go to goal position");
       return false;
+    }
     ros::Duration(1.0).sleep();
 
 
@@ -605,10 +608,14 @@ public:
     ROS_INFO("[pick place] Lifting block -------------------------------------------");
 
     approach_direction << 0, 0, -1; // Approach direction (negative z axis)
-    desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+    desired_approach_distance = .040; // The distance the origin of a robot link needs to travel
 
-    computeStraightLinePath(approach_direction, desired_approach_distance);
-    ros::Duration(1.0).sleep();
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR("[pick place] Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -618,16 +625,6 @@ public:
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
     ros::Duration(2.0).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Reset
-    /* DELETE BECAUSE DEMO ALREADY DOES THIS
-    ROS_INFO("[pick place] Going to home position");
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
-    */
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm

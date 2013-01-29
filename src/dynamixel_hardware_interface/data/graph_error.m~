@@ -1,0 +1,25 @@
+
+clear
+clc
+
+file_number = 18;
+file_name = strcat('trajectory_error_'+file_number,'.csv')
+num_data = csvread(file_name,1,0);
+csv_data = textread(file_name,'%s','whitespace',',');
+key_names = csv_data(1:7);
+
+[rows,cols] = size(num_data);
+
+plot( num_data );
+
+legend(key_names, 'Interpreter', 'none');
+lh=findall(gcf,'tag','legend');
+set(lh,'location','northeastoutside');
+     
+%axis([0,.6,-.3,.3]);
+set(gca,'FontSize',14)
+
+%legend('Number of lookups','O(n log n)','Location','NorthWest')
+xlabel('Trajectory #')
+ylabel('Position Error')
+title('Servo Position Error wrt Trajectory Point #');

@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   clam_msgs
   moveit_ros_planning 
+  tf
 )
 
 ## Declare ROS messages and services
@@ -38,6 +39,7 @@ catkin_package(
     std_msgs 
     sensor_msgs
     moveit_ros_planning 
+    tf
 #  INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
 )

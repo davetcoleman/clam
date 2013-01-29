@@ -28,8 +28,7 @@
  */
 
 /*
-  This script combines the three components of block manipulation: block detection,
-  interactive block moving, and pick & place into one coherent program using actionlib action
+  This script combines the three components of block manipulation: block detection, block logic, and pick & place into one coherent program using actionlib action
   servers.
 */
 
@@ -38,7 +37,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <clam_msgs/BlockDetectionAction.h>
 #include <clam_msgs/PickPlaceAction.h>
-#include <clam_msgs/InteractiveBlockManipulationAction.h>
+#include <clam_msgs/BlockLogicAction.h>
 #include <clam_msgs/ClamArmAction.h>
 
 #include <string>
@@ -50,19 +49,19 @@ const std::string pick_place_topic = "/pick_place";
 namespace clam_msgs
 {
 
-class BlockManipulationAction
+class BlockManipulationDemo
 {
 private:
   ros::NodeHandle nh_;
 
   // Actions
   actionlib::SimpleActionClient<clam_msgs::BlockDetectionAction> block_detection_action_;
-  actionlib::SimpleActionClient<clam_msgs::InteractiveBlockManipulationAction> interactive_manipulation_action_;
+  actionlib::SimpleActionClient<clam_msgs::BlockLogicAction> block_logic_action_;
   actionlib::SimpleActionClient<clam_msgs::PickPlaceAction> pick_place_action_;
-  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_action_;
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
 
   clam_msgs::BlockDetectionGoal block_detection_goal_;
-  clam_msgs::InteractiveBlockManipulationGoal interactive_manipulation_goal_;
+  clam_msgs::BlockLogicGoal block_logic_goal_;
   clam_msgs::PickPlaceGoal pick_place_goal_;
   clam_msgs::ClamArmGoal clam_arm_goal_;
 
@@ -77,11 +76,11 @@ private:
 
 public:
 
-  BlockManipulationAction() :
+  BlockManipulationDemo() :
     block_detection_action_("block_detection", true),
-    interactive_manipulation_action_("interactive_manipulation", true),
+    block_logic_action_("block_logic", true),
     pick_place_action_("pick_place", true),
-    clam_arm_action_("clam_arm", true)
+    clam_arm_client_("clam_arm", true)
   {
     // Load parameters -------------------------------------------------------------------
 
@@ -110,9 +109,9 @@ public:
     pick_place_goal_.gripper_closed = gripper_closed;
     pick_place_goal_.topic = pick_place_topic;
 
-    // Interactive Manipulation
-    interactive_manipulation_goal_.block_size = block_size;
-    interactive_manipulation_goal_.frame = arm_link;
+    // Block logic
+    block_logic_goal_.block_size = block_size;
+    block_logic_goal_.frame = arm_link;
 
     // Wait for servers -------------------------------------------------------------------
     ROS_INFO("[demo] Finished initializing, waiting for servers:");
@@ -120,17 +119,32 @@ public:
     block_detection_action_.waitForServer();
     ROS_INFO("[demo] - Found block detection server.");
 
-    interactive_manipulation_action_.waitForServer();
-    ROS_INFO("[demo] - Found interactive manipulation.");
+    block_logic_action_.waitForServer();
+    ROS_INFO("[demo] - Found block logic server.");
 
     pick_place_action_.waitForServer();
     ROS_INFO("[demo] - Found pick and place server.");
 
-    clam_arm_action_.waitForServer();
+    clam_arm_client_.waitForServer();
     ROS_INFO("[demo] - Found clam arm server.");
 
     ROS_INFO("[demo]  ");
     resetArm();
+  }
+
+  // Shutdown the arm correctly
+  ~BlockManipulationDemo()
+  {
+    // -----------------------------------------------------------------------------------------------
+    // Go to sleep
+    ROS_INFO("[demo] Sending arm to shutdown position");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::SHUTDOWN;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    clam_arm_client_.waitForResult(ros::Duration(20.0));
+    if( !clam_arm_client_.getState().isDone() || !clam_arm_client_.getResult()->success )
+    {
+      ROS_ERROR("[demo] Timeout: Unable to move to shutdown position");
+    }
   }
 
   void resetArm()
@@ -138,23 +152,23 @@ public:
     ROS_INFO("[demo] 1. Sending arm to home position (reseting)");
 
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_action_.sendGoal(clam_arm_goal_,
-                              boost::bind( &BlockManipulationAction::detectBlocks, this));
-    //boost::bind( &BlockManipulationAction::skipPerception, this));
+    clam_arm_client_.sendGoal(clam_arm_goal_,
+                              boost::bind( &BlockManipulationDemo::detectBlocks, this));
+    //boost::bind( &BlockManipulationDemo::skipPerception, this));
   }
 
   void skipPerception()
   {
     ROS_INFO("[demo] 1.1 Skipping perception, sending goal");
     pick_place_action_.sendGoal(pick_place_goal_,
-                                boost::bind( &BlockManipulationAction::finish, this, _1, _2));
+                                boost::bind( &BlockManipulationDemo::finish, this, _1, _2));
   }
 
   void detectBlocks()
   {
     ROS_INFO("[demo] 2. Detecting blocks using PCL");
     block_detection_action_.sendGoal(block_detection_goal_,
-                                     boost::bind( &BlockManipulationAction::addBlocks, this, _1, _2));
+                                     boost::bind( &BlockManipulationDemo::addBlocks, this, _1, _2));
   }
 
   void addBlocks(const actionlib::SimpleClientGoalState& state, const BlockDetectionResultConstPtr& result)
@@ -169,25 +183,25 @@ public:
       ros::shutdown();
     }
 
-    interactive_manipulation_action_.sendGoal(interactive_manipulation_goal_,
-                                              boost::bind( &BlockManipulationAction::pickAndPlace,
+    block_logic_action_.sendGoal(block_logic_goal_,
+                                              boost::bind( &BlockManipulationDemo::pickAndPlace,
                                                            this, _1, _2));
   }
 
   void pickAndPlace(const actionlib::SimpleClientGoalState& state,
-                    const InteractiveBlockManipulationResultConstPtr& result)
+                    const BlockLogicResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("[demo] 4. Rviz interactive marker recieved, moving arm");
+      ROS_INFO("[demo] 4. Pick and place command recieved, moving arm");
     }
     else
     {
-      ROS_ERROR("[demo] 4. Rviz interactive marker input did not succeed: %s",  state.toString().c_str());
+      ROS_ERROR("[demo] 4. Pick and place command input did not succeed: %s",  state.toString().c_str());
       ros::shutdown();
     }
     pick_place_action_.sendGoal(pick_place_goal_,
-                                boost::bind( &BlockManipulationAction::finish, this, _1, _2));
+                                boost::bind( &BlockManipulationDemo::finish, this, _1, _2));
   }
 
   void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)
@@ -204,10 +218,10 @@ public:
     }
     else
     {
-       ROS_INFO("[demo]  ");
-       ROS_INFO("[demo] Restarting Demo --------------------------------------------- ");
+      ROS_INFO("[demo]  ");
+      ROS_INFO("[demo] Restarting Demo --------------------------------------------- ");
 
-       resetArm();
+      resetArm();
     }
   }
 };
@@ -219,7 +233,7 @@ int main(int argc, char** argv)
   // initialize node
   ros::init(argc, argv, "block_manipulation");
 
-  clam_msgs::BlockManipulationAction demo;
+  clam_msgs::BlockManipulationDemo demo;
 
   // everything is done in cloud callback, just spin
   ros::spin();

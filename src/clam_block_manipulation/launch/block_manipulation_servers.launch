@@ -5,8 +5,12 @@
     <!--remap from="/camera/depth_registered/points" to="/camera/rgb/points" /-->
   </node>
 
-  <!-- Launch rviz interactivity -->
+  <!-- Launch rviz interactivity 
   <node name="interactive_manipulation_action_server" pkg="clam_block_manipulation" type="interactive_manipulation_action_server" output="screen">
+  </node>-->
+
+  <!-- Launch block logic server -->
+  <node name="block_logic_action_server" pkg="clam_block_manipulation" type="block_logic_action_server" output="screen">
   </node>
 
   <!-- Launch controller manager in this namespace -->

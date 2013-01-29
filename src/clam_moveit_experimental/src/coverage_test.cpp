@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2012, Dave Coleman
+ *  Copyright (c) 2013, CU Boulder
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the CU Boulder nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -126,7 +126,7 @@ public:
     clam_arm_client_.waitForResult(ros::Duration(20.0));
     if(!clam_arm_client_.getState().isDone())
     {
-      ROS_ERROR("[gripper test] Timeout: Unable to move to home position");
+      ROS_ERROR("[coverage test] Timeout: Unable to move to home position");
     }
 
     // -----------------------------------------------------------------------------------------------

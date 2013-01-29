@@ -25,26 +25,41 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// Standard
 #include <sstream>
 #include <string>
 #include <vector>
 #include <XmlRpcValue.h>
 
+// Dynamixel Low Level
 #include <dynamixel_hardware_interface/dynamixel_const.h>
 #include <dynamixel_hardware_interface/dynamixel_io.h>
 
+// Dynamixel Controllers
 #include <dynamixel_hardware_interface/single_joint_controller.h>
 #include <dynamixel_hardware_interface/multi_joint_controller.h>
 #include <dynamixel_hardware_interface/joint_trajectory_action_controller.h>
-#include <dynamixel_hardware_interface/JointState.h>
 
+// Services
 #include <dynamixel_hardware_interface/SetComplianceMargin.h>
 #include <dynamixel_hardware_interface/SetComplianceSlope.h>
 
-#include <ros/ros.h>
-#include <pluginlib/class_list_macros.h>
+// Messages
+#include <dynamixel_hardware_interface/JointState.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+
+// ROS
+#include <ros/ros.h>
+#include <ros/package.h> // for getting package file path
+#include <pluginlib/class_list_macros.h>
+
+// Boost
+#include <boost/filesystem.hpp>  // for error logging to file
+
+// TODO: remove. For recording data
+#include <iostream>
+#include <fstream>
 
 PLUGINLIB_DECLARE_CLASS(dynamixel_hardware_interface,
                         JointTrajectoryActionController,
@@ -53,9 +68,9 @@ PLUGINLIB_DECLARE_CLASS(dynamixel_hardware_interface,
 
 namespace controller
 {
-
-
-static const double ACCEPTABLE_BOUND = 0.05; // amount two positions can vary without being considered different positions
+// TODO: lower this const:
+static const double ACCEPTABLE_BOUND = 0.05; // amount two positions can vary without being considered different positions.
+static const bool USE_ERROR_OUTPUT_LOG = true; // during trajectory execution, log the position and velcoty error
 
 
 JointTrajectoryActionController::JointTrajectoryActionController()
@@ -67,7 +82,8 @@ JointTrajectoryActionController::~JointTrajectoryActionController()
 {
 }
 
-bool JointTrajectoryActionController::initialize(std::string name, std::vector<boost::shared_ptr<controller::SingleJointController> > deps)
+bool JointTrajectoryActionController::initialize(std::string name,
+                                                 std::vector<boost::shared_ptr<controller::SingleJointController> > deps)
 {
   // Load the multi joint controller that this class inherits from. This loads the list of joint_names_
   if (!MultiJointController::initialize(name, deps))
@@ -78,7 +94,7 @@ bool JointTrajectoryActionController::initialize(std::string name, std::vector<b
   update_rate_ = 1000;
   state_update_rate_ = 50;
 
-  std::string prefix = "joint_trajectory_action_node/constraints/";
+  const std::string prefix = "joint_trajectory_action_node/constraints/";
 
   c_nh_.param<double>(prefix + "goal_time", goal_time_constraint_, 0.0);
   c_nh_.param<double>(prefix + "stopped_velocity_tolerance", stopped_velocity_tolerance_, 0.01);
@@ -93,16 +109,17 @@ bool JointTrajectoryActionController::initialize(std::string name, std::vector<b
     c_nh_.param<double>(prefix + joint_names_[i] + "/trajectory", trajectory_constraints_[i], -1.0);
   }
 
-  msg_.joint_names = joint_names_;
-  msg_.desired.positions.resize(num_joints_);
-  msg_.desired.velocities.resize(num_joints_);
-  msg_.desired.accelerations.resize(num_joints_);
-  msg_.actual.positions.resize(num_joints_);
-  msg_.actual.velocities.resize(num_joints_);
-  msg_.actual.accelerations.resize(num_joints_);
-  msg_.error.positions.resize(num_joints_);
-  msg_.error.velocities.resize(num_joints_);
-  msg_.error.accelerations.resize(num_joints_);
+  // Setup/resize feedback message
+  feedback_msg_.joint_names = joint_names_;
+  feedback_msg_.desired.positions.resize(num_joints_);
+  feedback_msg_.desired.velocities.resize(num_joints_);
+  feedback_msg_.desired.accelerations.resize(num_joints_);
+  feedback_msg_.actual.positions.resize(num_joints_);
+  feedback_msg_.actual.velocities.resize(num_joints_);
+  feedback_msg_.actual.accelerations.resize(num_joints_);
+  feedback_msg_.error.positions.resize(num_joints_);
+  feedback_msg_.error.velocities.resize(num_joints_);
+  feedback_msg_.error.accelerations.resize(num_joints_);
 
   return true;
 }
@@ -166,26 +183,28 @@ void JointTrajectoryActionController::updateState()
       if (terminate_) { break; }
     }
 
-    msg_.header.stamp = ros::Time::now();
+    feedback_msg_.header.stamp = ros::Time::now();
 
     for (size_t j = 0; j < joint_names_.size(); ++j)
     {
       const dynamixel_hardware_interface::JointState* state = joint_states_[joint_names_[j]];
-      msg_.desired.positions[j] = state->target_position;
-      msg_.desired.velocities[j] = std::abs(state->target_velocity);
-      msg_.actual.positions[j] = state->position;
-      msg_.actual.velocities[j] = std::abs(state->velocity);
-      msg_.error.positions[j] = msg_.actual.positions[j] - msg_.desired.positions[j];
-      msg_.error.velocities[j] = msg_.actual.velocities[j] - msg_.desired.velocities[j];
+      feedback_msg_.desired.positions[j] = state->target_position;
+      feedback_msg_.desired.velocities[j] = std::abs(state->target_velocity);
+      feedback_msg_.actual.positions[j] = state->position;
+      feedback_msg_.actual.velocities[j] = std::abs(state->velocity);
+      feedback_msg_.error.positions[j] = feedback_msg_.actual.positions[j] - feedback_msg_.desired.positions[j];
+      feedback_msg_.error.velocities[j] = feedback_msg_.actual.velocities[j] - feedback_msg_.desired.velocities[j];
     }
 
-    state_pub_.publish(msg_);
+    state_pub_.publish(feedback_msg_);
 
     rate.sleep();
   }
 }
 
-void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj_msg, bool is_action)
+// Error check the trajectory then send it to the controllers
+void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj_msg,
+                                                        bool is_action)
 {
   control_msgs::FollowJointTrajectoryResult traj_result;
   std::string error_msg;
@@ -214,7 +233,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
       error_msg = "Unable to locate joint " + joint_names_[j] + " in the commanded trajectory";
       ROS_ERROR("%s", error_msg.c_str());
-      if (is_action) { action_server_->setAborted(traj_result, error_msg.c_str()); }
+      if (is_action)
+      {
+        action_server_->setAborted(traj_result, error_msg.c_str());
+      }
       return;
     }
   }
@@ -346,12 +368,34 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   }
 
 
-  // Set the compliance margin and slope 
+  // Set the compliance margin and slope
   // TODO: move this to configuration file
   int traj_compliance_margin = 1;
-  int traj_compliance_slope = 20; 
+  int traj_compliance_slope = 10; //20
   MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
 
+  // -----------------------------------------------------------------------------------------------
+  // Log position and velocity error for each joint to file
+  std::ofstream error_log_file;
+  std::string error_log_string;
+  if( USE_ERROR_OUTPUT_LOG )
+  {
+    std::string error_log_path;
+    getUniqueErrorLogPath(error_log_path);
+
+    // Save results to file
+    error_log_file.open(error_log_path.c_str());
+
+    // Output list of joint names to first line of erronnr log
+    for (size_t j = 0; j < joint_names_.size(); ++j)
+    {
+      if(!j) // no comma before first item
+        error_log_file << joint_names_[j];
+      else
+        error_log_file << "," << joint_names_[j];
+    }
+    error_log_file << "\n";
+  }
 
   // Wait until we've reached the trajectory start time
   ROS_INFO("Trajectory start requested at %.3lf, waiting...", traj_msg.header.stamp.toSec());
@@ -518,49 +562,117 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       time = ros::Time::now();
     }
 
+    // -----------------------------------------------------------------------------------------
     // Verifies trajectory constraints
     for (size_t j = 0; j < joint_names_.size(); ++j)
     {
-      if (trajectory_constraints_[j] > 0.0 && msg_.error.positions[j] > trajectory_constraints_[j])
+      if (trajectory_constraints_[j] > 0.0 && feedback_msg_.error.positions[j] > trajectory_constraints_[j])
       {
         traj_result.error_code = control_msgs::FollowJointTrajectoryResult::PATH_TOLERANCE_VIOLATED;
         error_msg = "Unsatisfied position constraint for " + joint_names_[j] +
           " trajectory point " + boost::lexical_cast<std::string>(traj_seg) +
-          ", " + boost::lexical_cast<std::string>(msg_.error.positions[j]) +
+          ", " + boost::lexical_cast<std::string>(feedback_msg_.error.positions[j]) +
           " is larger than " + boost::lexical_cast<std::string>(trajectory_constraints_[j]);
         ROS_ERROR("%s", error_msg.c_str());
-        if (is_action) { action_server_->setAborted(traj_result, error_msg); }
+        if (is_action)
+        {
+          action_server_->setAborted(traj_result, error_msg);
+        }
         return;
       }
+
+      // Save to file
+      if( USE_ERROR_OUTPUT_LOG )
+      {
+        if(!j) // no comma before first item
+          error_log_string = boost::lexical_cast<std::string>(feedback_msg_.error.positions[j]);
+        else
+          error_log_string += "," + boost::lexical_cast<std::string>(feedback_msg_.error.positions[j]);
+      }
+
     }
+
+    // End line - the entire set of position error for each trajectory point is saved per line
+    if( USE_ERROR_OUTPUT_LOG )
+    {
+      error_log_file << error_log_string << "\n";
+    }
+
   } // end of the main loop
 
   // let motors roll for specified amount of time
   ros::Duration(goal_time_constraint_).sleep();
 
   // Check if all motors are within their goal constraints
+  bool aborted_at_end = false;
   for (size_t i = 0; i < num_joints_; ++i)
   {
-    if (goal_constraints_[i] > 0 && std::abs(msg_.error.positions[i]) > goal_constraints_[i])
+    if (goal_constraints_[i] > 0 && std::abs(feedback_msg_.error.positions[i]) > goal_constraints_[i])
     {
       traj_result.error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
-      error_msg = "Aborting because " + joint_names_[i] +
+      error_msg = "Aborting at end because " + joint_names_[i] +
         " joint wound up outside the goal constraints. The position error " +
-        boost::lexical_cast<std::string>(fabs(msg_.error.positions[i])) +
+        boost::lexical_cast<std::string>(fabs(feedback_msg_.error.positions[i])) +
         " is larger than the goal constraints " + boost::lexical_cast<std::string>(goal_constraints_[i]);
       ROS_ERROR("%s", error_msg.c_str());
       if (is_action)
       {
         action_server_->setAborted(traj_result, error_msg);
       }
-      return;
+      aborted_at_end = true;
     }
+
+    // Save final results to file
+    if( USE_ERROR_OUTPUT_LOG )
+    {
+      if(!i) // no comma before first item
+        error_log_string = boost::lexical_cast<std::string>(feedback_msg_.error.positions[i]);
+      else
+        error_log_string += "," + boost::lexical_cast<std::string>(feedback_msg_.error.positions[i]);
+    }
+
+  }
+  // End line - the entire set of position error for each trajectory point is saved per line
+  if( USE_ERROR_OUTPUT_LOG )
+  {
+    error_log_file << error_log_string << "\n";
   }
 
+  if( aborted_at_end )
+    return;
+
+  // -----------------------------------------------------------------------------------------------
+  // Finish up
+
+  // Close log file
+  if( USE_ERROR_OUTPUT_LOG )
+    error_log_file.close();
+
+  // Set result
   traj_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
   error_msg = "Trajectory execution successfully completed";
   ROS_INFO("%s", error_msg.c_str());
   action_server_->setSucceeded(traj_result, error_msg);
+}
+
+
+void JointTrajectoryActionController::getUniqueErrorLogPath(std::string &error_log_path)
+{
+  // Get the location of the dynamixel package within ros
+  const std::string package_path = ros::package::getPath("dynamixel_hardware_interface");
+
+  std::string error_log_base_path = package_path + "/data/trajectory_error_";
+
+  // Loop until we find a number-appended file name that does not exist
+  unsigned int file_id = 0;
+  do
+  {
+    error_log_path = error_log_base_path + boost::lexical_cast<std::string>(file_id) + ".csv";
+    ++file_id;
+  } while( boost::filesystem::is_regular_file( error_log_path ) );
+
+  ROS_INFO_STREAM("Error logging to " << error_log_path);
+  //error_log_path = "/home/dave/ros/clam/src/dynamixel_hardware_interface/data";
 }
 
 }

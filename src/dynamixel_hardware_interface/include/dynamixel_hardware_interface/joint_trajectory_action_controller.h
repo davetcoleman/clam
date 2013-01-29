@@ -43,6 +43,8 @@ public:
   void processTrajectory(const trajectory_msgs::JointTrajectory& traj, bool is_action);
 
 private:
+  void getUniqueErrorLogPath(std::string &log_path);
+
   int update_rate_;
   int state_update_rate_;
   std::vector<Segment> trajectory_;
@@ -53,7 +55,7 @@ private:
   std::vector<double> goal_constraints_;
   std::vector<double> trajectory_constraints_;
 
-  control_msgs::FollowJointTrajectoryFeedback msg_;
+  control_msgs::FollowJointTrajectoryFeedback feedback_msg_;
 
   ros::Subscriber command_sub_;
   ros::Publisher state_pub_;
@@ -64,6 +66,7 @@ private:
   boost::thread* feedback_thread_;
   boost::mutex terminate_mutex_;
   bool terminate_;
+
 };
 
 }

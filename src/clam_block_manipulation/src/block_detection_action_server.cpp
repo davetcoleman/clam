@@ -82,7 +82,7 @@ private:
   ros::Subscriber point_cloud_sub_;
   ros::Publisher filtered_pub_; // filtered point cloud for testing the algorithms
   ros::Publisher plane_pub_; // points that were recognized as part of the table
-  ros::Publisher block_pose_pub_; // publishes to the interactive_manipulation_action_server
+  ros::Publisher block_pose_pub_; // publishes to the block logic server
   tf::TransformListener tf_listener_;
 
   // Parameters from goal
@@ -367,7 +367,7 @@ public:
       ROS_WARN_STREAM("Rejected block: " << block_pose );
     }
 
-    ROS_INFO_STREAM("Added block: " << block_pose );
+    //ROS_INFO_STREAM("Added block: \n" << block_pose );
 
     result_.blocks.poses.push_back(block_pose);
   }

@@ -12,24 +12,24 @@ clam_arm_controller:
     joint_trajectory_action_node:
         min_velocity: 0.0
         constraints:
-            goal_time: 0.3
+            goal_time: 0.3  # time to let the servos finish before the goal is considered 'reached'
 # original goal amount was 0.045 but controllers kept aborting
             shoulder_pan_joint:
-                goal: 0.075
+                goal: 0.1
             gripper_roll_joint:
-                goal: 0.075
+                goal: 0.1
 #            l_gripper_aft_joint:
-#                goal: 0.075
+#                goal: 0.1
             shoulder_pitch_joint:
-                goal: 0.075
+                goal: 0.1
             elbow_roll_joint:
-                goal: 0.075
+                goal: 0.1
             elbow_pitch_joint:
-                goal: 0.075
+                goal: 0.1
             wrist_roll_joint:
-                goal: 0.075
+                goal: 0.1
             wrist_pitch_joint:
-                goal: 0.075
+                goal: 0.1
 
 
 

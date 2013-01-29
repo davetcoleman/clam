@@ -49,11 +49,6 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
-## Declare a cpp library
-# add_library(clam_moveit_experimental
-#   src/${PROJECT_NAME}/clam_moveit_experimental.cpp
-# )
-
 ## Declare cpp executables
 
 # Coverage test
@@ -67,6 +62,10 @@ target_link_libraries(gripper_test ${catkin_LIBRARIES})
 # End effector offset test
 add_executable(ee_offset_test src/ee_offset_test.cpp)
 target_link_libraries(ee_offset_test ${catkin_LIBRARIES})
+
+# Up Down Test
+add_executable(up_down_test src/up_down_test.cpp)
+target_link_libraries(up_down_test ${catkin_LIBRARIES})
 
 
 #############

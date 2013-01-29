@@ -38,8 +38,8 @@
   Allows you to perform various actions to the clam arm: (see clam_controller::ClamArmAction::command msg)
   - Reset the arm to its default/home pose
   - Open and close the end effector
-  - TODO: close end effector with feedback
-  - TODO: shutdown: go to sleep position
+  - Close end effector with feedback
+  - Shutdown: go to sleep position
 */
 
 
@@ -55,6 +55,7 @@
 
 // Dynamixel
 #include <dynamixel_hardware_interface/SetVelocity.h> // For changing servo velocities using service call
+#include <dynamixel_hardware_interface/TorqueEnable.h> // For changing servo velocities using service call
 #include <dynamixel_hardware_interface/JointState.h> // For knowing the state of the end effector
 
 // Messages
@@ -128,7 +129,7 @@ private:
 
   // Remember MoveGroupGoals
   moveit_msgs::MoveGroupGoal send_home_goal_; // only compute this once
-  moveit_msgs::MoveGroupGoal send_sleep_goal_; // only compute this once
+  moveit_msgs::MoveGroupGoal send_shutdown_goal_; // only compute this once
 
   // MoveIt Components
   boost::shared_ptr<tf::TransformListener> tf_;
@@ -160,7 +161,7 @@ public:
     trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
     while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
     {
-      ROS_WARN("[clam arm] Waiting for the joint_trajectory_action server");
+      ROS_INFO("[clam arm] Waiting for the joint_trajectory_action server");
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -168,6 +169,18 @@ public:
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
       ROS_INFO("[clam arm] Waiting for the move_group action server");
     }
+
+    // -----------------------------------------------------------------------------------------------
+    // Create the goals once, then shutdown monitors
+    generateMoveItGoals();
+
+
+    // Change the goal constraints on the servos to be less strict, so that the controllers don't die. this is a hack
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
     // -----------------------------------------------------------------------------------------------
     // Register the goal and feeback callbacks
@@ -228,7 +241,17 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Create MoveGroupGoal for going home
-    joint_state_group.setToDefaultValues();  // sets to zeros
+    //joint_state_group.setToDefaultValues();  // sets to zeros
+    std::map<std::string, double> joint_state_map;
+    joint_state_map["elbow_pitch_joint"] = 0.0;
+    joint_state_map["elbow_roll_joint"] = 0.0;
+    joint_state_map["gripper_roll_joint"] = 0.0;
+    joint_state_map["shoulder_pan_joint"] = 0.0;
+    joint_state_map["shoulder_pitch_joint"] = 0.0;
+   joint_state_map["wrist_pitch_joint"] = 1.6622;
+    joint_state_map["wrist_roll_joint"] = 0.0;
+    joint_state_group.setVariableValues(joint_state_map);
+
     const double TOLERANCE_BELOW = 0.01;
     const double TOLERANCE_ABOVE = 0.01;
     moveit_msgs::Constraints goal_constraints =
@@ -239,6 +262,35 @@ public:
     send_home_goal_.request.allowed_planning_time = ros::Duration(5.0);
     send_home_goal_.request.goal_constraints.resize(1);
     send_home_goal_.request.goal_constraints[0] = goal_constraints;
+
+    // -----------------------------------------------------------------------------------------------
+    // Create MoveGroupGoal for shutting down
+
+    //    joint_state_map["elbow_pitch_joint"] = -0.23521038747579834;
+    joint_state_map["elbow_pitch_joint"] = -0.28521038747579834;
+    joint_state_map["elbow_roll_joint"] = 0.06135923151542565;
+    joint_state_map["gripper_roll_joint"] = -0.0051132692929521375;
+    joint_state_map["shoulder_pan_joint"] = 0.0409061543436171;
+    joint_state_map["shoulder_pitch_joint"] = 1.8261673124389464;
+    joint_state_map["wrist_pitch_joint"] = -0.15339807878856412;
+    joint_state_map["wrist_roll_joint"] = -0.0609061543436171;
+    //    joint_state_map["wrist_roll_joint"] = -0.0409061543436171;
+    joint_state_group.setVariableValues(joint_state_map);
+
+    goal_constraints =
+      kinematic_constraints::constructGoalConstraints(&joint_state_group, TOLERANCE_BELOW, TOLERANCE_ABOVE);
+
+    send_shutdown_goal_.request.group_name = GROUP_NAME;
+    send_shutdown_goal_.request.num_planning_attempts = 1;
+    send_shutdown_goal_.request.allowed_planning_time = ros::Duration(5.0);
+    send_shutdown_goal_.request.goal_constraints.resize(1);
+    send_shutdown_goal_.request.goal_constraints[0] = goal_constraints;
+
+    // -----------------------------------------------------------------------------------------------
+    // Shutdown monitors
+    planning_scene_monitor_->stopStateMonitor();
+    planning_scene_monitor_.reset();
+    tf_.reset();
   }
 
   // Recieve Action Goal Function
@@ -321,8 +373,19 @@ public:
       }
       break;
     case clam_msgs::ClamArmGoal::SHUTDOWN:
-      ROS_ERROR("[clam arm] not implemented");
-
+      ROS_INFO("[clam arm] Received shutdown goal");
+      if( sendShutdown() )
+      {
+        ROS_INFO("[clam arm] Succeeded in shutting down arm");
+        result_.success = true;
+        action_server_.setSucceeded(result_);
+      }
+      else
+      {
+        ROS_INFO("[clam arm] Failed to shut down arm");
+        result_.success = false;
+        action_server_.setSucceeded(result_);
+      }
       break;
     default:
       ROS_ERROR_STREAM("Unknown command to clam_arm_action_server: " << goal_->command);
@@ -396,7 +459,6 @@ public:
     ROS_INFO("[clam arm] Sending arm to home position");
     movegroup_action_.sendGoal(send_home_goal_);
 
-    ROS_WARN("[clam arm] waiting 10 seconds?");
     if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
     {
       ROS_INFO_STREAM("[clam arm] Returned early?");
@@ -414,6 +476,51 @@ public:
     return true;
   }
 
+  // Send arm to laying down position
+  bool sendShutdown()
+  {
+    // -------------------------------------------------------------------------------------------
+    // Plan
+    ROS_INFO("[clam arm] Sending arm to shutdown position");
+    movegroup_action_.sendGoal(send_shutdown_goal_);
+
+    if(!movegroup_action_.waitForResult(ros::Duration(10.0)))
+    {
+      ROS_INFO_STREAM("[clam arm] Returned early?");
+    }
+    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      ROS_INFO("[clam arm] Arm successfully shutdown.");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("[clam arm] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      return false;
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Turn off torque
+    enableTorque("elbow_pitch_controller", false);
+    enableTorque("elbow_roll_controller", false);
+    enableTorque("gripper_roll_controller", false);
+    enableTorque("shoulder_pan_controller", false);
+    enableTorque("shoulder_pitch_controller", false);
+    enableTorque("wrist_pitch_controller", false);
+    enableTorque("wrist_roll_controller", false);
+    ros::Duration(0.5).sleep();
+
+    // -------------------------------------------------------------------------------------------
+    // Turn torque back on
+    enableTorque("elbow_pitch_controller", true);
+    enableTorque("elbow_roll_controller", true);
+    enableTorque("gripper_roll_controller", true);
+    enableTorque("shoulder_pan_controller", true);
+    enableTorque("shoulder_pitch_controller", true);
+    enableTorque("wrist_pitch_controller", true);
+    enableTorque("wrist_roll_controller", true);
+
+    return true;
+  }
 
   // Actually run the action
   bool sendHome_OnlyTrajectory()
@@ -635,7 +742,7 @@ public:
 
       // Wait until end effector is done moving
       while( ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
-                                   ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
+             ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
       {
         ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
 
@@ -698,7 +805,28 @@ public:
     ee_status_ = msg;
   }
 
+  // Set the torque for a servo
+  bool enableTorque(const std::string joint_name, bool enable)
+  {
+    ROS_DEBUG_STREAM("[clam arm] Setting torque for " << joint_name );
 
+    std::string service_name = "/" + joint_name + "/torque_enable";
+    ros::ServiceClient torque_client = nh_.serviceClient< dynamixel_hardware_interface::TorqueEnable >(service_name);
+    while(!torque_client.waitForExistence(ros::Duration(10.0)))
+    {
+      ROS_ERROR_STREAM("[clam arm] Failed to find the service: " << service_name);
+      return false;
+    }
+    dynamixel_hardware_interface::TorqueEnable set_torque_srv;
+    set_torque_srv.request.torque_enable = enable;
+    if( !torque_client.call(set_torque_srv) )
+    {
+      ROS_ERROR_STREAM("[clam arm] Failed to set the torque via service call to joint " << joint_name);
+      return false;
+    }
+
+    return true;
+  }
 
 };
 

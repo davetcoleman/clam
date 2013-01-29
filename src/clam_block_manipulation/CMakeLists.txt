@@ -51,14 +51,14 @@ link_directories(${catkin_LIBRARY_DIRS})
 add_executable(block_detection_action_server src/block_detection_action_server.cpp)
 target_link_libraries(block_detection_action_server ${catkin_LIBRARIES})
 
-add_executable(interactive_manipulation_action_server src/interactive_manipulation_action_server.cpp)
-target_link_libraries(interactive_manipulation_action_server ${catkin_LIBRARIES})
+add_executable(block_logic_action_server src/block_logic_action_server.cpp)
+target_link_libraries(block_logic_action_server ${catkin_LIBRARIES})
 
 add_executable(pick_place_action_server src/pick_place_action_server.cpp)
 target_link_libraries(pick_place_action_server ${catkin_LIBRARIES})
 
-add_executable(block_manipulation_action_demo src/demo/block_manipulation_action_demo.cpp)
-target_link_libraries(block_manipulation_action_demo ${catkin_LIBRARIES})
+add_executable(block_manipulation_demo src/demo/block_manipulation_demo.cpp)
+target_link_libraries(block_manipulation_demo ${catkin_LIBRARIES})
 
 #include_directories(${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})

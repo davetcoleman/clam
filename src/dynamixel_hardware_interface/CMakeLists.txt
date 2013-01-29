@@ -67,6 +67,7 @@ target_link_libraries(controller_manager ${PROJECT_NAME})
 add_library(dynamixel_controllers src/joint_position_controller.cpp
                                   src/joint_torque_controller.cpp
                                   src/joint_trajectory_action_controller.cpp)
+add_definitions(-DERROR_OUTPUT_LOG) # this tells the trajectory_action_controller to log position error to file
 target_link_libraries(dynamixel_controllers ${PROJECT_NAME})
 
 # Test code

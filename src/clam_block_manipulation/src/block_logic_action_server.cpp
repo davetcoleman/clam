@@ -1,40 +1,11 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * Author: Michael Ferguson, Helen Oleynikova
- */
+
 
 #include <ros/ros.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <interactive_markers/interactive_marker_server.h>
 
-#include <clam_msgs/InteractiveBlockManipulationAction.h>
+#include <clam_msgs/BlockLogicAction.h>
 #include <geometry_msgs/PoseArray.h>
 
 using namespace visualization_msgs;
@@ -42,19 +13,19 @@ using namespace visualization_msgs;
 namespace clam_msgs
 {
 
-class InteractiveManipulationServer
+class BlockLogicServer
 {
 private:
   ros::NodeHandle nh_;
 
-  interactive_markers::InteractiveMarkerServer server_;
+  interactive_markers::InteractiveMarkerServer interactive_m_server_;
 
-  actionlib::SimpleActionServer<clam_msgs::InteractiveBlockManipulationAction> as_;
+  actionlib::SimpleActionServer<clam_msgs::BlockLogicAction> action_server_;
   std::string action_name_;
 
-  clam_msgs::InteractiveBlockManipulationFeedback     feedback_;
-  clam_msgs::InteractiveBlockManipulationResult       result_;
-  clam_msgs::InteractiveBlockManipulationGoalConstPtr goal_;
+  clam_msgs::BlockLogicFeedback     feedback_;
+  clam_msgs::BlockLogicResult       result_;
+  clam_msgs::BlockLogicGoalConstPtr goal_;
 
   ros::Subscriber block_sub_;
   ros::Publisher  pick_place_pub_;
@@ -71,21 +42,28 @@ private:
   // Parameters from server
   double bump_size;
 
+  static const double CUBE_Z_HEIGHT = 0.2;
+
 public:
 
-  InteractiveManipulationServer(const std::string name) :
-    nh_("~"), server_("block_controls"), as_(name, false), action_name_(name), initialized_(false), block_size(0.4)
+  BlockLogicServer(const std::string name) :
+    nh_("~"), 
+    interactive_m_server_("block_controls"), 
+    action_server_(name, false), 
+    action_name_(name), 
+    initialized_(false), 
+    block_size(0.4)
   {
     // Load parameters from the server.
-    nh_.param<double>("bump_size", bump_size, 0.000); // original 0.005
+    nh_.param<double>("bump_size", bump_size, -0.02); // original 0.005
 
     // Register the goal and feeback callbacks.
-    as_.registerGoalCallback(boost::bind(&InteractiveManipulationServer::goalCB, this));
-    as_.registerPreemptCallback(boost::bind(&InteractiveManipulationServer::preemptCB, this));
+    action_server_.registerGoalCallback(boost::bind(&BlockLogicServer::goalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&BlockLogicServer::preemptCB, this));
 
-    as_.start();
+    action_server_.start();
 
-    block_sub_ = nh_.subscribe("/clam_blocks", 1, &InteractiveManipulationServer::addBlocks, this);
+    block_sub_ = nh_.subscribe("/clam_blocks", 1, &BlockLogicServer::addBlocks, this);
     pick_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_place", 1, true);
   }
 
@@ -93,9 +71,9 @@ public:
   {
 
     // accept the new goal
-    goal_ = as_.acceptNewGoal();
+    goal_ = action_server_.acceptNewGoal();
 
-    ROS_INFO("[interactive manipulation] Received goal! %f, %s", goal_->block_size, goal_->frame.c_str());
+    ROS_INFO("[block logic] Received goal! %f, %s", goal_->block_size, goal_->frame.c_str());
 
     block_size = goal_->block_size;
     arm_link = goal_->frame;
@@ -104,9 +82,6 @@ public:
     {
       addBlocks(msg_);
     }
-
-    // DTC - skip the interactive crap and just choose the first one
-
 
     // --------------------------------------------------------------------------------------------
     // Start pose - choose one that is preferrablt not in the goal region
@@ -117,11 +92,13 @@ public:
     if( !msg_->poses.size() )
     {
       // no blocks, what to do?
+      ROS_WARN("[block logic] No blocks found");
     }
     else if( msg_->poses.size() == 1 )
     {
       start_pose = msg_->poses[0];
       found_pose = true;
+      ROS_INFO("[block logic] Only 1 block, using it");
     }
     else
     {
@@ -132,11 +109,13 @@ public:
         {
           start_pose = msg_->poses[i];
           found_pose = true;
+          ROS_INFO_STREAM("[block logic] Chose this block:\n" << start_pose);
           break;
         }
       }
       if( !found_pose )
       {
+        ROS_INFO("[block logic] Did not find a good block, default to first");
         start_pose = msg_->poses[0];
         found_pose = true;
       }
@@ -162,26 +141,26 @@ public:
   {
     ROS_INFO("%s: Preempted", action_name_.c_str());
     // set the action state to preempted
-    as_.setPreempted();
+    action_server_.setPreempted();
   }
 
   void addBlocks(const geometry_msgs::PoseArrayConstPtr& msg)
   {
-    server_.clear();
-    server_.applyChanges();
+    interactive_m_server_.clear();
+    interactive_m_server_.applyChanges();
 
-    ROS_INFO("[interactive manipulation] Got block detection callback. Adding blocks.");
+    ROS_INFO("[block logic] Got block detection callback. Adding blocks.");
     geometry_msgs::Pose block;
-    bool active = as_.isActive();
+    bool active = action_server_.isActive();
 
     for (unsigned int i=0; i < msg->poses.size(); i++)
     {
       block = msg->poses[i];
       addBlock(block, i, active, msg->header.frame_id);
     }
-    ROS_INFO("[interactive manipulation] Added %d blocks to Rviz", int(msg->poses.size()));
+    ROS_INFO("[block logic] Added %d blocks to Rviz", int(msg->poses.size()));
 
-    server_.applyChanges();
+    interactive_m_server_.applyChanges();
 
     msg_ = msg;
     initialized_ = true;
@@ -190,25 +169,25 @@ public:
   // Move the real block!
   void feedbackCb( const InteractiveMarkerFeedbackConstPtr &feedback )
   {
-    if (!as_.isActive())
+    if (!action_server_.isActive())
     {
-      ROS_INFO("[interactive manipulation] Got feedback but not active!");
+      ROS_INFO("[block logic] Got feedback but not active!");
       return;
     }
     switch ( feedback->event_type )
     {
     case visualization_msgs::InteractiveMarkerFeedback::MOUSE_DOWN:
-      ROS_INFO_STREAM("[interactive manipulation] Staging " << feedback->marker_name);
+      ROS_INFO_STREAM("[block logic] Staging " << feedback->marker_name);
       old_pose_ = feedback->pose;
       break;
 
     case visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP:
-      ROS_INFO_STREAM("[interactive manipulation] Now moving " << feedback->marker_name);
+      ROS_INFO_STREAM("[block logic] Now moving " << feedback->marker_name);
       moveBlock(old_pose_, feedback->pose);
       break;
     }
 
-    server_.applyChanges();
+    interactive_m_server_.applyChanges();
   }
 
   void moveBlock(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
@@ -216,11 +195,13 @@ public:
     geometry_msgs::Pose start_pose_bumped, end_pose_bumped;
     start_pose_bumped = start_pose;
     start_pose_bumped.position.y -= bump_size;
-    start_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    //start_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    start_pose_bumped.position.z = CUBE_Z_HEIGHT;
     result_.pickup_pose = start_pose_bumped;
 
     end_pose_bumped = end_pose;
-    end_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    //end_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    end_pose_bumped.position.z = CUBE_Z_HEIGHT;
     result_.place_pose = end_pose_bumped;
 
     geometry_msgs::PoseArray msg;
@@ -231,7 +212,7 @@ public:
 
     pick_place_pub_.publish(msg);
 
-    as_.setSucceeded(result_);
+    action_server_.setSucceeded(result_);
 
     // DTC server_.clear();
     // DTC server_.applyChanges();
@@ -283,8 +264,8 @@ public:
     marker.controls.push_back( control );
 
 
-    server_.insert( marker );
-    server_.setCallback( marker.name, boost::bind( &InteractiveManipulationServer::feedbackCb, this, _1 ));
+    interactive_m_server_.insert( marker );
+    interactive_m_server_.setCallback( marker.name, boost::bind( &BlockLogicServer::feedbackCb, this, _1 ));
   }
 
 };
@@ -294,9 +275,9 @@ public:
 int main(int argc, char** argv)
 {
   // initialize node
-  ros::init(argc, argv, "interactive_manipulation_action_server");
+  ros::init(argc, argv, "block_logic_action_server");
 
-  clam_msgs::InteractiveManipulationServer manip("interactive_manipulation");
+  clam_msgs::BlockLogicServer block_logic("block_logic");
 
   ros::spin();
 }
