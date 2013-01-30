@@ -5,13 +5,16 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /ClamArm1
+        - /DepthCloud1
+        - /BlockPoseArray1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /MotionPlanning1/Planning Metrics1
         - /MotionPlanning1/Planned Path1
-      Splitter Ratio: 0.392982
-    Tree Height: 533
+      Splitter Ratio: 0.784387
+    Tree Height: 881
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -64,17 +67,76 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Alpha: 1
+    - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
-        {}
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_fake_tip_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_fixed_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_pan_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tabletop_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: ClamArm
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Class: rviz/InteractiveMarkers
       Enabled: true
@@ -123,7 +185,7 @@ Visualization Manager:
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.01
-      Style: Spheres
+      Style: Points
       Topic Filter: true
       Use Fixed Frame: true
       Use rainbow:
@@ -196,7 +258,7 @@ Visualization Manager:
       Color: 255; 25; 0
       Enabled: true
       Name: BlockPoseArray
-      Topic: /clam_blocks
+      Topic: /cublet_block_poses
       Value: true
     - Class: rviz/InteractiveMarkers
       Enabled: true
@@ -206,7 +268,7 @@ Visualization Manager:
       Update Topic: /block_controls/update
       Value: true
     - Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: true
+      Enabled: false
       MoveIt_Goal_Tolerance: 0
       MoveIt_Planning_Time: 5
       MoveIt_Use_Constraint_Aware_IK: true
@@ -373,7 +435,7 @@ Visualization Manager:
             Value: true
         Robot Alpha: 0.5
         Show Scene Robot: true
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: visualization_marker
@@ -395,17 +457,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.11753
+      Distance: 1.21195
       Focal Point:
-        X: 0.32505
-        Y: -0.0786566
-        Z: 0.28123
+        X: 0.423284
+        Y: 0.128221
+        Z: 0.0966523
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.335203
+      Pitch: 0.789797
       Target Frame: /base_link
       Value: Orbit (rviz)
-      Yaw: 5.57313
+      Yaw: 5.38814
     Saved: ~
 Window Geometry:
   Displays:
@@ -417,9 +479,9 @@ Window Geometry:
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000434fc0200000004fb000000100044006900730070006c0061007900730100000041000002bc000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000303000001720000016700ffffff000003960000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000001000000000000010f00000434fc0200000004fb000000100044006900730070006c006100790073010000004100000418000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e0067010000045f000000160000001600000016000005290000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1600
-  X: 3829
-  Y: -325
+  X: 3827
+  Y: -381

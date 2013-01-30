@@ -196,7 +196,7 @@ Visualization Manager:
       Color: 255; 25; 0
       Enabled: true
       Name: BlockPoseArray
-      Topic: /clam_blocks
+      Topic: /
       Value: true
     - Class: rviz/InteractiveMarkers
       Enabled: true

@@ -5,15 +5,15 @@
 
   <!-- This is highly dependent on the setup of the kinect in the lab -->
   <node name="clam_vision_frame" pkg="tf" type="static_transform_publisher" output="screen"
-        args="0.715453 -0.0890048 0.659977 3.05082 0.844943 -0.20587 base_link /camera_link 100"/>
-  <!--  args= x        y          z        roll    pitch    yall -->
-  <!--        0.751453 -0.1000048 0.659977 3.04582 0.844943 -0.20587 -->
+        args="0.325766 0.07044 0.773049 0.0065139 0.732488 0.0329268 0.707349 /base_link /camera_link 100"/>
+  <!--  args= x        y       z        roll      pitch    yall -->
+  <!--  args="0.287766 0.08244 0.643049 0.0145139 0.706488 0.0179268 0.707349 /base_link /camera_link 100" -->
   <!-- KEY:
-       x - x
-       y - the greater the closer to the wall
-       z
-       r - origin is camera, turns it on z axis
-       p
-       y
+       x - 
+       y - 
+       z - 
+       r - 
+       p - rotate of y axis
+       y - rotate of z axis
   -->
 </launch>

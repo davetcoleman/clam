@@ -132,7 +132,7 @@ public:
     resetArm();
   }
 
-  // Shutdown the arm correctly
+  // Shutdown the arm correctly... doesn't work
   ~BlockManipulationDemo()
   {
     // -----------------------------------------------------------------------------------------------
@@ -152,9 +152,18 @@ public:
     ROS_INFO("[demo] 1. Sending arm to home position (reseting)");
 
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
-    clam_arm_client_.sendGoal(clam_arm_goal_,
-                              boost::bind( &BlockManipulationDemo::detectBlocks, this));
-    //boost::bind( &BlockManipulationDemo::skipPerception, this));
+
+    const bool skip_perception = false;
+    if( skip_perception )
+    {
+      clam_arm_client_.sendGoal(clam_arm_goal_,
+                                boost::bind( &BlockManipulationDemo::skipPerception, this));
+    }
+    else
+    {
+      clam_arm_client_.sendGoal(clam_arm_goal_,
+                                boost::bind( &BlockManipulationDemo::detectBlocks, this));
+    }
   }
 
   void skipPerception()
@@ -184,13 +193,16 @@ public:
     }
 
     block_logic_action_.sendGoal(block_logic_goal_,
-                                              boost::bind( &BlockManipulationDemo::pickAndPlace,
-                                                           this, _1, _2));
+                                 boost::bind( &BlockManipulationDemo::pickAndPlace,
+                                              this, _1, _2));
   }
 
   void pickAndPlace(const actionlib::SimpleClientGoalState& state,
                     const BlockLogicResultConstPtr& result)
   {
+
+    ROS_INFO_STREAM("Block logic result:\n" << result);
+
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
       ROS_INFO("[demo] 4. Pick and place command recieved, moving arm");
@@ -200,8 +212,14 @@ public:
       ROS_ERROR("[demo] 4. Pick and place command input did not succeed: %s",  state.toString().c_str());
       ros::shutdown();
     }
+
+
+    ROS_WARN("Demo ended here on purpose");
+
+    /*
     pick_place_action_.sendGoal(pick_place_goal_,
                                 boost::bind( &BlockManipulationDemo::finish, this, _1, _2));
+    */
   }
 
   void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)

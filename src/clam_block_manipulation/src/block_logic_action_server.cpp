@@ -24,11 +24,13 @@ private:
   std::string action_name_;
 
   clam_msgs::BlockLogicFeedback     feedback_;
-  clam_msgs::BlockLogicResult       result_;
+  clam_msgs::BlockLogicResult       action_result_;
   clam_msgs::BlockLogicGoalConstPtr goal_;
 
+  // Publishers/Subscribers
+  ros::Publisher marker_pub_; // for showing the blocks in rviz
   ros::Subscriber block_sub_;
-  ros::Publisher  pick_place_pub_;
+  ros::Publisher pick_place_pub_;
 
   geometry_msgs::Pose old_pose_;
 
@@ -55,22 +57,31 @@ public:
     block_size(0.4)
   {
     // Load parameters from the server.
-    nh_.param<double>("bump_size", bump_size, -0.02); // original 0.005
+    nh_.param<double>("bump_size", bump_size, 0.0); // original 0.005
 
-    // Register the goal and feeback callbacks.
+    // ---------------------------------------------------------------------------------------------
+    // Read in all seen blocks
+    block_sub_ = nh_.subscribe("/cube_block_poses", 1, &BlockLogicServer::addBlocks, this);
+
+    // ---------------------------------------------------------------------------------------------
+    // Publish location of blocks??
+    pick_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_place", 1, true);
+
+    // ---------------------------------------------------------------------------------------------
+    // Rviz Visualizations
+    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+
+    // ---------------------------------------------------------------------------------------------
+    // Register the goal and feeback callbacks for action server
     action_server_.registerGoalCallback(boost::bind(&BlockLogicServer::goalCB, this));
     action_server_.registerPreemptCallback(boost::bind(&BlockLogicServer::preemptCB, this));
-
     action_server_.start();
-
-    block_sub_ = nh_.subscribe("/clam_blocks", 1, &BlockLogicServer::addBlocks, this);
-    pick_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_place", 1, true);
   }
 
   void goalCB()
   {
-
-    // accept the new goal
+    // ---------------------------------------------------------------------------------------------
+    // Accept the new goal
     goal_ = action_server_.acceptNewGoal();
 
     ROS_INFO("[block logic] Received goal! %f, %s", goal_->block_size, goal_->frame.c_str());
@@ -84,7 +95,7 @@ public:
     }
 
     // --------------------------------------------------------------------------------------------
-    // Start pose - choose one that is preferrablt not in the goal region
+    // Start pose - choose one that is preferrably not in the goal region
     geometry_msgs::Pose start_pose;
     bool found_pose = false;
 
@@ -197,12 +208,12 @@ public:
     start_pose_bumped.position.y -= bump_size;
     //start_pose_bumped.position.z -= block_size/2.0 - bump_size;
     start_pose_bumped.position.z = CUBE_Z_HEIGHT;
-    result_.pickup_pose = start_pose_bumped;
+    action_result_.pickup_pose = start_pose_bumped;
 
     end_pose_bumped = end_pose;
     //end_pose_bumped.position.z -= block_size/2.0 - bump_size;
     end_pose_bumped.position.z = CUBE_Z_HEIGHT;
-    result_.place_pose = end_pose_bumped;
+    action_result_.place_pose = end_pose_bumped;
 
     geometry_msgs::PoseArray msg;
     msg.header.frame_id = arm_link;
@@ -212,7 +223,7 @@ public:
 
     pick_place_pub_.publish(msg);
 
-    action_server_.setSucceeded(result_);
+    action_server_.setSucceeded(action_result_);
 
     // DTC server_.clear();
     // DTC server_.applyChanges();

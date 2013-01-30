@@ -88,7 +88,7 @@ public:
 
     as_.start();
 
-    block_sub_ = nh_.subscribe("/clam_blocks", 1, &InteractiveManipulationServer::addBlocks, this);
+    block_sub_ = nh_.subscribe("/", 1, &InteractiveManipulationServer::addBlocks, this);
     pick_place_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/pick_place", 1, true);
   }
 

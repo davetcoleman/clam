@@ -112,7 +112,7 @@ public:
     plane_pub_ = nh_.advertise< pcl::PointCloud<pcl::PointXYZRGB> >("plane_output", 1);
 
     // Publish interactive markers for blocks
-    block_pose_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/clam_blocks", 1, true);
+    block_pose_pub_ = nh_.advertise< geometry_msgs::PoseArray >("/", 1, true);
   }
 
   void goalCB()
