@@ -64,7 +64,7 @@
 #include <moveit/plan_execution/plan_with_sensing.h>
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
 //#include <moveit/kinematics_planner/kinematics_planner.h>
-//#include <moveit/trajectory_processing/iterative_smoother.h>
+#include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
 
 // Rviz
@@ -384,13 +384,14 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Settings for computeCartesianPath
 
-    moveit_msgs::RobotTrajectory approach_traj_result; // create resulting generated trajectory (result)
-
     // End effector parent link
     const std::string &ik_link = EE_LINK; // eef->getEndEffectorParentGroup().second;
 
     // Resolution of trajectory
     double max_step = 0.001; // The maximum distance in Cartesian space between consecutive points on the resulting path
+
+    // Jump threshold for preventing consequtive joint values from 'jumping' by a large amount in joint space
+    double jump_threshold = 0.0; // disabled
 
     // ---------------------------------------------------------------------------------------------
     // Check for kinematic solver
@@ -407,7 +408,32 @@ public:
     // Compute Cartesian Path
     ROS_INFO("Preparing to computer cartesian path");
 
-    /** \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
+
+    /** \brief Compute the sequence of joint values that correspond to a Cartesian path.
+
+        The Cartesian path to be followed is specified as a direction of motion (\e direction, unit vector) for the origin of a robot
+        link (\e link_name). The direction is assumed to be either in a global reference frame or in the local reference frame of the
+        link. In the latter case (\e global_reference_frame is true) the \e direction is rotated accordingly. The link needs to move in a
+        straight line, following the specified direction, for the desired \e distance. The resulting joint values are stored in
+        the vector \e states, one by one. The maximum distance in Cartesian space between consecutive points on the resulting path
+        is specified by \e max_step.  If a \e validCallback is specified, this is passed to the internal call to|
+        setFromIK(). In case of IK failure, the computation of the path stops and the value returned corresponds to the distance that
+        was computed and for which corresponding states were added to the path.  At the end of the function call, the state of the
+        group corresponds to the last attempted Cartesian pose.  During the computation of the trajectory, it is sometimes prefered if
+        consecutive joint values do not 'jump' by a large amount in joint space, even if the Cartesian distance between the
+        corresponding points is as expected. To account for this, the \e jump_threshold parameter is provided.  As the joint values
+        corresponding to the Cartesian path are computed, distances in joint space between consecutive points are also computed. Once
+        the sequence of joint values is computed, the average distance between consecutive points (in joint space) is also computed. It
+        is then verified that none of the computed distances is above the average distance by a factor larger than \e jump_threshold. If
+        a point in joint is found such that it is further away than the previous one by more than average_consecutive_distance * \e jump_threshold,
+        that is considered a failure and the returned path is truncated up to just before the jump. The jump detection can be disabled
+        by settin \e jump_threshold to 0.0
+        double computeCartesianPath(std::vector<boost::shared_ptr<RobotState> > &traj, const std::string &link_name, const Eigen::Vector3d &direction, bool global_reference_frame,
+        ............................double distance, double max_step, double jump_threshold, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn());
+    */
+
+    /** OLD VERSION: DELETE THIS:
+        \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
         as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
         line, following the specified direction, for the desired \e distance. The resulting joint values are stored in the vector \e states,
         one by one. The maximum distance in Cartesian space between consecutive points on the resulting path is specified by \e max_step.
@@ -418,12 +444,20 @@ public:
         double computeCartesianPath(moveit_msgs::RobotTrajectory &traj, const std::string &link_name, const Eigen::Vector3d &direction,
         ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
 
+    //moveit_msgs::RobotTrajectory approach_traj_result; // create resulting generated trajectory (result)
+    std::vector<robot_state::RobotStatePtr> approach_traj_result; // create resulting generated trajectory (result)
+    //    std::vector<boost::shared_ptr<robot_state::RobotState> > approach_traj_result; // create resulting generated trajectory (result)
+
     double d_approach =
       approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
-                                                                          ik_link,
+                                                                          ik_link,                   // link name
                                                                           approach_direction,
+                                                                          true,                      // direction is in global reference frame
                                                                           desired_approach_distance,
-                                                                          max_step);          // TODO approach_validCallback);
+                                                                          max_step,
+                                                                          jump_threshold
+                                                                          // TODO approach_validCallback
+                                                                          );
 
     //    double robot_state::JointStateGroup::computeCartesianPath(std::vector<boost::shared_ptr<robot_state::RobotState> >&, const string&, const Vector3d&, bool, double, double, double, const StateValidityCallbackFn&)
 
@@ -435,29 +469,14 @@ public:
     }
 
     // -----------------------------------------------------------------------------------------------
-    // Proccess Trajectory
-
-    //trajectory_processing::reverseTrajectory(approach_traj_result);
-
-    /* Add times
-       for(int i = 0; i < approach_traj_result.joint_trajectory.points.size(); ++i)
-       {
-       approach_traj_result.joint_trajectory.points[i].time_from_start = ros::Duration((double)i + 1);
-       }
-    */
-
-    // Output debug
-    //ROS_INFO_STREAM("Approach Trajectory\n" << approach_traj_result);
-
-    // -----------------------------------------------------------------------------------------------
     // Get current RobotState  (in order to specify all joints not in approach_traj_result)
-    moveit_msgs::RobotState robot_state;
-    robot_state::kinematicStateToRobotState( planning_scene->getCurrentState(), robot_state );
+    robot_state::RobotState this_robot_state = planning_scene->getCurrentState();
+    //    robot_state::kinematicStateToRobotState( planning_scene->getCurrentState(), this_robot_state );
 
     // -----------------------------------------------------------------------------------------------
     // Smooth the path and add velocities/accelerations
 
-    trajectory_processing::IterativeParabolicSmoother iterative_smoother;
+    trajectory_processing::IterativeParabolicTimeParameterization iterative_smoother;
     trajectory_msgs::JointTrajectory trajectory_out;
 
     // Get the joint limits of planning group
@@ -465,13 +484,25 @@ public:
       planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
     const std::vector<moveit_msgs::JointLimits> &joint_limits = joint_model_group->getVariableLimits();
 
+
+    // Copy the vector of RobotStates to a RobotTrajectory
+    robot_trajectory::RobotTrajectoryPtr approach_traj(new robot_trajectory::RobotTrajectory(planning_scene->getKinematicModel(), GROUP_NAME));
+    for (std::size_t k = 0 ; k < approach_traj_result.size() ; ++k)
+      approach_traj->addSuffixWayPoint(approach_traj_result[k], 0.0);
+
     // Perform iterative parabolic smoothing
-    iterative_smoother.smooth(approach_traj_result.joint_trajectory, trajectory_out, joint_limits, robot_state);
+    iterative_smoother.computeTimeStamps( *approach_traj );
+    /*                                         approach_traj,
+                                         trajectory_out,
+                                         joint_limits,
+                                         this_robot_state // start_state
+                                         );
+    */
 
     // Copy results to robot trajectory message:
-    approach_traj_result.joint_trajectory = trajectory_out;
+    //    approach_traj_result = approach_traj;
 
-    ROS_INFO_STREAM("New trajectory\n" << approach_traj_result);
+    ROS_INFO_STREAM("New trajectory\n" << approach_traj);
 
     // -----------------------------------------------------------------------------------------------
     // Display the path in rviz
@@ -485,8 +516,13 @@ public:
     // Create the message
     moveit_msgs::DisplayTrajectory rviz_display;
     rviz_display.model_id = planning_scene->getKinematicModel()->getName();
-    rviz_display.trajectory_start = robot_state;
-    rviz_display.trajectory.resize(1, approach_traj_result);
+    //    rviz_display.trajectory_start = this_robot_state;
+    //    rviz_display.trajectory.resize(1, approach_traj_result);
+
+    robot_state::robotStateToRobotStateMsg(approach_traj->getFirstWayPoint(), rviz_display.trajectory_start);
+    rviz_display.trajectory.resize(1);
+    approach_traj->getRobotTrajectoryMsg(rviz_display.trajectory[0]);
+
 
     // Publish message
     display_path_publisher_.publish(rviz_display);
@@ -498,9 +534,13 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Execute the planned trajectory
     ROS_INFO("Executing trajectory");
+    
+    // Convert trajectory to a message
+    moveit_msgs::RobotTrajectory traj_msg;
+    approach_traj->getRobotTrajectoryMsg(traj_msg);
 
     plan_execution_->getTrajectoryExecutionManager()->clear();
-    if(plan_execution_->getTrajectoryExecutionManager()->push(approach_traj_result))
+    if(plan_execution_->getTrajectoryExecutionManager()->push(traj_msg))
     {
       plan_execution_->getTrajectoryExecutionManager()->execute();
 
