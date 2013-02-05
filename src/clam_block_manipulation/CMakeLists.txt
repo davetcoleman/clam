@@ -16,6 +16,7 @@ find_package(catkin REQUIRED
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 
+  moveit_core
 )
 
 generate_messages(DEPENDENCIES
@@ -35,6 +36,7 @@ catkin_package(DEPENDS
   pcl_ros
   eigen_conversions 
   moveit_ros_planning 
+  moveit_core
 #  INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
 )

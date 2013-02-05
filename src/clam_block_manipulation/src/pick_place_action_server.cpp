@@ -56,14 +56,16 @@
 #include <moveit_msgs/RobotState.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <moveit/kinematic_state/kinematic_state.h>
-#include <moveit/kinematic_state/conversions.h>
+#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_state/conversions.h>
+#include <moveit/robot_state/joint_state_group.h>
 #include <moveit/planning_models_loader/kinematic_model_loader.h>
 #include <moveit/plan_execution/plan_execution.h>
 #include <moveit/plan_execution/plan_with_sensing.h>
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
-#include <moveit/kinematics_planner/kinematics_planner.h>
-#include <moveit/trajectory_processing/iterative_smoother.h>
+//#include <moveit/kinematics_planner/kinematics_planner.h>
+//#include <moveit/trajectory_processing/iterative_smoother.h>
+
 
 // Rviz
 #include <visualization_msgs/Marker.h>
@@ -303,7 +305,7 @@ public:
     moveit_msgs::MoveGroupGoal goal;
     goal.request.group_name = GROUP_NAME;
     goal.request.num_planning_attempts = 1;
-    goal.request.allowed_planning_time = ros::Duration(5.0);
+    goal.request.allowed_planning_time = 5.0; //ros::Duration(5.0);
 
     // -------------------------------------------------------------------------------------------
     // Create goal state
@@ -370,7 +372,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Get planning scene
     const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
-    kinematic_state::KinematicState approach_state = planning_scene->getCurrentState();
+    robot_state::RobotState approach_state = planning_scene->getCurrentState();
 
     // Output state info
     ROS_INFO("\nState info: \n");
@@ -422,6 +424,9 @@ public:
                                                                           approach_direction,
                                                                           desired_approach_distance,
                                                                           max_step);          // TODO approach_validCallback);
+
+    //    double robot_state::JointStateGroup::computeCartesianPath(std::vector<boost::shared_ptr<robot_state::RobotState> >&, const string&, const Vector3d&, bool, double, double, double, const StateValidityCallbackFn&)
+
     ROS_INFO_STREAM("Approach distance: " << d_approach );
     if( d_approach == 0 )
     {
@@ -447,7 +452,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Get current RobotState  (in order to specify all joints not in approach_traj_result)
     moveit_msgs::RobotState robot_state;
-    kinematic_state::kinematicStateToRobotState( planning_scene->getCurrentState(), robot_state );
+    robot_state::kinematicStateToRobotState( planning_scene->getCurrentState(), robot_state );
 
     // -----------------------------------------------------------------------------------------------
     // Smooth the path and add velocities/accelerations

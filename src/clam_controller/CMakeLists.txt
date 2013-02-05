@@ -7,24 +7,12 @@ find_package(catkin REQUIRED COMPONENTS
   rospy 
   std_msgs
   actionlib 
-  actionlib_msgs
   dynamixel_hardware_interface 
   std_msgs 
   sensor_msgs
   clam_msgs
   moveit_ros_planning 
   tf
-)
-
-## Declare ROS messages and services
-add_action_files(
-  DIRECTORY action 
-  FILES ClamArm.action
-)
-
-generate_messages(DEPENDENCIES
-  std_msgs
-  actionlib_msgs
 )
 
 # Declare a catkin package
@@ -34,7 +22,6 @@ catkin_package(
     rospy 
     std_msgs
     actionlib 
-    actionlib_msgs
     dynamixel_hardware_interface 
     std_msgs 
     sensor_msgs

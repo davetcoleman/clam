@@ -68,8 +68,8 @@
 //#include <moveit_msgs/RobotState.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <moveit/kinematic_state/kinematic_state.h>
-#include <moveit/kinematic_state/conversions.h>
+#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_state/conversions.h>
 //#include <moveit/planning_models_loader/kinematic_model_loader.h>
 //#include <moveit/plan_execution/plan_execution.h>
 //#include <moveit/plan_execution/plan_with_sensing.h>
@@ -235,9 +235,9 @@ public:
     // Create the joint_state_group needed for creating the constraint
     const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
     const kinematic_model::JointModelGroup *joint_model_group = planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
-    kinematic_state::KinematicState kinematic_state = planning_scene->getCurrentState();
+    robot_state::RobotState robot_state = planning_scene->getCurrentState();
 
-    kinematic_state::JointStateGroup joint_state_group(&kinematic_state, joint_model_group);
+    robot_state::JointStateGroup joint_state_group(&robot_state, joint_model_group);
 
     // -----------------------------------------------------------------------------------------------
     // Create MoveGroupGoal for going home
@@ -248,7 +248,7 @@ public:
     joint_state_map["gripper_roll_joint"] = 0.0;
     joint_state_map["shoulder_pan_joint"] = 0.0;
     joint_state_map["shoulder_pitch_joint"] = 0.0;
-   joint_state_map["wrist_pitch_joint"] = 1.6622;
+    joint_state_map["wrist_pitch_joint"] = 1.6622;
     joint_state_map["wrist_roll_joint"] = 0.0;
     joint_state_group.setVariableValues(joint_state_map);
 
@@ -259,7 +259,7 @@ public:
 
     send_home_goal_.request.group_name = GROUP_NAME;
     send_home_goal_.request.num_planning_attempts = 1;
-    send_home_goal_.request.allowed_planning_time = ros::Duration(5.0);
+    send_home_goal_.request.allowed_planning_time = 5.0; // fix for moveit updates?  ros::Duration(5.0);
     send_home_goal_.request.goal_constraints.resize(1);
     send_home_goal_.request.goal_constraints[0] = goal_constraints;
 
@@ -282,7 +282,7 @@ public:
 
     send_shutdown_goal_.request.group_name = GROUP_NAME;
     send_shutdown_goal_.request.num_planning_attempts = 1;
-    send_shutdown_goal_.request.allowed_planning_time = ros::Duration(5.0);
+    send_shutdown_goal_.request.allowed_planning_time = 5.0; // fix for moveit update? ros::Duration(5.0);
     send_shutdown_goal_.request.goal_constraints.resize(1);
     send_shutdown_goal_.request.goal_constraints[0] = goal_constraints;
 

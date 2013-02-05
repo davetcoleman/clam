@@ -42,9 +42,9 @@
 #include <moveit_msgs/MoveGroupAction.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <moveit/kinematic_state/kinematic_state.h>
+#include <moveit/robot_state/robot_state.h>
 #include <moveit/planning_models_loader/kinematic_model_loader.h>
-#include <moveit/kinematic_state/conversions.h>
+#include <moveit/robot_state/conversions.h>
 // ROS
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
@@ -149,7 +149,7 @@ public:
     moveit_msgs::MoveGroupGoal goal;
     goal.request.group_name = GROUP_NAME;
     goal.request.num_planning_attempts = 1;
-    goal.request.allowed_planning_time = ros::Duration(5.0);
+    goal.request.allowed_planning_time = 5.0; // fix for moveit? ros::Duration(5.0);
 
 
     // Position
@@ -210,7 +210,7 @@ public:
 
         // -------------------------------------------------------------------------------------------
         // Create start state
-        kinematic_state::KinematicState start = scene.getCurrentState();
+        robot_state::RobotState start = scene.getCurrentState();
 
 
         //group.setStartState( start_state );
