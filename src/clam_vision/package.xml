@@ -17,7 +17,6 @@
   <build_depend>image_geometry</build_depend>
   <build_depend>pcl</build_depend>
   <build_depend>pcl_ros</build_depend>
-  <build_depend>image_geometry</build_depend>
   <build_depend>vision_opencv</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>cv_bridge</build_depend>
@@ -30,7 +29,6 @@
   <run_depend>image_geometry</run_depend>
   <run_depend>pcl</run_depend>
   <run_depend>pcl_ros</run_depend>
-  <run_depend>image_geometry</run_depend>
   <run_depend>vision_opencv</run_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>cv_bridge</run_depend>

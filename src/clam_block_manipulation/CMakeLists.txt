@@ -14,6 +14,8 @@ find_package(catkin REQUIRED
   clam_controller 
   clam_msgs
   pcl_ros
+  cv_bridge
+  opencv2
   eigen_conversions 
   moveit_ros_planning 
   moveit_core
@@ -34,6 +36,8 @@ catkin_package(DEPENDS
   clam_controller 
   clam_msgs
   pcl_ros
+  cv_bridge
+  opencv2
   eigen_conversions 
   moveit_ros_planning 
   moveit_core
@@ -48,10 +52,11 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
  
-#add_executable(block_manipulation test/block_manipulation.cpp)
-
 add_executable(block_detection_action_server src/block_detection_action_server.cpp)
 target_link_libraries(block_detection_action_server ${catkin_LIBRARIES})
+
+add_executable(findContours_demo2 src/findContours_demo.cpp)
+target_link_libraries(findContours_demo2 ${catkin_LIBRARIES})
 
 add_executable(block_logic_action_server src/block_logic_action_server.cpp)
 target_link_libraries(block_logic_action_server ${catkin_LIBRARIES})
