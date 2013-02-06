@@ -112,6 +112,7 @@ private:
   // OpenCV data structures
   cv::Mat cluster_image;
   cv::Mat cluster_image_gray;
+  cv::Mat cluster_image_cropped;
   int opencv_threshhold;
   int max_opencv_threshhold;
   cv::RNG opencv_rand_gen;
@@ -150,17 +151,6 @@ public:
     arm_link = "/base_link";
     block_size = 0.04;
     table_height = 0.001;
-
-    /*    // Wait for TF to be read
-          ROS_INFO("[block detection] Waiting for TF");
-          tf_listener_.waitForTransform(std::string(arm_link), cloud.header.frame_id,
-          cloud.header.stamp, ros::Duration(10.0));
-          if(!pcl_ros::transformPointCloud(std::string(arm_link), cloud, *cloud_transformed, tf_listener_))
-          {
-          ROS_ERROR("Error converting to desired frame");
-          return;
-          }
-    */
 
     // Register the goal and feeback callbacks.
     action_server_.registerGoalCallback(boost::bind(&BlockDetectionServer::goalCB, this));
@@ -365,108 +355,8 @@ public:
 
     ROS_WARN_STREAM("Number indicies/clusters: " << cluster_indices.size() );
 
-    // for each cluster, see if it is a block
-    for(size_t c = 0; c < cluster_indices.size(); ++c)
-    {
-      // find the outer dimensions of the cluster
-      float xmin = 0; float xmax = 0;
-      float ymin = 0; float ymax = 0;
-      //      float zmin = 0; float zmax = 0;
-      // also remember each min & max's correponding other coordinate (not needed for z)
-      float xminy = 0; float xmaxy = 0;
-      float yminx = 0; float ymaxx = 0;
-
-      for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
-      {
-        int j = cluster_indices[c].indices[i];
-        float x = cloud_filtered->points[j].x;
-        float y = cloud_filtered->points[j].y;
-        //        float z = cloud_filtered->points[j].z;
-
-        if(i == 0) // initial values
-        {
-          xmin = xmax = x;
-          ymin = ymax = y;
-          //          zmin = zmax = z;
-          xminy = xmaxy = y;
-          yminx = ymaxx = x;
-        }
-        else
-        {
-          if( x < xmin )
-          {
-            xmin = x;
-            xminy = y;
-          }
-          if( x > xmax )
-          {
-            xmax = x;
-            xmaxy = y;
-          }
-          if( y < ymin )
-          {
-            ymin = y;
-            yminx = x;
-          }
-          if( y > ymax )
-          {
-            ymax = y;
-            ymaxx = x;
-          }
-        }
-      }
-
-      // ---------------------------------------------------------------------------------------------
-      // Check if these dimensions make sense for the block size specified
-      float xside = xmax-xmin;
-      float yside = ymax-ymin;
-
-      const float tol = 0.01; // 1 cm error tolerance
-
-      // In order to be part of the block, xside and yside must be between
-      // blocksize and blocksize*sqrt(2)
-      // z must be equal to or smaller than blocksize
-      if(xside > block_size-tol &&
-         xside < block_size*sqrt(2)+tol &&
-                 yside > block_size-tol &&
-        yside < block_size*sqrt(2)+tol )
-      {
-
-        // Now send to OpenCV for further processing
-        //        processClusterOpenCV( cluster_indices[c], cloud_filtered );
-        processClusterOpenCV( cluster_indices[c], pointcloud_msg );
-
-        // If so, then figure out the position and the orientation of the block
-        //float angle = atan(block_size/((xside+yside)/2));
-        //float angle = atan( (xmaxy - ymin) / (xmax - yminx) );
-        float angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
-
-        /*if(yside < block_size)
-          angle = 0.0;
-        */
-
-        ROS_INFO_STREAM("[block detection] FOUND -> xside: " << xside << " yside: " << yside << " angle: " << angle);
-        // Then add it to our set
-        //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
-
-        // Find the block's center point
-        float x_origin = xmin+(xside)/2.0;
-        float y_origin = ymin+(yside)/2.0;
-        float z_origin = table_height + block_size / 2;
-
-        addBlock( x_origin, y_origin, z_origin, angle);
-
-        /*        ROS_ERROR("Temp break");
-                  ros::Duration(30.0).sleep();
-                  exit(0);*/
-
-      }
-      else
-      {
-        ROS_ERROR_STREAM("[block detection] REJECT -> xside: " << xside << " yside: " << yside );
-      }
-
-    }
+    //    processClusters( cluster_indices, pointcloud_msg, cloud_filtered );
+    processClusters( cluster_indices, cloud_transformed, cloud_filtered );
 
     // ---------------------------------------------------------------------------------------------
     // Final results
@@ -491,22 +381,21 @@ public:
     }
   }
 
-
-  void processClusterOpenCV( pcl::PointIndices cluster_indices,
-                             const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg )
-  //                             const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud_filtered )
+  // Processes the point cloud with OpenCV using the PCL cluster indices
+  void processClusters( const std::vector<pcl::PointIndices> cluster_indices,
+                        //                        const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
+                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud_transformed,
+                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud_filtered )
   {
     // -------------------------------------------------------------------------------------------------------
     // Convert image
-    ROS_INFO("Converting image");
-
-    /// Load source image and convert it to gray
-    //cluster_image = cv::imread( "/home/dave/ros/clam/src/clam_vision/calibration/test_opencv.png", 1 );
+    ROS_INFO("Converting image to OpenCV format");
 
     try
     {
       sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
-      pcl::toROSMsg (*pointcloud_msg, *image_msg);
+      //      pcl::toROSMsg (*pointcloud_msg, *image_msg);
+      pcl::toROSMsg (*cloud_transformed, *image_msg);
       cv_bridge::CvImagePtr input_bridge = cv_bridge::toCvCopy(image_msg, "rgb8");
       cluster_image = input_bridge->image;
     }
@@ -519,65 +408,217 @@ public:
     // -------------------------------------------------------------------------------------------------------
     // Process Image
 
-    /// Convert image to gray
+    // Convert image to gray
     cv::cvtColor( cluster_image, cluster_image_gray, CV_BGR2GRAY );
 
-    // Blur image
+    // Blur image - reduce noise with a 3x3 kernel
     cv::blur( cluster_image_gray, cluster_image_gray, cv::Size(3,3) );
-
-
-    // -------------------------------------------------------------------------------------------------------
-    // Find Contours
-    cv::Mat canny_output;
-    vector<vector<cv::Point> > contours;
-    vector<cv::Vec4i> hierarchy;
-
-    /// Detect edges using canny
-    cv::Canny( cluster_image_gray, canny_output, opencv_threshhold, opencv_threshhold*2, 3 );
-
-    /// Find contours
-    cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-
-    /// Draw contours
-    cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-      cv::Scalar color = cv::Scalar( opencv_rand_gen.uniform(0, 255),
-                                     opencv_rand_gen.uniform(0,255),
-                                     opencv_rand_gen.uniform(0,255) );
-      cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
-    }
-
-
-
-
-    // -------------------------------------------------------------------------------------------------------
-    // Combine PCL with OpenCV
-
-    for(size_t i = 0; i < cluster_indices.indices.size(); i++)
-    {
-      int j = cluster_indices.indices[i];
-      float x = cloud_filtered->points[j].x;
-      float y = cloud_filtered->points[j].y;
-      
-    }
-
 
     // -------------------------------------------------------------------------------------------------------
     // GUI Stuff
 
     // First window
-    cv::namedWindow( "Source", CV_WINDOW_AUTOSIZE );
+    const char* source_window = "Source";
+    cv::namedWindow( source_window, CV_WINDOW_AUTOSIZE );
     cv::imshow( source_window, cluster_image_gray );
     cv::createTrackbar( " Canny thresh:", "Source", &opencv_threshhold, max_opencv_threshhold );
 
     // Second window
     cv::namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
-    cv::imshow( "Contours", drawing );
+    cv::waitKey(10000); // 1 sec to allow gui to catch up
 
-    cv::waitKey(1000); // 1 sec to allow gui to catch up
+    // -------------------------------------------------------------------------------------------------------
+    // Start processing clusters
+
+    // for each cluster, see if it is a block
+    for(size_t c = 0; c < cluster_indices.size(); ++c)
+    {
+      ROS_INFO("\n\n");
+      ROS_INFO("On cluster %i", int(c));
+
+      // find the outer dimensions of the cluster
+      float xmin = 0; float xmax = 0;
+      float ymin = 0; float ymax = 0;
+
+      // also remember each min & max's correponding other coordinate (not needed for z)
+      float xminy = 0; float xmaxy = 0;
+      float yminx = 0; float ymaxx = 0;
+
+      // also remember their corresponding indice
+      int xmini = 0; int xmaxi = 0;
+      int ymini = 0; int ymaxi = 0;
+
+      for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
+      {
+
+        int j = cluster_indices[c].indices[i];
+        float x = cloud_filtered->points[j].x;
+        float y = cloud_filtered->points[j].y;
+
+        if(i == 0) // initial values
+        {
+          xmin = xmax = x;
+          ymin = ymax = y;
+          xminy = xmaxy = y;
+          yminx = ymaxx = x;
+          xmini = xmaxi = ymini = ymaxi = j; // record the indice corresponding to the min/max
+        }
+        else
+        {
+          if( x < xmin )
+          {
+            xmin = x;
+            xminy = y;
+            xmini = j;
+          }
+          if( x > xmax )
+          {
+            xmax = x;
+            xmaxy = y;
+            xmaxi = j;
+          }
+          if( y < ymin )
+          {
+            ymin = y;
+            yminx = x;
+            ymini = j;
+          }
+          if( y > ymax )
+          {
+            ymax = y;
+            ymaxx = x;
+            ymaxi = j;
+          }
+        }
+      }
+
+      // ---------------------------------------------------------------------------------------------
+      // Check if these dimensions make sense for the block size specified
+      float xside = xmax-xmin;
+      float yside = ymax-ymin;
+
+      const float tol = 0.01; // 1 cm error tolerance
+
+      // In order to be part of the block, xside and yside must be between
+      // blocksize and blocksize*sqrt(2)
+      if(xside > block_size-tol &&
+         xside < block_size*sqrt(2)+tol &&
+                 yside > block_size-tol &&
+        yside < block_size*sqrt(2)+tol )
+      {
 
 
+        // -------------------------------------------------------------------------------------------------------
+        // Find Contours
+
+        // Use OpenCV only on the region identified by PCL
+        int image_width = cluster_image_gray.size.p[1];
+        int image_height = cluster_image_gray.size.p[0];
+        ROS_WARN_STREAM( "height " << image_height << " -- width " << image_width );
+
+        // Get the pixel coordinates of the xmax and ymax indicies
+        int px_xmax = 0; int py_xmax = 0;
+        int px_ymax = 0; int py_ymax = 0;
+
+        getXYCoordinates( xmaxi, image_height, image_width, px_xmax, py_xmax);
+        getXYCoordinates( ymaxi, image_height, image_width, px_ymax, py_ymax);
+
+        // Get the pixel coordinates of the xmin and ymin indicies
+        int px_xmin = 0; int py_xmin = 0;
+        int px_ymin = 0; int py_ymin = 0;
+        getXYCoordinates( xmini, image_height, image_width, px_xmin, py_xmin);
+        getXYCoordinates( ymini, image_height, image_width, px_ymin, py_ymin);
+
+
+        float roi_width = px_xmax - px_xmin;
+        float roi_height = py_ymin - py_ymax;
+        float x_offset = px_xmax - roi_width;
+        float y_offset = py_ymax;
+
+        // This changes the frame of reference from the robot to the camera (reversed, kinda)
+        /*
+        float roi_width = py_ymax - py_ymin;
+        float roi_height = px_xmax - px_xmin;
+        float x_offset = py_ymin;
+        float y_offset = px_xmax;
+        */
+
+        ROS_WARN_STREAM("x_offset " << x_offset << " -- y_offset " << y_offset
+                        << " -- roi_height " << roi_height << " -- roi_width " << roi_width );
+        ROS_WARN_STREAM(" width = " << px_xmax << " - " << px_xmin << " height = " << py_ymax << " - " << py_ymin );
+
+        cv::Rect region_of_interest( x_offset, y_offset, roi_height, roi_width );
+        //        cv::Rect region_of_interest(10, 10, 100, 100);
+
+        // Crop image (doesn't actually copy the data)
+        cluster_image_cropped = cluster_image_gray(region_of_interest);
+        ROS_INFO_STREAM("Cropped");
+
+
+        // GUI Stuff
+        ROS_INFO_STREAM("pre imshow");
+        cv::imshow( "Contours", cluster_image_cropped );
+        ROS_INFO_STREAM("imshow");
+        cv::waitKey(0); // 50 milisec to allow gui to catch up
+
+
+        // Detect edges using canny
+        cv::Mat canny_output;
+        cv::Canny( cluster_image_cropped, canny_output, opencv_threshhold, opencv_threshhold*2, 3 );
+        ROS_INFO_STREAM("Canny");
+
+        // Find contours
+        vector<vector<cv::Point> > contours;
+        vector<cv::Vec4i> hierarchy;
+        cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+        ROS_INFO_STREAM("Contours");
+
+        // Draw contours
+        cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+        ROS_INFO_STREAM("drawing");
+
+        for( size_t i = 0; i< contours.size(); i++ )
+        {
+          cv::Scalar color = cv::Scalar( opencv_rand_gen.uniform(0, 255),
+                                         opencv_rand_gen.uniform(0,255),
+                                         opencv_rand_gen.uniform(0,255) );
+          cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
+        }
+
+        // -------------------------------------------------------------------------------------------------------
+        // GUI Stuff
+        cv::imshow( "Contours", drawing );
+        ROS_INFO_STREAM("imshow");
+        cv::waitKey(5000); // 1 sec to allow gui to catch up
+
+
+        // figure out the position and the orientation of the block
+        //float angle = atan(block_size/((xside+yside)/2));
+        //float angle = atan( (xmaxy - ymin) / (xmax - yminx) );
+        float angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
+
+        /*if(yside < block_size)
+          angle = 0.0;
+        */
+
+        ROS_INFO_STREAM("[block detection] FOUND -> xside: " << xside << " yside: " << yside << " angle: " << angle);
+        // Then add it to our set
+        //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
+
+        // Find the block's center point
+        float x_origin = xmin+(xside)/2.0;
+        float y_origin = ymin+(yside)/2.0;
+        float z_origin = table_height + block_size / 2;
+
+        addBlock( x_origin, y_origin, z_origin, angle);
+
+      }
+      else
+      {
+        ROS_ERROR_STREAM("[block detection] REJECT -> xside: " << xside << " yside: " << yside );
+      }
+
+    }
 
   }
 
@@ -666,7 +707,15 @@ public:
       ros::Duration(0.1).sleep();
     }
   }
-  p
+
+  void getXYCoordinates(const int index, const int height, const int width,
+                        int& x, int& y)
+  {
+    x = index % width;
+    y = (index - x) / width;
+    ROS_WARN_STREAM("Converting point " << index << " to x=" << x << " and y=" << y );
+  }
+
 };
 
 };
