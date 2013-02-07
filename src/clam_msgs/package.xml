@@ -1,0 +1,27 @@
+<package>
+  <name>clam_msgs</name>
+  <version>0.3.15</version>
+  <description>Messages, services and actions used by the ClamArm</description>
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>  
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+
+</package>
