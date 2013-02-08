@@ -12,6 +12,11 @@
     <group name="arm">
         <chain base_link="base_link" tip_link="gripper_roll_link" />
     </group>
+    <group name="gripper_group">
+        <link name="gripper_fixed_finger_link" />
+        <link name="gripper_finger_link" />
+        <link name="gripper_fake_tip_link" />
+    </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="cobra" group="arm">
         <joint name="elbow_pitch_joint" value="-0.0096" />
@@ -22,6 +27,8 @@
         <joint name="wrist_pitch_joint" value="1.6622" />
         <joint name="wrist_roll_joint" value="0" />
     </group_state>
+    <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
+    <end_effector name="end_effector" parent_link="gripper_roll_link" group="gripper_group" parent_group="arm" />
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="vjoint_1" type="fixed" parent_frame="vjoint_parent_frame" child_link="base_link" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
