@@ -47,8 +47,9 @@ include_directories(
 add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
 target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
 
-add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
 # This line is needed to ensure that messages are done being built before this is built
-add_dependencies(clam_arm_action_server clam_controller_msgs_gencpp)
-target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
+#add_dependencies(clam_arm_action_server clam_controller_msgs_gencpp)
+
+#add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
+#target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
 
