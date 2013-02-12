@@ -59,7 +59,7 @@
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/robot_state/joint_state_group.h>
-#include <moveit/planning_models_loader/kinematic_model_loader.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 #include <moveit/plan_execution/plan_execution.h>
 #include <moveit/plan_execution/plan_with_sensing.h>
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
@@ -163,7 +163,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Create a trajectory execution manager
     trajectory_execution_manager_.reset(new trajectory_execution_manager::TrajectoryExecutionManager
-                                        (planning_scene_monitor_->getKinematicModel()));
+                                        (planning_scene_monitor_->getRobotModel()));
     plan_execution_.reset(new plan_execution::PlanExecution(planning_scene_monitor_, trajectory_execution_manager_));
 
     // ---------------------------------------------------------------------------------------------
@@ -398,7 +398,7 @@ public:
     if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
     {
       // Set kinematic solver
-      const std::pair<kinematic_model::SolverAllocatorFn, kinematic_model::SolverAllocatorMapFn> &allocators =
+      const std::pair<robot_model::SolverAllocatorFn, robot_model::SolverAllocatorMapFn> &allocators =
         approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
       if( !allocators.first)
         ROS_ERROR("No IK Solver loaded - make sure moveit_config/kinamatics.yaml is loaded in this namespace");
@@ -480,13 +480,13 @@ public:
     trajectory_msgs::JointTrajectory trajectory_out;
 
     // Get the joint limits of planning group
-    const kinematic_model::JointModelGroup *joint_model_group =
-      planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
+    const robot_model::JointModelGroup *joint_model_group =
+      planning_scene->getRobotModel()->getJointModelGroup(GROUP_NAME);
     const std::vector<moveit_msgs::JointLimits> &joint_limits = joint_model_group->getVariableLimits();
 
 
     // Copy the vector of RobotStates to a RobotTrajectory
-    robot_trajectory::RobotTrajectoryPtr approach_traj(new robot_trajectory::RobotTrajectory(planning_scene->getKinematicModel(), GROUP_NAME));
+    robot_trajectory::RobotTrajectoryPtr approach_traj(new robot_trajectory::RobotTrajectory(planning_scene->getRobotModel(), GROUP_NAME));
     for (std::size_t k = 0 ; k < approach_traj_result.size() ; ++k)
       approach_traj->addSuffixWayPoint(approach_traj_result[k], 0.0);
 
@@ -515,7 +515,7 @@ public:
 
     // Create the message
     moveit_msgs::DisplayTrajectory rviz_display;
-    rviz_display.model_id = planning_scene->getKinematicModel()->getName();
+    rviz_display.model_id = planning_scene->getRobotModel()->getName();
     //    rviz_display.trajectory_start = this_robot_state;
     //    rviz_display.trajectory.resize(1, approach_traj_result);
 

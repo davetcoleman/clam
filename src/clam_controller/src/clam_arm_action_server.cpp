@@ -70,7 +70,7 @@
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/robot_state/conversions.h>
-//#include <moveit/planning_models_loader/kinematic_model_loader.h>
+//#include <moveit/robot_model_loader/robot_model_loader.h>
 //#include <moveit/plan_execution/plan_execution.h>
 //#include <moveit/plan_execution/plan_with_sensing.h>
 //#include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
@@ -234,7 +234,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Create the joint_state_group needed for creating the constraint
     const planning_scene::PlanningScenePtr planning_scene = planning_scene_monitor_->getPlanningScene();
-    const kinematic_model::JointModelGroup *joint_model_group = planning_scene->getKinematicModel()->getJointModelGroup(GROUP_NAME);
+    const robot_model::JointModelGroup *joint_model_group = planning_scene->getRobotModel()->getJointModelGroup(GROUP_NAME);
     robot_state::RobotState robot_state = planning_scene->getCurrentState();
 
     robot_state::JointStateGroup joint_state_group(&robot_state, joint_model_group);
