@@ -1,22 +1,34 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 84
+    Help Height: 78
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /DepthCloudFiltered1
+        - /Status1
+        - /MotionPlanning1
+        - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
-      Splitter Ratio: 0.54013
-    Tree Height: 927
-  - Class: rviz/Help
-    Name: Help
+        - /MotionPlanning1/Planning Metrics1
+        - /MotionPlanning1/Planned Path1
+      Splitter Ratio: 0.5
+    Tree Height: 391
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+    Name: Tool Properties
+    Splitter Ratio: 0.588679
   - Class: rviz/Views
     Expanded:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: rviz/Time
+    Name: Time
 Visualization Manager:
   Class: ""
   Displays:
@@ -38,190 +50,8 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /move_clam_arm_markers
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 10000
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /move_clam_arm_markers_array
-      Name: MoveArm Collisions
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /allowed_contact_regions_array
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: false
-      Links:
-        {}
-      Name: ClamArm
-      Robot Description: robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: false
-      Visual Enabled: true
-    - Class: rviz/InteractiveMarkers
-      Enabled: true
-      Name: Move Arm Control
-      Show Axes: false
-      Show Descriptions: true
-      Update Topic: /clam_marker_server/update
-      Value: true
-    - Class: rviz/TF
-      Enabled: false
-      Frame Timeout: 15
-      Frames:
-        All Enabled: true
-      Marker Scale: 0.1
-      Name: ClamArmTF
-      Show Arrows: true
-      Show Axes: false
-      Show Names: true
-      Tree:
-        {}
-      Update Interval: 0
-      Value: false
-    - Alpha: 1
-      Auto Size: true
-      Auto Size Factor: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/DepthCloud
-      Color: 255; 255; 255
-      Color Image Topic: /camera/rgb/image_color
-      Color Transformer: RGB8
-      Color Transport Hint: raw
-      Decay Time: 0
-      Depth Map Topic: /camera/depth_registered/image_rect
-      Depth Map Transport Hint: raw
-      Enabled: false
-      Name: DepthCloud
-      Position Transformer: XYZ
-      Queue Size: 5
-      Selectable: true
-      Size (Pixels): 3
-      Style: Spheres
-      Topic Filter: true
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 0.350458
-        Min Value: -0.727807
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
-      Enabled: true
-      Name: DepthCloudFiltered
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: false
-      Size (Pixels): 15
-      Size (m): 0.01
-      Style: Points
-      Topic: /block_detection_action_server/block_output
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 0; 0; 255
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: false
-      Name: DepthCloudTable
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.01
-      Style: Points
-      Topic: /block_detection_action_server/plane_output
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: false
-    - Arrow Length: 0.1
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Name: BlockPoseArray
-      Topic: /block_detection_action_server/block_orientation
-      Value: true
-    - Class: rviz/InteractiveMarkers
-      Enabled: true
-      Name: RecognizedBlocks
-      Show Axes: false
-      Show Descriptions: false
-      Update Topic: /block_controls/update
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: visualization_marker
-      Name: Goal Gripper Location
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /block_detection_action_server/block_marker
-      Name: RecognizedBlocks
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
     - Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: false
+      Enabled: true
       MoveIt_Goal_Tolerance: 0
       MoveIt_Planning_Time: 5
       MoveIt_Use_Constraint_Aware_IK: true
@@ -310,7 +140,7 @@ Visualization Manager:
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
-        Query Goal State: false
+        Query Goal State: true
         Query Start State: true
         Show Workspace: false
         Start State Alpha: 1
@@ -386,45 +216,55 @@ Visualization Manager:
             Show Trail: false
             Value: true
         Robot Alpha: 0.5
-        Show Scene Robot: false
-      Value: false
+        Show Scene Robot: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Fixed Frame: /base_link
   Name: root
   Tools:
-    - Class: rviz/MoveCamera
     - Class: rviz/Interact
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/Measure
+    - Class: rviz/SetInitialPose
+      Topic: /initialpose
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
   Value: true
   Views:
     Current:
-      Class: rviz/XYOrbit
-      Distance: 0.424357
+      Class: rviz/Orbit
+      Distance: 1.44857
       Focal Point:
-        X: 0.422687
-        Y: -0.031669
-        Z: 0
+        X: 0.150739
+        Y: 0.0842114
+        Z: 0.312037
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.0398
-      Target Frame: /base_link
-      Value: XYOrbit (rviz)
-      Yaw: 5.59498
+      Pitch: 0.275399
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 4.87855
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
   Height: 1200
-  Help:
-    collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001cf00000434fc0200000005fb000000100044006900730070006c006100790073010000004100000434000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e0067000000045f000000160000001600000016000004690000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002a200000451fc0200000007fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004100000216000000dd00fffffffb0000000a00560069006500770073010000025d000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003130000017f0000017400ffffff000000010000010f00000451fc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000002bf00fffffffb0000000800540069006d00650100000000000004500000000000000000000003980000045100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
   Views:
     collapsed: false
   Width: 1600
-  X: 3819
-  Y: -20
+  X: 3839
+  Y: -28

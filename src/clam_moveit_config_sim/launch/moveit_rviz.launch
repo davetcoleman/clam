@@ -4,7 +4,8 @@
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
   
-  <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" respawn="false" output="screen">
+  <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" 
+	respawn="false" output="screen" args="-d $(find clam_moveit_config_sim)/launch/moveit.rviz" >
     <rosparam command="load" file="$(find clam_moveit_config_sim)/config/kinematics.yaml"/>
   </node>
 
