@@ -1,8 +1,14 @@
 <!-- -*- mode: XML -*- -->
 <launch>
 
-  <!-- Launch visualizer -->
-  <node pkg="rviz" type="rviz" name="rviz" 
-	args="-d $(find clam_block_manipulation)/launch/block_manipulation.rviz" />
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- Launch visualizer -->  
+  <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" 
+	respawn="false" output="screen" args="-d $(find clam_block_manipulation)/launch/block_manipulation.rviz" >
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
+  </node>
 
 </launch>
