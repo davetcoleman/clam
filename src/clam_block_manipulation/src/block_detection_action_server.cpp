@@ -229,12 +229,6 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB> cloud;
     pcl::fromROSMsg(*pointcloud_msg, cloud);
 
-    // Copy to a pointer
-    //    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud_ptr(*cloud);
-    //    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr =
-    //      boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >(cloud);
-
-
     // Make new point cloud that is in our working frame
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -251,63 +245,78 @@ public:
       return;
     }
 
+
     // Limit to things we think are roughly at the table height ------------------------------------
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filteredZ(new pcl::PointCloud<pcl::PointXYZRGB>);
+    //    pcl::PointIndices::Ptr filtered_indices(new pcl::PointIndices); // hold things at table height
+    //    std::vector<int> 
+    ROS_INFO("here");
+    boost::shared_ptr<std::vector<int> > filtered_indices(new std::vector<int>);
+    ROS_INFO("here");
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PassThrough<pcl::PointXYZRGB> pass;
-    pass.setInputCloud(cloud_transformed);
+    pass.setInputCloud(cloud_transformed);    
     pass.setFilterFieldName("z");
     pass.setFilterLimits(table_height - 0.05, table_height + block_size + 0.05);
     //pass.setFilterLimits(table_height - 0.01, table_height + block_size + 0.02); // DTC
-    pass.filter(*cloud_filteredZ);
+    ROS_INFO("before filtered indicies");
+    pass.filter(*filtered_indices);
+    ROS_INFO("after filter");
 
-
+    /*
     // Limit to things in front of the robot ---------------------------------------------------
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pass.setInputCloud(cloud_filteredZ);
+    //pass.setInputCloud(cloud_filteredZ);
+    pass.setIndices(filtered_indices);
     pass.setFilterFieldName("x");
     pass.setFilterLimits(.1,.5);
     pass.filter(*cloud_filtered);
+    */
 
-
+    /*
     // Check if any points remain
     if( cloud_filtered->points.size() == 0 )
     {
-      ROS_ERROR("0 points left");
-      return;
+    ROS_ERROR("0 points left");
+    return;
     }
     else
     {
-      ROS_INFO("[block detection] Filtered, %d points left", (int) cloud_filtered->points.size());
+    ROS_INFO("[block detection] Filtered, %d points left", (int) cloud_filtered->points.size());
     }
+    */
 
     // Segment components --------------------------------------------------------------------------
+
 
     // Create the segmentation object for the planar model and set all the parameters
     pcl::SACSegmentation<pcl::PointXYZRGB> seg;
     seg.setOptimizeCoefficients(true);
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC); // robustness estimator - RANSAC is simple
-    seg.setMaxIterations(200);
+    seg.setMaxIterations(200); // the maximum number of iterations the sample consensus method will run
     seg.setDistanceThreshold(0.005); // determines how close a point must be to the model in order to be considered an inlier
 
+
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::ModelCoefficients::Ptr model_coefficients(new pcl::ModelCoefficients);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane(new pcl::PointCloud<pcl::PointXYZRGB>());
 
-    int nr_points = cloud_filtered->points.size();
+    /*
+      int nr_points = cloud_filtered->points.size();
 
-    // Segment cloud until there are less than 30% of points left? not sure why this is necessary
-    while(cloud_filtered->points.size() > 0.3 * nr_points)
-    {
+      // Segment cloud until there are less than 30% of points left? not sure why this is necessary
+      while(cloud_filtered->points.size() > 0.3 * nr_points)
+      {
 
       // Segment the largest planar component from the remaining cloud (find the table)
       seg.setInputCloud(cloud_filtered);
-      seg.segment(*inliers, *coefficients);
+      //      seg.setIndices();
+      seg.segment(*inliers, *model_coefficients);
 
       if(inliers->indices.size() == 0)
       {
-        ROS_ERROR("[block detection] Could not estimate a planar model for the given dataset.");
-        return;
+      ROS_ERROR("[block detection] Could not estimate a planar model for the given dataset.");
+      return;
       }
 
       //std::cout << "Inliers: " << (inliers->indices.size()) << std::endl;
@@ -329,38 +338,48 @@ public:
 
       // Debug output - DTC
       // Show the contents of the inlier set, together with the estimated plane parameters, in ax+by+cz+d=0 form (general equation of a plane)
-      ROS_INFO_STREAM( "[block detection] Model coefficients: " << coefficients->values[0] << " "
-                       << coefficients->values[1] << " "
-                       << coefficients->values[2] << " "
-                       << coefficients->values[3] ); // TODO: turn this into an rviz marker somehow?
+      ROS_INFO_STREAM( "[block detection] Model coefficients: " << model_coefficients->values[0] << " "
+      << model_coefficients->values[1] << " "
+      << model_coefficients->values[2] << " "
+      << model_coefficients->values[3] ); // TODO: turn this into an rviz marker somehow?
+    */
+    // Show groups of recognized objects (the inliers)
+    /*std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+      for (size_t i = 0; i < inliers->indices.size (); ++i)        {
+      std::cerr << inliers->indices[i] << "    " << cloud.points[inliers->indices[i]].x << " "
+      << cloud.points[inliers->indices[i]].y << " "
+      << cloud.points[inliers->indices[i]].z << std::endl;
+      }*/
+    //    }
 
-      // Show groups of recognized objects (the inliers)
-      /*std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
-        for (size_t i = 0; i < inliers->indices.size (); ++i)        {
-        std::cerr << inliers->indices[i] << "    " << cloud.points[inliers->indices[i]].x << " "
-        << cloud.points[inliers->indices[i]].y << " "
-        << cloud.points[inliers->indices[i]].z << std::endl;
-        }*/
-    }
 
     // DTC: Removed to make compatible with PCL 1.5
     // Creating the KdTree object for the search method of the extraction
-    //pcl::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::KdTreeFLANN<pcl::PointXYZRGB>);
-    //tree->setInputCloud(cloud_filtered);
+    //    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTreeFLANN<pcl::PointXYZRGB>);
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+    //    tree->setInputCloud(cloud_filtered);
+    ROS_INFO("kdTree");
+    tree->setInputCloud(cloud_transformed, filtered_indices);
+    ROS_INFO("after set input cloud");
 
     // Find the clusters (objects) on the table
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> cluster_extract;
-    cluster_extract.setClusterTolerance(0.005);
+    //cluster_extract.setClusterTolerance(0.005); // 5mm -  If you take a very small value, it can happen that an actual object can be seen as multiple clusters. On the other hand, if you set the value too high, it could happen, that multiple objects are seen as one cluster. So our recommendation is to just test and try out which value suits your dataset.
+    cluster_extract.setClusterTolerance(0.02); // 2cm
     cluster_extract.setMinClusterSize(100);
     cluster_extract.setMaxClusterSize(25000);
-    //cluster_extract.setSearchMethod(tree);
-    cluster_extract.setInputCloud(cloud_filtered);
+    cluster_extract.setSearchMethod(tree);
+    //    cluster_extract.setInputCloud(cloud_filtered);
+    cluster_extract.setInputCloud(cloud_transformed);
+    ROS_INFO("cluster_Extract");
+    cluster_extract.setIndices(filtered_indices);
+    ROS_INFO("after cluster extract");
     cluster_extract.extract(cluster_indices);
 
     // Publish point cloud data
-    filtered_pub_.publish(cloud_filtered);
-    plane_pub_.publish(cloud_plane);
+    //    filtered_pub_.publish(cloud_filtered);
+    //    plane_pub_.publish(cloud_plane);
 
     ROS_WARN_STREAM("Number indicies/clusters: " << cluster_indices.size() );
 
@@ -465,7 +484,7 @@ public:
         int j = cluster_indices[c].indices[i];
 
         // Get RGB from point cloud
-        pcl::PointXYZRGB p = cloud_filtered->points[j];
+        pcl::PointXYZRGB p = cloud_transformed->points[j];
 
         float x = p.x;
         float y = p.y;
@@ -539,23 +558,22 @@ public:
         RGBImage block_image = RGBImage::zeros(image_height, image_width); 
 
 
-        ROS_INFO_STREAM("cloud points should be 307200 but it is " << cloud.points.size() );
+        //ROS_INFO_STREAM("cloud points should be 307200 but it is " << cloud.points.size() );
 
-        /*
-          for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
-          {
+        for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
+        {
 
           int j = cluster_indices[c].indices[i];
-        */
 
-        for(size_t j = 0; j < cloud.points.size(); ++j)
-          // for(size_t j = 0; j < 307200; ++j)
-        {
+          /*
+            for(size_t j = 0; j < cloud.points.size(); ++j)
+            {
+          */
 
           // Get RGB from point cloud
           pcl::PointXYZRGB p = cloud.points[j];
-          int row;
-          int col;
+          int row = 0;
+          int col = 0;
 
           // Get the pixel coordinates of the index
           getXYCoordinates( j, image_height, image_width, col, row);
@@ -577,14 +595,14 @@ public:
           //       block_image.data[j][1] = g;
           //        block_image.data[j][2] = b;
 
-            block_image.at<cv::Vec3b>(row,col)[0] = r;
-            block_image.at<cv::Vec3b>(row,col)[1] = g;
-            block_image.at<cv::Vec3b>(row,col)[2] = b;
-            /*
-          block_image.at<cv::Vec3b>(row,col)[0] = 255;
-          block_image.at<cv::Vec3b>(row,col)[1] = 255;
-          block_image.at<cv::Vec3b>(row,col)[2] = 0;
-            */
+          block_image.at<cv::Vec3b>(row,col)[0] = r;
+          block_image.at<cv::Vec3b>(row,col)[1] = g;
+          block_image.at<cv::Vec3b>(row,col)[2] = b;
+          /*
+            block_image.at<cv::Vec3b>(row,col)[0] = 255;
+            block_image.at<cv::Vec3b>(row,col)[1] = 255;
+            block_image.at<cv::Vec3b>(row,col)[2] = 0;
+          */
           //          ROS_INFO_STREAM("done assigning rgb");
         }
 
