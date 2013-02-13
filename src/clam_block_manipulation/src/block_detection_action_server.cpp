@@ -28,7 +28,7 @@
  *
  * Author: Michael Ferguson, Helen Oleynikova, Dave Coleman
  */
-
+ 
 /*
   DEV NOTES:
   Types of clouds:
@@ -76,6 +76,9 @@
 
 namespace clam_msgs
 {
+
+typedef cv::Mat_<cv::Vec3b> RGBImage;
+
 
 class BlockDetectionServer
 {
@@ -226,6 +229,12 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB> cloud;
     pcl::fromROSMsg(*pointcloud_msg, cloud);
 
+    // Copy to a pointer
+    //    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud_ptr(*cloud);
+    //    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr =
+    //      boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >(cloud);
+
+
     // Make new point cloud that is in our working frame
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -356,7 +365,7 @@ public:
     ROS_WARN_STREAM("Number indicies/clusters: " << cluster_indices.size() );
 
     //    processClusters( cluster_indices, pointcloud_msg, cloud_filtered );
-    processClusters( cluster_indices, cloud_transformed, cloud_filtered );
+    processClusters( cluster_indices, cloud_transformed, cloud_filtered, cloud );
 
     // ---------------------------------------------------------------------------------------------
     // Final results
@@ -373,7 +382,7 @@ public:
       // Publish rviz markers of the blocks
       publishBlockLocation();
 
-      ROS_INFO("[block detection] Finished");
+      ROS_INFO("[block detection] Finished ---------------------------------------------- ");
     }
     else
     {
@@ -384,25 +393,28 @@ public:
   // Processes the point cloud with OpenCV using the PCL cluster indices
   void processClusters( const std::vector<pcl::PointIndices> cluster_indices,
                         //                        const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg,
-                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud_transformed,
-                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud_filtered )
+                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr  cloud_transformed,
+                        const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud_filtered,
+                        const pcl::PointCloud<pcl::PointXYZRGB>&  cloud )
   {
+
+    /*
     // -------------------------------------------------------------------------------------------------------
     // Convert image
     ROS_INFO("Converting image to OpenCV format");
 
     try
     {
-      sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
-      //      pcl::toROSMsg (*pointcloud_msg, *image_msg);
-      pcl::toROSMsg (*cloud_transformed, *image_msg);
-      cv_bridge::CvImagePtr input_bridge = cv_bridge::toCvCopy(image_msg, "rgb8");
-      cluster_image = input_bridge->image;
+    sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
+    //      pcl::toROSMsg (*pointcloud_msg, *image_msg);
+    pcl::toROSMsg (*cloud_transformed, *image_msg);
+    cv_bridge::CvImagePtr input_bridge = cv_bridge::toCvCopy(image_msg, "rgb8");
+    cluster_image = input_bridge->image;
     }
     catch (cv_bridge::Exception& ex)
     {
-      ROS_ERROR("[calibrate] Failed to convert image");
-      return;
+    ROS_ERROR("[calibrate] Failed to convert image");
+    return;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -426,7 +438,7 @@ public:
     // Second window
     cv::namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
     cv::waitKey(10000); // 1 sec to allow gui to catch up
-
+    */
     // -------------------------------------------------------------------------------------------------------
     // Start processing clusters
 
@@ -450,10 +462,13 @@ public:
 
       for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
       {
-
         int j = cluster_indices[c].indices[i];
-        float x = cloud_filtered->points[j].x;
-        float y = cloud_filtered->points[j].y;
+
+        // Get RGB from point cloud
+        pcl::PointXYZRGB p = cloud_filtered->points[j];
+
+        float x = p.x;
+        float y = p.y;
 
         if(i == 0) // initial values
         {
@@ -492,6 +507,8 @@ public:
         }
       }
 
+      ROS_INFO_STREAM("Cluster size - xmin: " << xmin << " xmax: " << xmax << " ymin: " << ymin << " ymax: " << ymax << "\n");
+
       // ---------------------------------------------------------------------------------------------
       // Check if these dimensions make sense for the block size specified
       float xside = xmax-xmin;
@@ -507,14 +524,84 @@ public:
         yside < block_size*sqrt(2)+tol )
       {
 
+        // -------------------------------------------------------------------------------------------------------
+        // Convert to OpenCV Mat format
+        /*
+          int image_width = 640;
+          int image_height = 480;
+        */
+        int image_width = cloud.width;
+        int image_height = cloud.height;
+        ROS_WARN_STREAM( "PCL Image height " << image_height << " -- width " << image_width << "\n");
+
+        //cv::Mat block_image = cv::Mat::zeros( image_height, image_width, CV_8UC3 );
+        //typedef cv::Mat_<cv::Vec3b> block_image = cv::Mat::zeros( image_height, image_width, CV_8UC3 ); 
+        RGBImage block_image = RGBImage::zeros(image_height, image_width); 
+
+
+        ROS_INFO_STREAM("cloud points should be 307200 but it is " << cloud.points.size() );
+
+        /*
+          for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
+          {
+
+          int j = cluster_indices[c].indices[i];
+        */
+
+        for(size_t j = 0; j < cloud.points.size(); ++j)
+          // for(size_t j = 0; j < 307200; ++j)
+        {
+
+          // Get RGB from point cloud
+          pcl::PointXYZRGB p = cloud.points[j];
+          int row;
+          int col;
+
+          // Get the pixel coordinates of the index
+          getXYCoordinates( j, image_height, image_width, col, row);
+
+          // unpack rgb into r/g/b
+          uint32_t rgb = *reinterpret_cast<int*>(&p.rgb);
+          uint8_t r = (rgb >> 16) & 0x0000ff;
+          uint8_t g = (rgb >> 8)  & 0x0000ff;
+          uint8_t b = (rgb)       & 0x0000ff;
+          //          ROS_INFO_STREAM("RGB is " << int(r) << ", " << int(g) << ", " << int(b) << 
+          //                          " at ROW,COL " << row << ", " << col);
+
+          if( isnan(row) || isnan(col) )
+          {
+            ROS_ERROR("is nan");
+            continue;
+          }
+          //        block_image.data[j][0] = r;
+          //       block_image.data[j][1] = g;
+          //        block_image.data[j][2] = b;
+
+            block_image.at<cv::Vec3b>(row,col)[0] = r;
+            block_image.at<cv::Vec3b>(row,col)[1] = g;
+            block_image.at<cv::Vec3b>(row,col)[2] = b;
+            /*
+          block_image.at<cv::Vec3b>(row,col)[0] = 255;
+          block_image.at<cv::Vec3b>(row,col)[1] = 255;
+          block_image.at<cv::Vec3b>(row,col)[2] = 0;
+            */
+          //          ROS_INFO_STREAM("done assigning rgb");
+        }
+
+
+        ROS_INFO_STREAM("pre imshow");
+        cv::imshow( "Copy conversion", block_image );
+        ROS_INFO_STREAM("imshow");
+        cv::waitKey(10000); // 50 milisec to allow gui to catch up
+
 
         // -------------------------------------------------------------------------------------------------------
         // Find Contours
-
+        /*      
         // Use OpenCV only on the region identified by PCL
         int image_width = cluster_image_gray.size.p[1];
         int image_height = cluster_image_gray.size.p[0];
-        ROS_WARN_STREAM( "height " << image_height << " -- width " << image_width );
+        ROS_WARN_STREAM( "OpenCV Image height " << image_height << " -- width " << image_width << "\n");
 
         // Get the pixel coordinates of the xmax and ymax indicies
         int px_xmax = 0; int py_xmax = 0;
@@ -528,96 +615,119 @@ public:
         int px_ymin = 0; int py_ymin = 0;
         getXYCoordinates( xmini, image_height, image_width, px_xmin, py_xmin);
         getXYCoordinates( ymini, image_height, image_width, px_ymin, py_ymin);
-
-
-        float roi_width = px_xmax - px_xmin;
-        float roi_height = py_ymin - py_ymax;
-        float x_offset = px_xmax - roi_width;
-        float y_offset = py_ymax;
-
-        // This changes the frame of reference from the robot to the camera (reversed, kinda)
+        
+        // Decide which - min,min or max,max is the closest to the 0,0 in pixel coordinates
+        */
+        /*        (x1,y1)----------------------------------
+         *       |                                        |
+         *       |                                        |
+         *       |                   ROI                  |
+         *       |                                        |
+         *       |                                        |
+         *       |                                        |
+         *       |_________________________________(x2,y2)|
+         */
         /*
-        float roi_width = py_ymax - py_ymin;
-        float roi_height = px_xmax - px_xmin;
-        float x_offset = py_ymin;
-        float y_offset = px_xmax;
-        */
+          ROS_WARN_STREAM("");
+          ROS_WARN_STREAM("px_xmin " << px_xmin << " px_xmax: " << px_xmax << " py_ymin: " << py_ymin << " py_ymax: " << py_ymax );
 
-        ROS_WARN_STREAM("x_offset " << x_offset << " -- y_offset " << y_offset
-                        << " -- roi_height " << roi_height << " -- roi_width " << roi_width );
-        ROS_WARN_STREAM(" width = " << px_xmax << " - " << px_xmin << " height = " << py_ymax << " - " << py_ymin );
+          // Change the frame of reference from the robot to the camera
+          int x1 = std::min( px_xmin, px_xmax );
+          int y1 = std::min( py_ymin, py_ymax );
+          int x2 = std::max( px_xmin, px_xmax );
+          int y2 = std::max( py_ymin, py_ymax );          
 
-        cv::Rect region_of_interest( x_offset, y_offset, roi_height, roi_width );
-        //        cv::Rect region_of_interest(10, 10, 100, 100);
+          ROS_WARN_STREAM("x1: " << x1 << " y1: " << y1 << " x2: " << x2 << " y2: " << y2);
 
-        // Crop image (doesn't actually copy the data)
-        cluster_image_cropped = cluster_image_gray(region_of_interest);
-        ROS_INFO_STREAM("Cropped");
+          // Create ROI parameters
+          int roi_width = x2 - x1 + 10;
+          int roi_height = y2 - y1 + 10;
+          int x_offset = x1;
+          int y_offset = x2;
+
+          ROS_WARN_STREAM("ROI: x " << x_offset << " -- y " << y_offset << " -- height " << roi_height << " -- width " << roi_width );
+
+          if( roi_width + x_offset > image_width )
+          {
+          ROS_ERROR("skipped because width too much");
+          continue;
+          }
+          if( roi_height + y_offset > image_height )
+          {
+          ROS_ERROR("skipped because height too much");
+          continue;
+          }
+
+          cv::Rect region_of_interest( x_offset, y_offset, roi_height, roi_width );
+          //        cv::Rect region_of_interest(10, 10, 100, 100);
+
+          // Crop image (doesn't actually copy the data)
+          cluster_image_cropped = cluster_image_gray(region_of_interest);
+          ROS_INFO_STREAM("Cropped");
 
 
-        // GUI Stuff
-        ROS_INFO_STREAM("pre imshow");
-        cv::imshow( "Contours", cluster_image_cropped );
-        ROS_INFO_STREAM("imshow");
-        cv::waitKey(0); // 50 milisec to allow gui to catch up
+          // GUI Stuff
+          ROS_INFO_STREAM("pre imshow");
+          cv::imshow( "Contours", cluster_image_cropped );
+          ROS_INFO_STREAM("imshow");
+          cv::waitKey(5000); // 50 milisec to allow gui to catch up
 
+          // Detect edges using canny
+          cv::Mat canny_output;
+          cv::Canny( cluster_image_cropped, canny_output, opencv_threshhold, opencv_threshhold*2, 3 );
+          ROS_INFO_STREAM("Canny");
 
-        // Detect edges using canny
-        cv::Mat canny_output;
-        cv::Canny( cluster_image_cropped, canny_output, opencv_threshhold, opencv_threshhold*2, 3 );
-        ROS_INFO_STREAM("Canny");
+          // Find contours
+          vector<vector<cv::Point> > contours;
+          vector<cv::Vec4i> hierarchy;
+          cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+          ROS_INFO_STREAM("Contours");
 
-        // Find contours
-        vector<vector<cv::Point> > contours;
-        vector<cv::Vec4i> hierarchy;
-        cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-        ROS_INFO_STREAM("Contours");
+          // Draw contours
+          cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+          ROS_INFO_STREAM("drawing");
 
-        // Draw contours
-        cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
-        ROS_INFO_STREAM("drawing");
-
-        for( size_t i = 0; i< contours.size(); i++ )
-        {
+          for( size_t i = 0; i< contours.size(); i++ )
+          {
           cv::Scalar color = cv::Scalar( opencv_rand_gen.uniform(0, 255),
-                                         opencv_rand_gen.uniform(0,255),
-                                         opencv_rand_gen.uniform(0,255) );
+          opencv_rand_gen.uniform(0,255),
+          opencv_rand_gen.uniform(0,255) );
           cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
-        }
+          }
 
-        // -------------------------------------------------------------------------------------------------------
-        // GUI Stuff
-        cv::imshow( "Contours", drawing );
-        ROS_INFO_STREAM("imshow");
-        cv::waitKey(5000); // 1 sec to allow gui to catch up
+          // -------------------------------------------------------------------------------------------------------
+          // GUI Stuff
+          cv::imshow( "Contours", drawing );
+          ROS_INFO_STREAM("imshow");
+          cv::waitKey(5000); // 1 sec to allow gui to catch up
 
 
-        // figure out the position and the orientation of the block
-        //float angle = atan(block_size/((xside+yside)/2));
-        //float angle = atan( (xmaxy - ymin) / (xmax - yminx) );
-        float angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
+          // figure out the position and the orientation of the block
+          //float angle = atan(block_size/((xside+yside)/2));
+          //float angle = atan( (xmaxy - ymin) / (xmax - yminx) );
+          float angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
 
-        /*if(yside < block_size)
-          angle = 0.0;
+          //if(yside < block_size)
+          //          angle = 0.0;
+
+
+          ROS_INFO_STREAM("[block detection] FOUND -> xside: " << xside << " yside: " << yside << " angle: " << angle);
+          // Then add it to our set
+          //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
+
+          // Find the block's center point
+          float x_origin = xmin+(xside)/2.0;
+          float y_origin = ymin+(yside)/2.0;
+          float z_origin = table_height + block_size / 2;
+
+          addBlock( x_origin, y_origin, z_origin, angle);
         */
-
-        ROS_INFO_STREAM("[block detection] FOUND -> xside: " << xside << " yside: " << yside << " angle: " << angle);
-        // Then add it to our set
-        //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
-
-        // Find the block's center point
-        float x_origin = xmin+(xside)/2.0;
-        float y_origin = ymin+(yside)/2.0;
-        float z_origin = table_height + block_size / 2;
-
-        addBlock( x_origin, y_origin, z_origin, angle);
 
       }
       else
       {
         ROS_ERROR_STREAM("[block detection] REJECT -> xside: " << xside << " yside: " << yside );
       }
-
     }
 
   }
@@ -711,9 +821,12 @@ public:
   void getXYCoordinates(const int index, const int height, const int width,
                         int& x, int& y)
   {
+    //    y = (int)(index / width);
+    //    x = index - (y * width);
+
     x = index % width;
     y = (index - x) / width;
-    ROS_WARN_STREAM("Converting point " << index << " to x=" << x << " and y=" << y );
+    //    ROS_WARN_STREAM("Converting point " << index << " to x=" << x << " and y=" << y );
   }
 
 };
@@ -729,4 +842,5 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
 
