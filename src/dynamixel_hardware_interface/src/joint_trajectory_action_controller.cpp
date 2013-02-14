@@ -169,6 +169,7 @@ void JointTrajectoryActionController::processCommand(const trajectory_msgs::Join
 // This is what MoveIt is sending out
 void JointTrajectoryActionController::processFollowTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal)
 {
+  ROS_INFO("before process traj");
   processTrajectory(goal->trajectory, true);
 }
 
@@ -206,6 +207,7 @@ void JointTrajectoryActionController::updateState()
 void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj_msg,
                                                         bool is_action)
 {
+  ROS_INFO("inside process Trajectory");
   control_msgs::FollowJointTrajectoryResult traj_result;
   std::string error_msg;
 
@@ -215,6 +217,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
 
   // Maps from an index in joint_names_ to an index in the JointTrajectory msg "traj_msg"
   std::vector<int> lookup(num_joints_, -1);
+  ROS_INFO("lookup");
 
   // Check that all the joints in the trajectory exist in this multiDOF controller
   for (size_t j = 0; j < num_joints_; ++j)
@@ -240,7 +243,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       return;
     }
   }
-
+  ROS_INFO("after for");
 
   // Check for initial position
   if (traj_msg.points[0].positions.empty())
@@ -255,14 +258,17 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     return;
   }
 
+  ROS_INFO("after initial");
 
   // Find out the duration of each segment in the trajectory
   std::vector<double> durations;
   durations.resize(num_points);
 
+  ROS_INFO("after initial");
   durations[0] = traj_msg.points[0].time_from_start.toSec();
+  ROS_INFO("after initial");
   double trajectory_duration = durations[0];
-
+  ROS_INFO("after initial");
   for (int i = 1; i < num_points; ++i)
   {
     durations[i] = (traj_msg.points[i].time_from_start - traj_msg.points[i-1].time_from_start).toSec();
@@ -325,6 +331,20 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       return;
     }
 
+    ROS_INFO("Copying velocities and positions to new datastructure");
+
+    // Error Check for trajectory messages that don't have any velocities included
+    if(point.velocities.size() == 0)
+    {
+      error_msg = "No velocities included in the trajectory method!";
+      ROS_ERROR("%s", error_msg.c_str());
+      if (is_action)
+      {
+        action_server_->setAborted(traj_result, error_msg);
+      }
+      return;
+    }
+
     // Create a new segment datastructure
     seg.velocities.resize(num_joints_);
     seg.positions.resize(num_joints_);
@@ -333,7 +353,6 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       seg.velocities[j] = point.velocities[lookup[j]];
       seg.positions[j] = point.positions[lookup[j]];
     }
-
     trajectory.push_back(seg);
   }
 
@@ -341,8 +360,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
   // Check if this trajectory goal is already fullfilled by robot's current position
   bool outside_bounds = false; // flag for remembing if a different position was found
   Segment* last_segment = &trajectory[trajectory.size()-1];
+
   for( std::size_t i = 0; i < last_segment->positions.size(); ++i)
   {
+
     std::string joint_name = joint_names_[i];
 
     ROS_DEBUG_STREAM("Checking for similarity on joint " << joint_name << " with real position " << joint_states_[ joint_name ]->position);
@@ -366,14 +387,14 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     action_server_->setSucceeded(traj_result, error_msg);
     return;
   }
-
+    ROS_INFO("6");
 
   // Set the compliance margin and slope
   // TODO: move this to configuration file
   int traj_compliance_margin = 1;
   int traj_compliance_slope = 10; //20
   MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
-
+    ROS_INFO("7");
   // -----------------------------------------------------------------------------------------------
   // Log position and velocity error for each joint to file
   std::ofstream error_log_file;
@@ -396,7 +417,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     }
     error_log_file << "\n";
   }
-
+    ROS_INFO("8");
   // Wait until we've reached the trajectory start time
   ROS_INFO("Trajectory start requested at %.3lf, waiting...", traj_msg.header.stamp.toSec());
   ros::Time::sleepUntil(traj_msg.header.stamp);
