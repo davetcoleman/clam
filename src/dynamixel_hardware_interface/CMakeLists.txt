@@ -47,6 +47,8 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # Add additional libraries
 add_library(${PROJECT_NAME} src/dynamixel_io.cpp src/serial_proxy.cpp)
 target_link_libraries(${PROJECT_NAME} flexiport)
+# Wait for messages to be ready
+add_dependencies(${PROJECT_NAME} dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
 
 # Add Boost
 find_package(Boost REQUIRED COMPONENTS thread)
@@ -62,13 +64,17 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(controller_manager src/controller_manager.cpp)
 target_link_libraries(controller_manager ${PROJECT_NAME})
 
-
 # LIBRARY -------------------------------------------------------
 add_library(dynamixel_controllers src/joint_position_controller.cpp
                                   src/joint_torque_controller.cpp
                                   src/joint_trajectory_action_controller.cpp)
 add_definitions(-DERROR_OUTPUT_LOG) # this tells the trajectory_action_controller to log position error to file
 target_link_libraries(dynamixel_controllers ${PROJECT_NAME})
+
+# Wait for messages to be ready
+add_dependencies(controller_manager dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
+add_dependencies(dynamixel_controllers dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
+
 
 # Test code
 add_executable(dynamixel_io test/main.cpp)
