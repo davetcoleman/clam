@@ -558,6 +558,12 @@ public:
       {
 
         // -------------------------------------------------------------------------------------------------------
+        // Find the block's center point
+        double x_origin = xmin+(xside)/2.0;
+        double y_origin = ymin+(yside)/2.0;
+        double z_origin = table_height + block_size / 2;
+
+        // -------------------------------------------------------------------------------------------------------
         // Convert to OpenCV Mat format
         /*
         //cv::Mat block_image = cv::Mat::zeros( image_height, image_width, CV_8UC3 );
@@ -666,6 +672,12 @@ public:
         ROS_DEBUG_STREAM("ROI: x " << x1 << " -- y " << y1 << " -- height " << roi_height << " -- width " << roi_width );
 
         // -------------------------------------------------------------------------------------------------------
+        // Find paramters of the block in pixel coordiantes
+        int block_center_x = x1 + 0.5*roi_width;
+        int block_center_y = y1 + 0.5*roi_height;
+        const cv::Point block_center = cv::Point( block_center_x, block_center_y );
+
+        // -------------------------------------------------------------------------------------------------------
         // Create a sub image of just the block
         cv::Point a1 = cv::Point(x1, y1);
         cv::Point a2 = cv::Point(x2, y2);
@@ -678,8 +690,15 @@ public:
         // Detect edges using canny
         ROS_INFO_STREAM("Detecting edges using canny");
 
+        // Find edges
         cv::Mat canny_output;
         cv::Canny( cluster_image_cropped, canny_output, opencv_threshhold, opencv_threshhold*2, 3 );
+
+        // Get mini window stats
+        const int mini_width = canny_output.size.p[1];
+        const int mini_height = canny_output.size.p[0];
+        const cv::Size mini_size = canny_output.size();
+        const cv::Point mini_center = cv::Point( mini_width, mini_height );
 
         // Find contours
         vector<vector<cv::Point> > contours;
@@ -688,7 +707,7 @@ public:
         ROS_INFO_STREAM("Contours");
 
         // Draw contours
-        cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+        cv::Mat drawing = cv::Mat::zeros( mini_size, CV_8UC3 );
         ROS_INFO_STREAM("Drawing contours");
 
         // Find the largest contour for getting the angle
@@ -721,7 +740,7 @@ public:
 
         // -------------------------------------------------------------------------------------------------------
         // Copy largest contour to seperate image
-        cv::Mat hough_input = cv::Mat::zeros( canny_output.size(), CV_8UC1 );
+        cv::Mat hough_input = cv::Mat::zeros( mini_size, CV_8UC1 );
         cv::Mat hough_input_color;
         cv::Scalar hough_color = cv::Scalar( 200 );
         cv::drawContours( hough_input, contours, (int)max_contour_length_i, hough_color, 1, 8, hierarchy, 0 );
@@ -729,14 +748,14 @@ public:
 
         // -------------------------------------------------------------------------------------------------------
         // Hough Transform
-        cv::Mat hough_drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+        cv::Mat hough_drawing = cv::Mat::zeros( mini_size, CV_8UC3 );
         std::vector<cv::Vec4i> lines;
 
-        const double hough_rho = 1; // Distance resolution of the accumulator in pixels.
+        const double hough_rho = 2; // Distance resolution of the accumulator in pixels.
         const double hough_theta = CV_PI/180; // Angle resolution of the accumulator in radians.
-        const int hough_threshold = 5; // Accumulator threshold parameter. Only those lines are returned that get enough votes
+        const int hough_threshold = 10; // Accumulator threshold parameter. Only those lines are returned that get enough votes
         const double hough_minLineLength = 10; // Minimum line length. Line segments shorter than that are rejected.
-        const double hough_maxLineGap = 10; // Maximum allowed gap between points on the same line to link them.
+        const double hough_maxLineGap = 20; // Maximum allowed gap between points on the same line to link them.
         cv::HoughLinesP(hough_input, lines, hough_rho, hough_theta, hough_threshold, hough_minLineLength, hough_maxLineGap);
 
         ROS_WARN_STREAM("Found " << lines.size() << " lines");
@@ -747,78 +766,72 @@ public:
         for( size_t i = 0; i < lines.size(); i++ )
         {
           cv::Vec4i line = lines[i];
-          ROS_WARN_STREAM("Hough Lines: " << line );
           cv::line( hough_drawing, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]),
                     cv::Scalar(255,255,255), 1, CV_AA);
 
+          // Error check
+          if(line[3] - line[1] == 0 && line[2] - line[0] == 0)
+          {
+            ROS_ERROR("Line is actually two points at the origin, unable to calculate. TODO: handle better?");
+            continue;
+          }
+
           // Find angle
-          double angle = atan2(line[3] - line[1], line[2] - line[0]); //in radian, degrees: * 180.0 / CV_PI;
-          line_angles.push_back(angle);
-          ROS_WARN_STREAM("Hough Line angle: " << angle );
+          double line_angle = atan2(line[3] - line[1], line[2] - line[0]); //in radian, degrees: * 180.0 / CV_PI;
+          // Reverse angle direction if negative
+          if( line_angle < 0 )
+          {
+            line_angle += CV_PI;
+          }
+          line_angles.push_back(line_angle);
+          ROS_DEBUG_STREAM("Hough Line angle: " << line_angle * 180.0 / CV_PI;);
         }
 
-        std::vector<int> base_angle;
-        std::vector<int> perpendicular_angle;
+        double block_angle = 0; // the overall result of the block's angle
 
         // Everything is based on the first angle
-        base_angle.push_back(line_angles[0]);
-
-        const double angle_tolerance = .45 * CV_PI; // Just less than 90 degrees
-
-        // Group angles
-        for( size_t i = 1; i < line_angles.size(); i++ )
+        if( line_angles.size() == 0 ) // make sure we have at least 1 angle
         {
-          // Determine if this angle is perpendicular or parallel to the first angle
-          if( line_angles[i] < base_angle[0] + angle_tolerance && 
-              line_angles[i] > base_angle[0] - angle_tolerance )
-          {
-            // Qualified for base group
-            base_angle.push_back(line_angles[i]);
-          }
-          else
-          {
-            // In perpendicular group
-            perpendicular_angle.push_back(line_angles[i]);
-          }
+          ROS_ERROR("No lines were found for this cluster, unable to calculate block angle");
+        }
+        else
+        {
+          calculateBlockAngleSimple( line_angles, block_angle );
         }
 
-        // TODO: 
-        // make sure there is at least one angle before selecting the base angle!!
-        // average the two groups
-        // rotate by 90 the second group
-        // avarage the two averages
-        // done
-        // also, consider removing outliers
-        // consider doing this several times with random intial angles until the perp and choose the one with
-        //   perp and base closest
-        // move this into a seperate function
-        //
-        // also
-        // find the center point of the cube
-        // create a vector using the overall angle
-        // better image processing for different color cubes
-        // fix color of stuff
-        // determine if copying directly from point cloud is faster
+        // -------------------------------------------------------------------------------------------------------
+        // Draw chosen angle
+        ROS_INFO_STREAM("Using block angle " << block_angle );
+
+        cv::Mat angle_drawing = cv::Mat::zeros( mini_size, CV_8UC3 );
+        double angle_x = 0.25*double(mini_width); // have the line go 1/4 across the screen
+        double angle_y = angle_x * tan( block_angle );
+        cv::Point angle_point = cv::Point(angle_x, angle_y);
+        cv::line( angle_drawing, mini_center, angle_point, cv::Scalar(255,255,255), 1, CV_AA);
+
+        // Draw chosen angle on main image
+        angle_x = block_center_x + 0.5 * double(mini_width); // have the line go 1/4 across the screen
+        angle_y = block_center_y - 0.5 * double(mini_width) * tan( block_angle );
+        ROS_INFO_STREAM(block_center_x << ", " << block_center_y << ", " << angle_x << ", " << angle_y);
+        angle_point = cv::Point(angle_x, angle_y);
+        cv::line( cluster_image, block_center, angle_point, cv::Scalar(255,0,255), 1, CV_AA);
 
         // -------------------------------------------------------------------------------------------------------
         // GUI Stuff
 
+
         // Copy the cluster image to the main image in the top left corner
-        if( top_image_overlay_x + canny_output.size.p[1] < image_width )
+        if( top_image_overlay_x + mini_width < image_width )
         {
           const int common_height = 42;
-          cv::Rect small_roi_row0 = cv::Rect(top_image_overlay_x, common_height, canny_output.size.p[1],
-                                             canny_output.size.p[0]);
-          cv::Rect small_roi_row1 = cv::Rect(top_image_overlay_x, common_height,
-                                             canny_output.size.p[1], canny_output.size.p[0]);
-          cv::Rect small_roi_row2 = cv::Rect(top_image_overlay_x, common_height,
-                                             canny_output.size.p[1], canny_output.size.p[0]);
-          cv::Rect small_roi_row3 = cv::Rect(top_image_overlay_x, common_height,
-                                             canny_output.size.p[1], canny_output.size.p[0]);
+          cv::Rect small_roi_row0 = cv::Rect(top_image_overlay_x, common_height*0, mini_width, mini_height);
+          cv::Rect small_roi_row1 = cv::Rect(top_image_overlay_x, common_height*1, mini_width, mini_height);
+          cv::Rect small_roi_row2 = cv::Rect(top_image_overlay_x, common_height*2, mini_width, mini_height);
+          cv::Rect small_roi_row3 = cv::Rect(top_image_overlay_x, common_height*3, mini_width, mini_height);
 
           /*
           // Copy cropped image to avoid CopyTo bug ?
-          //          cv::Mat small_image = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+          //          cv::Mat small_image = cv::Mat::zeros( mini_size, CV_8UC3 );
           cv::Mat small_image(cluster_image_cropped.rows,cluster_image_cropped.cols,cluster_image_cropped.type());
           ROS_INFO("before copy");
           //          cluster_image_cropped.copyTo(small_image(cv::Rect(0,0,cluster_image_cropped.rows,
@@ -836,13 +849,12 @@ public:
           drawing.copyTo(              cluster_image(small_roi_row0) );
           hough_input_color.copyTo(    cluster_image(small_roi_row1) );
           hough_drawing.copyTo(        cluster_image(small_roi_row2) );
+          angle_drawing.copyTo(        cluster_image(small_roi_row3) );
 
-          top_image_overlay_x += canny_output.size.p[1];
+          top_image_overlay_x += mini_width;
         }
 
-        //        cv::imshow( "Cropped Image", cluster_image_cropped );
         cv::imshow( opencv_window, cluster_image );
-        //        cv::imshow( "Contours", drawing );
 
         ROS_INFO_STREAM("imshow waitkey...");
         cv::waitKey(10); // 1 sec to allow gui to catch up
@@ -878,7 +890,7 @@ public:
     } // end for each cluser
 
     ROS_INFO_STREAM("final imshow waitkey...");
-    cv::waitKey(10000); // 1 sec to allow gui to catch up
+    cv::waitKey(1); // 1 sec to allow gui to catch up
   }
 
   void addBlock(float x, float y, float z, float angle)
@@ -985,6 +997,179 @@ public:
     cluster_image.at<cv::Vec3b>(row,col)[2] = b;
   }
 
+
+  // Find a line perpendicular to the block in the x/y plane
+  // @param lines - the list of contours that makeup the outline of the block
+  // @param block_angle - the resulting angle of the block
+  void calculateBlockAngle( std::vector<double> line_angles, double &block_angle )
+  {
+    std::vector<std::pair<double,double> > vector_score_angle;
+
+    double score;
+    double angle;
+
+    // Group the angles repeatidly, using different base angles each time
+    for( size_t i = 0; i < line_angles.size(); i++ )
+    {
+      groupAngles( line_angles, i, score, angle );
+      vector_score_angle.push_back(std::pair<double,double>(score,angle));
+    }
+
+    double min_score = 2*CV_PI; // really big angle
+    double best_angle = 0;
+
+    // Find the angle with the best (lowest)
+    for( size_t i = 0; i < vector_score_angle.size(); ++i)
+    {
+      if( vector_score_angle[i].first < min_score )
+      {
+        min_score = vector_score_angle[i].first;
+        best_angle = vector_score_angle[i].second;
+      }
+    }
+
+    ROS_INFO_STREAM("Chose angle " << best_angle*180.0/CV_PI << " with score " << min_score);
+
+    // return the best angle found
+    block_angle = best_angle;
+  }
+
+  void groupAngles( std::vector<double> line_angles, int base_angle_id, double &score, double &angle )
+  {
+    std::vector<double> parallel_angles;
+    std::vector<double> perpendicular_angles;
+
+    double base_angle = line_angles[base_angle_id];
+    // Use the positive perpendicular angle
+    double perpendicular_angle;
+    if( base_angle > 0.5*CV_PI )
+      perpendicular_angle = base_angle - 0.5 * CV_PI; // rotate 90 degrees
+    else
+      perpendicular_angle = base_angle + 0.5 * CV_PI; // rotate 90 degrees
+    parallel_angles.push_back(base_angle);
+    ROS_WARN_STREAM("Base Angle: " << base_angle * 180.0 / CV_PI;);
+    ROS_WARN_STREAM("Perp Angle: " << perpendicular_angle * 180.0 / CV_PI;);
+
+    // Must be within 30 degrees of an angle to be considered not an outlier
+    //    const double angle_tolerance = 0.166666 * CV_PI;
+    const double angle_tolerance =  3*CV_PI/180; // radians = 5 degrees
+
+    // Group angles
+    for( size_t i = 1; i < line_angles.size(); i++ )
+    {
+      // Skip the base_angle_id because it has already been categorized
+      if( i == base_angle_id )
+        continue;
+
+      // Determine if this angle is perpendicular or parallel to the first angle
+      if( line_angles[i] < base_angle + angle_tolerance &&
+          line_angles[i] > base_angle - angle_tolerance )
+      {
+        // Qualified for base group
+        parallel_angles.push_back(line_angles[i]);
+        ROS_WARN_STREAM("In parallel group " << line_angles[i]* 180.0 / CV_PI;);
+      }
+      else if( line_angles[i] < perpendicular_angle + angle_tolerance &&
+               line_angles[i] > perpendicular_angle - angle_tolerance )
+      {
+        // In perpendicular group
+        perpendicular_angles.push_back(line_angles[i]);
+        ROS_WARN_STREAM("In perpendicular group " << line_angles[i]* 180.0 / CV_PI;);
+      }
+      else // rejected
+      {
+        ROS_ERROR_STREAM("Angle rejected for being out of range " << line_angles[i]* 180.0 / CV_PI;);
+      }
+    }
+
+    // Average both groups
+    double parallel_avg = average_vector( parallel_angles );
+    double perpendicular_avg = average_vector( perpendicular_angles );
+
+    ROS_INFO_STREAM("parallel avg " << parallel_avg*180.0/CV_PI << " perp avg " << perpendicular_avg*180.0/CV_PI << " num perp " << perpendicular_angles.size());
+
+    if( perpendicular_angles.empty() ) // nothing was grouped into second group...
+    {
+      score = CV_PI; // a bad score
+      angle = parallel_avg; // just use one group of angles
+    }
+    else
+    {
+      // Score this angle based on how perpendicular the two averages are
+
+      double perpendicular_avg_rotated;
+
+      // Score by taking the difference of the smallest from biggest
+      if( parallel_avg > perpendicular_avg_rotated )
+      {
+        perpendicular_avg_rotated = perpendicular_avg + .5 * CV_PI; // rotate 90 degrees
+        score = std::abs(parallel_avg - perpendicular_avg_rotated);
+      }
+      else
+      {
+        perpendicular_avg_rotated = perpendicular_avg - .5 * CV_PI; // rotate 90 degrees
+        score = std::abs(perpendicular_avg_rotated - parallel_avg);
+      }
+
+      ROS_DEBUG_STREAM("Parallel avg = " << parallel_avg*180.0/CV_PI << " and transformed perp avg " << perpendicular_avg_rotated*180.0/CV_PI);
+
+      // Calculate the mean of the parallel and perpendicular
+      angle = (parallel_avg + perpendicular_avg + .5 * CV_PI) / 2;
+    }
+
+    ROS_DEBUG_STREAM("Averaged angle " << angle*180.0/CV_PI << " with score " << score );
+  }
+
+
+  // Find a line perpendicular to the block in the x/y plane
+  // @param lines - the list of contours that makeup the outline of the block
+  // @param block_angle - the resulting angle of the block
+  void calculateBlockAngleSimple( std::vector<double> line_angles, double &block_angle )
+  {
+    double base_angle = line_angles[0];
+    ROS_DEBUG_STREAM("Base angle " << line_angles[0]* 180.0 / CV_PI;);
+
+    const double angle_tolerance =  45*CV_PI/180; // radians = 45 degrees
+    std::vector<double> parallel_angles;
+
+    for( size_t i = 1; i < line_angles.size(); i++ )
+    {
+      // Determine if this angle is perpendicular or parallel to the first angle
+      if( line_angles[i] < base_angle + angle_tolerance &&
+          line_angles[i] > base_angle - angle_tolerance )
+      {
+        parallel_angles.push_back(line_angles[i]);
+        ROS_DEBUG_STREAM("Not flipped " << line_angles[i]* 180.0 / CV_PI;);
+      }
+      else
+      {
+        double angle_converted;
+        if( base_angle < line_angles[i] )
+        {
+          angle_converted = line_angles[i] - 0.5*CV_PI;
+        }
+        else
+        {
+          angle_converted = line_angles[i] + 0.5*CV_PI;
+        }
+        parallel_angles.push_back(angle_converted);
+        ROS_DEBUG_STREAM("Flipped " << angle_converted* 180.0 / CV_PI;);
+      }
+    }
+
+    // Average all the angles
+    block_angle = average_vector( parallel_angles );
+    ROS_INFO_STREAM("Average angle: " << block_angle);
+  }
+
+  double average_vector(std::vector<double>& input)
+  {
+    double sum = 0.0;
+    for(std::vector<double>::const_iterator num_it = input.begin(); num_it < input.end(); ++num_it)
+      sum += *num_it;
+    return sum / input.size();
+  }
+
 };
 
 };
@@ -998,5 +1183,6 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
 
 
