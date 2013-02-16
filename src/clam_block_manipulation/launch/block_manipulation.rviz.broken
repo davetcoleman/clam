@@ -216,7 +216,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.01
       Style: Squares
-      Topic: /block_detection_action_server/block_output
+      Topic: /block_detection_server/block_output
       Use Fixed Frame: true
       Use rainbow:
         Max Color: 255; 255; 255
@@ -246,7 +246,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.01
       Style: Points
-      Topic: /block_detection_action_server/plane_output
+      Topic: /block_detection_server/plane_output
       Use Fixed Frame: true
       Use rainbow:
         Max Color: 255; 255; 255

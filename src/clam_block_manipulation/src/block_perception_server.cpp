@@ -1,42 +1,39 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
+/*********************************************************************
+ * Software License Agreement (BSD License)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ *  Copyright (c) 2013, University of Colorado, Boulder
+ *  All rights reserved.
  *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
- * Author: Michael Ferguson, Helen Oleynikova, Dave Coleman
- */
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 
-/*
-  DEV NOTES:
-  Types of clouds:
-  cloud
-  cloud_transformed
-  cloud_filtered
-  cloud_plane
-
+/* Author: Dave Coleman
+   Desc:   Detects Cublet blocks on a plane using PCL and OpenCV combined
 */
 
 #include <ros/ros.h>
@@ -74,13 +71,13 @@
 #include <cv_bridge/cv_bridge.h>
 
 
-namespace clam_msgs
+namespace clam_block_manipulation
 {
 
 typedef cv::Mat_<cv::Vec3b> RGBImage;
 
 
-class BlockDetectionServer
+class BlockPerceptionServer
 {
 private:
 
@@ -104,7 +101,8 @@ private:
   tf::TransformListener tf_listener_;
 
   // Parameters from goal
-  std::string arm_link;
+  std::string camera_link;
+  std::string base_link;
   double block_size;
   double table_height;
 
@@ -129,14 +127,11 @@ private:
 
 public:
 
-  BlockDetectionServer(const std::string name) :
+  BlockPerceptionServer(const std::string name) :
     nh_("~"),
     action_server_(name, false),
     action_name_(name)
   {
-    // Subscribe to point cloud
-    point_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &BlockDetectionServer::pointCloudCallback, this);
-
     // Publish a point cloud of filtered data that was not part of table
     filtered_pub_ = nh_.advertise< pcl::PointCloud<pcl::PointXYZRGB> >("block_output", 1);
 
@@ -162,42 +157,47 @@ public:
     process_count_ = PROCESS_EVERY_NTH;
 
     // TODO: move this, should be brought in from action goal. temporary!
-    arm_link = "/base_link";
+    base_link = "/base_link";
+        camera_link = "/camera_rgb_frame"; 
+    //    camera_link = "/camera_rgb_optical_frame"; 
     block_size = 0.04;
     table_height = 0.001;
 
+    // Subscribe to point cloud
+    point_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &BlockPerceptionServer::pointCloudCallback, this);
+
     // Register the goal and feeback callbacks.
-    action_server_.registerGoalCallback(boost::bind(&BlockDetectionServer::goalCB, this));
-    action_server_.registerPreemptCallback(boost::bind(&BlockDetectionServer::preemptCB, this));
+    action_server_.registerGoalCallback(boost::bind(&BlockPerceptionServer::goalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&BlockPerceptionServer::preemptCB, this));
 
     action_server_.start();
 
     // Announce state
-    ROS_INFO_STREAM_NAMED("block_detection", "Server ready.");
-    ROS_INFO_STREAM_NAMED("block_detection", "Waiting for point clouds...");
+    ROS_INFO_STREAM_NAMED("perception", "Server ready.");
+    ROS_INFO_STREAM_NAMED("perception", "Waiting for point clouds...");
 
   }
 
-  ~BlockDetectionServer()
+  ~BlockPerceptionServer()
   {
     cv::destroyAllWindows();
   }
 
   void goalCB()
   {
-    ROS_INFO_STREAM_NAMED("block_detection","Starting detection");
+    ROS_INFO_STREAM_NAMED("perception","Starting detection");
 
     // Accept the new goal and save data
     goal_ = action_server_.acceptNewGoal();
     block_size = goal_->block_size;
     table_height = goal_->table_height;
-    arm_link = goal_->frame;
+    base_link = goal_->frame;
   }
 
   // Cancel the detection
   void preemptCB()
   {
-    ROS_INFO_NAMED("block_detection","%s: Preempted", action_name_.c_str());
+    ROS_INFO_NAMED("perception","%s: Preempted", action_name_.c_str());
 
     // set the action state to preempted
     action_server_.setPreempted();
@@ -225,14 +225,14 @@ public:
   // Proccess the point clouds
   void processPointCloud( const sensor_msgs::PointCloud2ConstPtr& pointcloud_msg )
   {
-    ROS_INFO_NAMED("block_detection","\n\n\n");
-    ROS_INFO_STREAM_NAMED("block_detection","Processing new point cloud");
+    ROS_INFO_NAMED("perception","\n\n\n");
+    ROS_INFO_STREAM_NAMED("perception","Processing new point cloud");
 
     // ---------------------------------------------------------------------------------------------
     // Start making result
     result_.blocks.poses.clear();    // Clear last block detection result
     result_.blocks.header.stamp = pointcloud_msg->header.stamp;
-    result_.blocks.header.frame_id = arm_link;
+    result_.blocks.header.frame_id = camera_link;
 
     // Basic point cloud conversions ---------------------------------------------------------------
 
@@ -244,11 +244,14 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     // Transform to whatever frame we're working in, probably the arm's base frame, ie "base_link"
-    tf_listener_.waitForTransform(arm_link, cloud.header.frame_id,
-                                  cloud.header.stamp, ros::Duration(2.0));
-    if(!pcl_ros::transformPointCloud(arm_link, cloud, *cloud_transformed, tf_listener_))
+    ROS_INFO_STREAM_NAMED("perception","Waiting for transform...");
+    ros::spinOnce();
+    tf_listener_.waitForTransform(base_link, cloud.header.frame_id, cloud.header.stamp, ros::Duration(2.0));
+
+    if(!pcl_ros::transformPointCloud(base_link, cloud, *cloud_transformed, tf_listener_))
     {
-      ROS_ERROR_STREAM_NAMED("block_detection","Error converting to desired frame");
+      if( process_count_ > 1 ) // the first time we can ignore it
+        ROS_ERROR_STREAM_NAMED("perception","Error converting to desired frame");
 
       // Do this to speed up the next process attempt:
       process_count_ = PROCESS_EVERY_NTH;
@@ -283,12 +286,12 @@ public:
     // Check if any points remain
     if( cloud_filtered->points.size() == 0 )
     {
-    ROS_ERROR_STREAM_NAMED("block_detection","0 points left");
+    ROS_ERROR_STREAM_NAMED("perception","0 points left");
     return;
     }
     else
     {
-    ROS_INFO_STREAM_NAMED("block_detection","Filtered, %d points left", (int) cloud_filtered->points.size());
+    ROS_INFO_STREAM_NAMED("perception","Filtered, %d points left", (int) cloud_filtered->points.size());
     }
     */
 
@@ -322,7 +325,7 @@ public:
 
       if(inliers->indices.size() == 0)
       {
-      ROS_ERROR_STREAM_NAMED("block_detection","Could not estimate a planar model for the given dataset.");
+      ROS_ERROR_STREAM_NAMED("perception","Could not estimate a planar model for the given dataset.");
       return;
       }
 
@@ -344,7 +347,7 @@ public:
 
       // Debug output - DTC
       // Show the contents of the inlier set, together with the estimated plane parameters, in ax+by+cz+d=0 form (general equation of a plane)
-      ROS_INFO_STREAM_NAMED("block_detection", "Model coefficients: " << model_coefficients->values[0] << " "
+      ROS_INFO_STREAM_NAMED("perception", "Model coefficients: " << model_coefficients->values[0] << " "
       << model_coefficients->values[1] << " "
       << model_coefficients->values[2] << " "
       << model_coefficients->values[3] ); // TODO: turn this into an rviz marker somehow?
@@ -377,15 +380,15 @@ public:
     //    cluster_extract.setInputCloud(cloud_filtered);
     cluster_extract.setInputCloud(cloud_transformed);
     cluster_extract.setIndices(filtered_indices);
-    ROS_INFO_STREAM_NAMED("block_detection","Extracting...");
+    ROS_INFO_STREAM_NAMED("perception","Extracting...");
     cluster_extract.extract(cluster_indices);
-    ROS_INFO_STREAM_NAMED("block_detection","after cluster extract");
+    ROS_INFO_STREAM_NAMED("perception","after cluster extract");
 
     // Publish point cloud data
     //    filtered_pub_.publish(cloud_filtered);
     //    plane_pub_.publish(cloud_plane);
 
-    ROS_WARN_STREAM_NAMED("block_detection","Number indicies/clusters: " << cluster_indices.size() );
+    ROS_WARN_STREAM_NAMED("perception","Number indicies/clusters: " << cluster_indices.size() );
 
     //    processClusters( cluster_indices, pointcloud_msg, cloud_filtered );
     processClusters( cluster_indices, cloud_transformed, cloud_filtered, cloud );
@@ -405,11 +408,11 @@ public:
       // Publish rviz markers of the blocks
       publishBlockLocation();
 
-      ROS_INFO_STREAM_NAMED("block_detection","Finished ---------------------------------------------- ");
+      ROS_INFO_STREAM_NAMED("perception","Finished ---------------------------------------------- ");
     }
     else
     {
-      ROS_INFO_STREAM_NAMED("block_detection","Couldn't find any blocks this iteration!");
+      ROS_INFO_STREAM_NAMED("perception","Couldn't find any blocks this iteration!");
     }
   }
 
@@ -423,7 +426,7 @@ public:
 
     // -------------------------------------------------------------------------------------------------------
     // Convert image
-    ROS_INFO_STREAM_NAMED("block_detection","Converting image to OpenCV format");
+    ROS_INFO_STREAM_NAMED("perception","Converting image to OpenCV format");
 
     try
     {
@@ -435,7 +438,7 @@ public:
     }
     catch (cv_bridge::Exception& ex)
     {
-      ROS_ERROR_STREAM_NAMED("block_detection","[calibrate] Failed to convert image");
+      ROS_ERROR_STREAM_NAMED("perception","[calibrate] Failed to convert image");
       return;
     }
 
@@ -449,7 +452,7 @@ public:
     // Blur image - reduce noise with a 3x3 kernel
     cv::blur( full_input_image_gray, full_input_image_gray, cv::Size(3,3) );
 
-    ROS_INFO_STREAM_NAMED("block_detection","Finished coverting");
+    ROS_INFO_STREAM_NAMED("perception","Finished coverting");
 
     // -------------------------------------------------------------------------------------------------------
     // Check OpenCV and PCL image height for errors
@@ -462,7 +465,7 @@ public:
 
     if( image_width != image_width_cv || image_height != image_height_cv )
     {
-      ROS_ERROR_STREAM_NAMED("block_detection","PCL and OpenCV image heights/widths do not match!");
+      ROS_ERROR_STREAM_NAMED("perception","PCL and OpenCV image heights/widths do not match!");
       return;
     }
 
@@ -484,23 +487,23 @@ public:
 
       // -------------------------------------------------------------------------------------------------------
       // Start processing clusters
-      ROS_INFO_STREAM_NAMED("block_detection","Finding min/max in x/y axis");
+      ROS_INFO_STREAM_NAMED("perception","Finding min/max in x/y axis");
 
       int top_image_overlay_x = 0; // tracks were to copyTo the mini images
 
       // for each cluster, see if it is a block
       for(size_t c = 0; c < cluster_indices.size(); ++c)
       {
-        ROS_INFO_STREAM_NAMED("block_detection","\n\n");
-        ROS_INFO_STREAM_NAMED("block_detection","On cluster " << c);
+        ROS_INFO_STREAM_NAMED("perception","\n\n");
+        ROS_INFO_STREAM_NAMED("perception","On cluster " << c);
 
         // find the outer dimensions of the cluster
-        float xmin = 0; float xmax = 0;
-        float ymin = 0; float ymax = 0;
+        double xmin = 0; double xmax = 0;
+        double ymin = 0; double ymax = 0;
 
         // also remember each min & max's correponding other coordinate (not needed for z)
-        float xminy = 0; float xmaxy = 0;
-        float yminx = 0; float ymaxx = 0;
+        double xminy = 0; double xmaxy = 0;
+        double yminx = 0; double ymaxx = 0;
 
         // also remember their corresponding indice
         int xmini = 0; int xmaxi = 0;
@@ -514,8 +517,8 @@ public:
           // Get RGB from point cloud
           pcl::PointXYZRGB p = cloud_transformed->points[j];
 
-          float x = p.x;
-          float y = p.y;
+          double x = p.x;
+          double y = p.y;
 
           if(i == 0) // initial values
           {
@@ -554,15 +557,15 @@ public:
           }
         }
 
-        ROS_DEBUG_STREAM_NAMED("block_detection","Cluster size - xmin: " << xmin << " xmax: " << xmax << " ymin: " << ymin << " ymax: " << ymax);
-        ROS_DEBUG_STREAM_NAMED("block_detection","Cluster size - xmini: " << xmini << " xmaxi: " << xmaxi << " ymini: " << ymini << " ymaxi: " << ymaxi);
+        ROS_DEBUG_STREAM_NAMED("perception","Cluster size - xmin: " << xmin << " xmax: " << xmax << " ymin: " << ymin << " ymax: " << ymax);
+        ROS_DEBUG_STREAM_NAMED("perception","Cluster size - xmini: " << xmini << " xmaxi: " << xmaxi << " ymini: " << ymini << " ymaxi: " << ymaxi);
 
         // ---------------------------------------------------------------------------------------------
         // Check if these dimensions make sense for the block size specified
-        float xside = xmax-xmin;
-        float yside = ymax-ymin;
+        double xside = xmax-xmin;
+        double yside = ymax-ymin;
 
-        const float tol = 0.01; // 1 cm error tolerance
+        const double tol = 0.01; // 1 cm error tolerance
 
         // In order to be part of the block, xside and yside must be between
         // blocksize and blocksize*sqrt(2)
@@ -571,12 +574,6 @@ public:
                    yside > block_size-tol &&
           yside < block_size*sqrt(2)+tol )
         {
-
-          // -------------------------------------------------------------------------------------------------------
-          // Find the block's center point
-          double x_origin = xmin+(xside)/2.0;
-          double y_origin = ymin+(yside)/2.0;
-          double z_origin = table_height + block_size / 2;
 
           // -------------------------------------------------------------------------------------------------------
           // Convert to OpenCV Mat format
@@ -602,24 +599,24 @@ public:
           uint8_t r = (rgb >> 16) & 0x0000ff;
           uint8_t g = (rgb >> 8)  & 0x0000ff;
           uint8_t b = (rgb)       & 0x0000ff;
-          //ROS_DEBUG_STREAM_NAMED("block_detection","RGB is " << int(r) << ", " << int(g) << ", " << int(b) << " at ROW,COL " << row << ", " << col);
+          //ROS_DEBUG_STREAM_NAMED("perception","RGB is " << int(r) << ", " << int(g) << ", " << int(b) << " at ROW,COL " << row << ", " << col);
 
           if( isnan(row) || isnan(col) )
           {
-          ROS_ERROR_STREAM_NAMED("block_detection","is nan");
+          ROS_ERROR_STREAM_NAMED("perception","is nan");
           continue;
           }
 
           block_image.at<cv::Vec3b>(row,col)[0] = r;
           block_image.at<cv::Vec3b>(row,col)[1] = g;
           block_image.at<cv::Vec3b>(row,col)[2] = b;
-          //ROS_DEBUG_STREAM_NAMED("block_detection","done assigning rgb");
+          //ROS_DEBUG_STREAM_NAMED("perception","done assigning rgb");
           }
 
 
-          ROS_DEBUG_STREAM_NAMED("block_detection","pre imshow");
+          ROS_DEBUG_STREAM_NAMED("perception","pre imshow");
           cv::imshow( "Copy conversion", block_image );
-          ROS_DEBUG_STREAM_NAMED("block_detection","imshow");
+          ROS_DEBUG_STREAM_NAMED("perception","imshow");
           cv::waitKey(1000); // 50 milisec to allow gui to catch up
           */
 
@@ -638,7 +635,7 @@ public:
           getXYCoordinates( xmini, image_height, image_width, px_xmin, py_xmin);
           getXYCoordinates( ymini, image_height, image_width, px_ymin, py_ymin);
 
-          ROS_DEBUG_STREAM_NAMED("block_detection","px_xmin " << px_xmin << " px_xmax: " << px_xmax << " py_ymin: " << py_ymin << " py_ymax: " << py_ymax );
+          ROS_DEBUG_STREAM_NAMED("perception","px_xmin " << px_xmin << " px_xmax: " << px_xmax << " py_ymin: " << py_ymin << " py_ymax: " << py_ymax );
 
           // -------------------------------------------------------------------------------------------------------
           // Change the frame of reference from the robot to the camera
@@ -656,7 +653,7 @@ public:
           int x2 = *std::max_element(x_values.begin(), x_values.end());
           int y2 = *std::max_element(y_values.begin(), y_values.end());
 
-          ROS_DEBUG_STREAM_NAMED("block_detection","x1: " << x1 << " y1: " << y1 << " x2: " << x2 << " y2: " << y2);
+          ROS_DEBUG_STREAM_NAMED("perception","x1: " << x1 << " y1: " << y1 << " x2: " << x2 << " y2: " << y2);
 
           // -------------------------------------------------------------------------------------------------------
           // Expand the ROI by a fudge factor, if possible
@@ -670,7 +667,7 @@ public:
           if( y2 < image_height - FUDGE_FACTOR )
             y2 += FUDGE_FACTOR;
 
-          ROS_DEBUG_STREAM_NAMED("block_detection","After Fudge Factor - x1: " << x1 << " y1: " << y1 << " x2: " << x2 << " y2: " << y2);
+          ROS_DEBUG_STREAM_NAMED("perception","After Fudge Factor - x1: " << x1 << " y1: " << y1 << " x2: " << x2 << " y2: " << y2);
 
           // -------------------------------------------------------------------------------------------------------
           // Create ROI parameters
@@ -684,12 +681,13 @@ public:
           int roi_width = x2 - x1;
           int roi_height = y2 - y1;
           cv::Rect region_of_interest = cv::Rect( x1, y1, roi_width, roi_height );
-          ROS_DEBUG_STREAM_NAMED("block_detection","ROI: x " << x1 << " -- y " << y1 << " -- height " << roi_height << " -- width " << roi_width );
+          ROS_DEBUG_STREAM_NAMED("perception","ROI: x " << x1 << " -- y " << y1 << " -- height " << roi_height << " -- width " << roi_width );
 
           // -------------------------------------------------------------------------------------------------------
           // Find paramters of the block in pixel coordiantes
           int block_center_x = x1 + 0.5*roi_width;
           int block_center_y = y1 + 0.5*roi_height;
+          int block_center_z = block_size / 2; // TODO: make this better
           const cv::Point block_center = cv::Point( block_center_x, block_center_y );
 
           // -------------------------------------------------------------------------------------------------------
@@ -703,7 +701,7 @@ public:
 
           // -------------------------------------------------------------------------------------------------------
           // Detect edges using canny
-          ROS_INFO_STREAM_NAMED("block_detection","Detecting edges using canny");
+          ROS_INFO_STREAM_NAMED("perception","Detecting edges using canny");
 
           // Find edges
           cv::Mat canny_output;
@@ -719,11 +717,11 @@ public:
           vector<vector<cv::Point> > contours;
           vector<cv::Vec4i> hierarchy;
           cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-          ROS_INFO_STREAM_NAMED("block_detection","Contours");
+          ROS_INFO_STREAM_NAMED("perception","Contours");
 
           // Draw contours
           cv::Mat drawing = cv::Mat::zeros( mini_size, CV_8UC3 );
-          ROS_INFO_STREAM_NAMED("block_detection","Drawing contours");
+          ROS_INFO_STREAM_NAMED("perception","Drawing contours");
 
           // Find the largest contour for getting the angle
           double max_contour_length = 0;
@@ -736,7 +734,7 @@ public:
               max_contour_length = contour_length;
               max_contour_length_i = i;
             }
-            //ROS_DEBUG_STREAM_NAMED("block_detection","Contour length = " << contour_length << " of index " << max_contour_length_i);
+            //ROS_DEBUG_STREAM_NAMED("perception","Contour length = " << contour_length << " of index " << max_contour_length_i);
 
 
             cv::Scalar color = cv::Scalar( (30 + i*10) % 255, (30 + i*10) % 255, (30 + i*10) % 255);
@@ -765,14 +763,14 @@ public:
           std::vector<cv::Vec4i> lines;
 
 
-          ROS_DEBUG_STREAM_NAMED("block_detection","hough_rho " << hough_rho << " hough_theta " << hough_theta <<
+          ROS_DEBUG_STREAM_NAMED("perception","hough_rho " << hough_rho << " hough_theta " << hough_theta <<
                                  " theta_converted " << (1/hough_theta)*CV_PI/180 << " hough_threshold " <<
                                  hough_threshold << " hough_minLineLength " << hough_minLineLength <<
                                  " hough_maxLineGap " << hough_maxLineGap );
 
           cv::HoughLinesP(hough_input, lines, hough_rho, (1/hough_theta)*CV_PI/180, hough_threshold, hough_minLineLength, hough_maxLineGap);
 
-          ROS_WARN_STREAM_NAMED("block_detection","Found " << lines.size() << " lines");
+          ROS_WARN_STREAM_NAMED("perception","Found " << lines.size() << " lines");
 
           std::vector<double> line_angles;
 
@@ -786,7 +784,7 @@ public:
             // Error check
             if(line[3] - line[1] == 0 && line[2] - line[0] == 0)
             {
-              ROS_ERROR_STREAM_NAMED("block_detection","Line is actually two points at the origin, unable to calculate. TODO: handle better?");
+              ROS_ERROR_STREAM_NAMED("perception","Line is actually two points at the origin, unable to calculate. TODO: handle better?");
               continue;
             }
 
@@ -798,7 +796,7 @@ public:
               line_angle += CV_PI;
             }
             line_angles.push_back(line_angle);
-            ROS_DEBUG_STREAM_NAMED("block_detection","Hough Line angle: " << line_angle * 180.0 / CV_PI;);
+            ROS_DEBUG_STREAM_NAMED("perception","Hough Line angle: " << line_angle * 180.0 / CV_PI;);
           }
 
           double block_angle = 0; // the overall result of the block's angle
@@ -806,7 +804,7 @@ public:
           // Everything is based on the first angle
           if( line_angles.size() == 0 ) // make sure we have at least 1 angle
           {
-            ROS_ERROR_STREAM_NAMED("block_detection","No lines were found for this cluster, unable to calculate block angle");
+            ROS_ERROR_STREAM_NAMED("perception","No lines were found for this cluster, unable to calculate block angle");
           }
           else
           {
@@ -815,7 +813,7 @@ public:
 
           // -------------------------------------------------------------------------------------------------------
           // Draw chosen angle
-          ROS_INFO_STREAM_NAMED("block_detection","Using block angle " << block_angle*180.0/CV_PI);
+          ROS_INFO_STREAM_NAMED("perception","Using block angle " << block_angle*180.0/CV_PI);
 
           // Draw chosen angle on mini image
           cv::Mat angle_drawing = cv::Mat::zeros( mini_size, CV_8UC3 );
@@ -835,7 +833,7 @@ public:
           line_length = 0.75 * double(mini_width); // have the line go 1/2 across the box
           new_x = block_center_x + line_length*cos( block_angle );
           new_y = block_center_y + line_length*sin( block_angle );
-          ROS_INFO_STREAM_NAMED("block_detection",block_center_x << ", " << block_center_y << ", " << new_x << ", " << new_y);
+          ROS_INFO_STREAM_NAMED("perception",block_center_x << ", " << block_center_y << ", " << new_x << ", " << new_y);
           angle_point = cv::Point(new_x, new_y);
           cv::line( output_image, block_center, angle_point, cv::Scalar(255,0,255), 2, CV_AA);
 
@@ -856,15 +854,15 @@ public:
             // Copy cropped image to avoid CopyTo bug ?
             //          cv::Mat small_image = cv::Mat::zeros( mini_size, CV_8UC3 );
             cv::Mat small_image(cropped_image.rows,cropped_image.cols,cropped_image.type());
-            ROS_INFO_STREAM_NAMED("block_detection","before copy");
+            ROS_INFO_STREAM_NAMED("perception","before copy");
             //          cropped_image.copyTo(small_image(cv::Rect(0,0,cropped_image.rows,
             //                                                            cropped_image.cols)));
             cropped_image.copyTo(small_image);
 
             cv::imshow( "ss", small_image );
-            ROS_INFO_STREAM_NAMED("block_detection","imshow waitkey...");
+            ROS_INFO_STREAM_NAMED("perception","imshow waitkey...");
             cv::waitKey(10000); // 1 sec to allow gui to catch up
-            ROS_INFO_STREAM_NAMED("block_detection","after copy");
+            ROS_INFO_STREAM_NAMED("perception","after copy");
 
             small_image.copyTo(          output_image(small_roi_row0) );
             */
@@ -878,18 +876,28 @@ public:
           }
 
           // figure out the position and the orientation of the block
-          //float angle = atan(block_size/((xside+yside)/2));
-          //float angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
+          //double angle = atan(block_size/((xside+yside)/2));
+          //double angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
           // Then add it to our set
           //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
 
-          ROS_INFO_STREAM_NAMED("block_detection","FOUND -> xside: " << xside << " yside: " << yside << " angle: " << block_angle);
+          //          ROS_INFO_STREAM_NAMED("perception","FOUND -> xside: " << xside << " yside: " << yside << " angle: " << block_angle);
 
-          addBlock( x_origin, y_origin, z_origin, block_angle);
+
+          // -------------------------------------------------------------------------------------------------------
+          // Find the block's center point
+          /*
+          double x_origin = xmin+(xside)/2.0;
+          double y_origin = ymin+(yside)/2.0;
+          double z_origin = table_height + block_size / 2;
+          */
+
+          //addBlock( x_origin, y_origin, z_origin, block_angle);
+          addBlock( block_center_x, block_center_y, block_center_z, block_angle);
         }
         else
         {
-          ROS_ERROR_STREAM_NAMED("block_detection","REJECT -> xside: " << xside << " yside: " << yside );
+          ROS_ERROR_STREAM_NAMED("perception","REJECT -> xside: " << xside << " yside: " << yside );
         } // end if size of block
 
       } // end for each cluser
@@ -902,19 +910,21 @@ public:
       cv::createTrackbar( "minLineLength:", opencv_window, &hough_minLineLength, 100 );
       cv::createTrackbar( "maxLineGap:", opencv_window, &hough_maxLineGap, 100 );
 
-      ROS_INFO_STREAM_NAMED("block_detection","final imshow waitkey...");
+      ROS_INFO_STREAM_NAMED("perception","final imshow waitkey...");
       cv::waitKey(1000); // 1 sec to allow gui to catch up
     }
   }
 
-  void addBlock(float x, float y, float z, float angle)
+  void addBlock(double x, double y, double z, double angle)
   {
+    ROS_INFO_STREAM_NAMED("perception","Adding block in pixel coordinates (" << x << "," << y << "," << z << ") and angle " << angle );
+
     geometry_msgs::Pose block_pose;
     block_pose.position.x = x;
     block_pose.position.y = y;
     block_pose.position.z = z;
 
-    Eigen::Quaternionf quat(Eigen::AngleAxis<float>(angle, Eigen::Vector3f(0,0,1)));
+    Eigen::Quaternionf quat(Eigen::AngleAxis<float>(float(angle), Eigen::Vector3f(0,0,1)));
 
     block_pose.orientation.x = quat.x();
     block_pose.orientation.y = quat.y();
@@ -925,11 +935,11 @@ public:
     // Discard noise
     if( block_pose.position.y > 10 || block_pose.position.y < -10 )
     {
-    ROS_WARN_STREAM_NAMED("block_detection","Rejected block: " << block_pose );
+    ROS_WARN_STREAM_NAMED("perception","Rejected block: " << block_pose );
     }
     */
 
-    //ROS_INFO_STREAM_NAMED("block_detection","Added block: \n" << block_pose );
+    ROS_INFO_STREAM_NAMED("perception","Added block: \n" << block_pose );
 
     result_.blocks.poses.push_back(block_pose);
 
@@ -939,7 +949,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/base_link";
+    marker.header.frame_id = camera_link;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -965,7 +975,7 @@ public:
     if( result_.blocks.poses.size() > max_blocks_published )
       max_blocks_published = result_.blocks.poses.size();
 
-    ROS_WARN_STREAM_NAMED("block_detection","max_blocks_published " << max_blocks_published << " this time we have " << result_.blocks.poses.size() );
+    ROS_WARN_STREAM_NAMED("perception","max_blocks_published " << max_blocks_published << " this time we have " << result_.blocks.poses.size() );
 
     // Loop through all blocks ever and add/delete
     for(unsigned int i = 0; i < max_blocks_published; ++i)
@@ -1000,7 +1010,7 @@ public:
 
     x = index % width;
     y = (index - x) / width;
-    //    ROS_WARN_STREAM_NAMED("block_detection","Converting point " << index << " to x=" << x << " and y=" << y );
+    //    ROS_WARN_STREAM_NAMED("perception","Converting point " << index << " to x=" << x << " and y=" << y );
   }
 
 
@@ -1034,7 +1044,7 @@ public:
       }
     }
 
-    ROS_INFO_STREAM_NAMED("block_detection","Chose angle " << best_angle*180.0/CV_PI << " with score " << min_score);
+    ROS_INFO_STREAM_NAMED("perception","Chose angle " << best_angle*180.0/CV_PI << " with score " << min_score);
 
     // return the best angle found
     block_angle = best_angle;
@@ -1056,8 +1066,8 @@ public:
     else
       perpendicular_angle = base_angle + 0.5 * CV_PI; // rotate 90 degrees
 
-    ROS_WARN_STREAM_NAMED("block_detection","Base Angle: " << base_angle * 180.0 / CV_PI;);
-    ROS_WARN_STREAM_NAMED("block_detection","Perp Angle: " << perpendicular_angle * 180.0 / CV_PI;);
+    ROS_WARN_STREAM_NAMED("perception","Base Angle: " << base_angle * 180.0 / CV_PI;);
+    ROS_WARN_STREAM_NAMED("perception","Perp Angle: " << perpendicular_angle * 180.0 / CV_PI;);
 
     // Must be within 30 degrees of an angle to be considered not an outlier
     //    const double angle_tolerance = 0.166666 * CV_PI;
@@ -1076,18 +1086,18 @@ public:
       {
         // Qualified for base group
         parallel_angles.push_back(line_angles[i]);
-        ROS_WARN_STREAM_NAMED("block_detection","In parallel group " << line_angles[i]* 180.0 / CV_PI;);
+        ROS_WARN_STREAM_NAMED("perception","In parallel group " << line_angles[i]* 180.0 / CV_PI;);
       }
       else if( line_angles[i] < perpendicular_angle + angle_tolerance &&
                line_angles[i] > perpendicular_angle - angle_tolerance )
       {
         // In perpendicular group
         perpendicular_angles.push_back(line_angles[i]);
-        ROS_WARN_STREAM_NAMED("block_detection","In perpendicular group " << line_angles[i]* 180.0 / CV_PI;);
+        ROS_WARN_STREAM_NAMED("perception","In perpendicular group " << line_angles[i]* 180.0 / CV_PI;);
       }
       else // rejected
       {
-        ROS_ERROR_STREAM_NAMED("block_detection","Angle rejected for being out of range " << line_angles[i]* 180.0 / CV_PI;);
+        ROS_ERROR_STREAM_NAMED("perception","Angle rejected for being out of range " << line_angles[i]* 180.0 / CV_PI;);
       }
     }
 
@@ -1095,7 +1105,7 @@ public:
     double parallel_avg = average_vector( parallel_angles );
     double perpendicular_avg = average_vector( perpendicular_angles );
 
-    ROS_INFO_STREAM_NAMED("block_detection","parallel avg " << parallel_avg*180.0/CV_PI << " perp avg " << perpendicular_avg*180.0/CV_PI << " num perp " << perpendicular_angles.size());
+    ROS_INFO_STREAM_NAMED("perception","parallel avg " << parallel_avg*180.0/CV_PI << " perp avg " << perpendicular_avg*180.0/CV_PI << " num perp " << perpendicular_angles.size());
 
     if( perpendicular_angles.empty() ) // nothing was grouped into second group...
     {
@@ -1120,13 +1130,13 @@ public:
         score = std::abs(perpendicular_avg_rotated - parallel_avg);
       }
 
-      ROS_DEBUG_STREAM_NAMED("block_detection","Parallel avg = " << parallel_avg*180.0/CV_PI << " and transformed perp avg " << perpendicular_avg_rotated*180.0/CV_PI);
+      ROS_DEBUG_STREAM_NAMED("perception","Parallel avg = " << parallel_avg*180.0/CV_PI << " and transformed perp avg " << perpendicular_avg_rotated*180.0/CV_PI);
 
       // Calculate the mean of the parallel and perpendicular
       angle = (parallel_avg + perpendicular_avg + .5 * CV_PI) / 2;
     }
 
-    ROS_DEBUG_STREAM_NAMED("block_detection","Averaged angle " << angle*180.0/CV_PI << " with score " << score );
+    ROS_DEBUG_STREAM_NAMED("perception","Averaged angle " << angle*180.0/CV_PI << " with score " << score );
   }
 
 
@@ -1141,7 +1151,7 @@ public:
     // Get base angle
     double base_angle = line_angles[0];
     parallel_angles.push_back(base_angle);
-    ROS_DEBUG_STREAM_NAMED("block_detection","Base angle " << base_angle*180.0/CV_PI;);
+    ROS_DEBUG_STREAM_NAMED("perception","Base angle " << base_angle*180.0/CV_PI;);
 
     for( size_t i = 1; i < line_angles.size(); i++ )
     {
@@ -1150,7 +1160,7 @@ public:
           line_angles[i] > base_angle - angle_tolerance )
       {
         parallel_angles.push_back(line_angles[i]);
-        ROS_DEBUG_STREAM_NAMED("block_detection","Not flipped " << line_angles[i]* 180.0 / CV_PI;);
+        ROS_DEBUG_STREAM_NAMED("perception","Not flipped " << line_angles[i]* 180.0 / CV_PI;);
       }
       else
       {
@@ -1164,25 +1174,25 @@ public:
           angle_converted = line_angles[i] + 0.5*CV_PI;
         }
         parallel_angles.push_back(angle_converted);
-        ROS_DEBUG_STREAM_NAMED("block_detection","Flipped " << angle_converted*180.0/CV_PI;);
+        ROS_DEBUG_STREAM_NAMED("perception","Flipped " << angle_converted*180.0/CV_PI;);
       }
     }
 
     // Average all the angles
     block_angle = average_vector( parallel_angles );
-    ROS_INFO_STREAM_NAMED("block_detection","Average angle: " << block_angle*180.0/CV_PI);
+    ROS_INFO_STREAM_NAMED("perception","Average angle: " << block_angle*180.0/CV_PI);
   }
 
   double average_vector(std::vector<double>& input)
   {
-    ROS_DEBUG_STREAM_NAMED("block_detection","Averaging angles...");
+    ROS_DEBUG_STREAM_NAMED("perception","Averaging angles...");
     double sum = 0.0;
     for(std::vector<double>::const_iterator num_it = input.begin(); num_it < input.end(); ++num_it)
     {
-      ROS_DEBUG_STREAM_NAMED("block_detection","  Adding angle " << *num_it*180.0/CV_PI);
+      ROS_DEBUG_STREAM_NAMED("perception","  Adding angle " << *num_it*180.0/CV_PI);
       sum += *num_it;
     }
-    ROS_DEBUG_STREAM_NAMED("block_detection","  Angle sum " << sum*180.0/CV_PI << " divided by " << input.size() );
+    ROS_DEBUG_STREAM_NAMED("perception","  Angle sum " << sum*180.0/CV_PI << " divided by " << input.size() );
     return sum / input.size();
   }
 
@@ -1192,9 +1202,9 @@ public:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "block_detection_action_server");
+  ros::init(argc, argv, "block_perception_server");
 
-  clam_msgs::BlockDetectionServer server("block_detection");
+  clam_block_manipulation::BlockPerceptionServer server("block_perception");
   ros::spin();
 
   return 0;

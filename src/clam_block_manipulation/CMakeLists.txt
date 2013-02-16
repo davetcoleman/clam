@@ -52,17 +52,17 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
  
-add_executable(block_detection_action_server src/block_detection_action_server.cpp)
-target_link_libraries(block_detection_action_server ${catkin_LIBRARIES})
+add_executable(block_perception_server src/block_perception_server.cpp)
+target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
 add_executable(findContours_demo2 src/findContours_demo.cpp)
 target_link_libraries(findContours_demo2 ${catkin_LIBRARIES})
 
-add_executable(block_logic_action_server src/block_logic_action_server.cpp)
-target_link_libraries(block_logic_action_server ${catkin_LIBRARIES})
+add_executable(block_logic_server src/block_logic_server.cpp)
+target_link_libraries(block_logic_server ${catkin_LIBRARIES})
 
-add_executable(pick_place_action_server src/pick_place_action_server.cpp)
-target_link_libraries(pick_place_action_server ${catkin_LIBRARIES})
+add_executable(pick_place_server src/pick_place_server.cpp)
+target_link_libraries(pick_place_server ${catkin_LIBRARIES})
 
 add_executable(block_manipulation_demo src/demo/block_manipulation_demo.cpp)
 target_link_libraries(block_manipulation_demo ${catkin_LIBRARIES})

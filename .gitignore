@@ -20,3 +20,6 @@ devel/
 
 # Data files
 *.dat
+
+# Emacs temp files
+.#*

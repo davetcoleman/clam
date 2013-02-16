@@ -152,7 +152,7 @@ Visualization Manager:
       Size (Pixels): 15
       Size (m): 0.01
       Style: Points
-      Topic: /block_detection_action_server/block_output
+      Topic: /block_detection_server/block_output
       Use Fixed Frame: true
       Use rainbow:
         Max Color: 255; 255; 255
@@ -182,7 +182,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.01
       Style: Points
-      Topic: /block_detection_action_server/plane_output
+      Topic: /block_detection_server/plane_output
       Use Fixed Frame: true
       Use rainbow:
         Max Color: 255; 255; 255
@@ -194,7 +194,7 @@ Visualization Manager:
       Color: 255; 25; 0
       Enabled: true
       Name: BlockPoseArray
-      Topic: /block_detection_action_server/block_orientation
+      Topic: /block_detection_server/block_orientation
       Value: true
     - Class: rviz/InteractiveMarkers
       Enabled: false
@@ -213,7 +213,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: false
-      Marker Topic: /block_detection_action_server/block_marker
+      Marker Topic: /block_detection_server/block_marker
       Name: RecognizedBlocks
       Namespaces:
         {}
