@@ -23,3 +23,6 @@ devel/
 
 # Emacs temp files
 .#*
+
+# Silly OSX Files
+.DS_Store

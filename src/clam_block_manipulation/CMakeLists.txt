@@ -55,9 +55,6 @@ link_directories(${catkin_LIBRARY_DIRS})
 add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
-add_executable(findContours_demo2 src/findContours_demo.cpp)
-target_link_libraries(findContours_demo2 ${catkin_LIBRARIES})
-
 add_executable(block_logic_server src/block_logic_server.cpp)
 target_link_libraries(block_logic_server ${catkin_LIBRARIES})
 

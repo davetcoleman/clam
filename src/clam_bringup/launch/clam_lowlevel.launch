@@ -17,16 +17,7 @@
   <!-- Send robot XML description to param server -->
   <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
 
-  <!-- Publish combined joint info -->
-  <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
-
   <!-- Publish the robot state -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-
-  <!-- Launch fake joint state publisher -->
-  <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
-    <rosparam param="source_list">[joint_states]</rosparam>
-    <rosparam param="use_gui">FALSE</rosparam>
-  </node>
 
 </launch>
