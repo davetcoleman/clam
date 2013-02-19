@@ -1,4 +1,0 @@
-# This service simply tells the clam_block_manipulation/src/pick_place_action_server.cpp to send the clam arm home
-bool sendHome
----
-bool success

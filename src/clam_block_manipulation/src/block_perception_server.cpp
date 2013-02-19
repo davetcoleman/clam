@@ -158,8 +158,8 @@ public:
 
     // TODO: move this, should be brought in from action goal. temporary!
     base_link = "/base_link";
-        camera_link = "/camera_rgb_frame"; 
-    //    camera_link = "/camera_rgb_optical_frame"; 
+    camera_link = "/camera_rgb_frame";
+    //    camera_link = "/camera_rgb_optical_frame";
     block_size = 0.04;
     table_height = 0.001;
 
@@ -232,7 +232,7 @@ public:
     // Start making result
     result_.blocks.poses.clear();    // Clear last block detection result
     result_.blocks.header.stamp = pointcloud_msg->header.stamp;
-    result_.blocks.header.frame_id = camera_link;
+    result_.blocks.header.frame_id = base_link;
 
     // Basic point cloud conversions ---------------------------------------------------------------
 
@@ -576,51 +576,6 @@ public:
         {
 
           // -------------------------------------------------------------------------------------------------------
-          // Convert to OpenCV Mat format
-          /*
-          //cv::Mat block_image = cv::Mat::zeros( image_height, image_width, CV_8UC3 );
-          RGBImage block_image = RGBImage::zeros(image_height, image_width); //, CV_8UC3 );
-
-          // Loop though all the indicies and copy to OpenCV
-          for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
-          {
-          int j = cluster_indices[c].indices[i];
-
-          // Get RGB from point cloud
-          pcl::PointXYZRGB p = cloud.points[j];
-          int row = 0;
-          int col = 0;
-
-          // Get the pixel coordinates of the index
-          getXYCoordinates( j, image_height, image_width, col, row);
-
-          // unpack rgb into r/g/b
-          uint32_t rgb = *reinterpret_cast<int*>(&p.rgb);
-          uint8_t r = (rgb >> 16) & 0x0000ff;
-          uint8_t g = (rgb >> 8)  & 0x0000ff;
-          uint8_t b = (rgb)       & 0x0000ff;
-          //ROS_DEBUG_STREAM_NAMED("perception","RGB is " << int(r) << ", " << int(g) << ", " << int(b) << " at ROW,COL " << row << ", " << col);
-
-          if( isnan(row) || isnan(col) )
-          {
-          ROS_ERROR_STREAM_NAMED("perception","is nan");
-          continue;
-          }
-
-          block_image.at<cv::Vec3b>(row,col)[0] = r;
-          block_image.at<cv::Vec3b>(row,col)[1] = g;
-          block_image.at<cv::Vec3b>(row,col)[2] = b;
-          //ROS_DEBUG_STREAM_NAMED("perception","done assigning rgb");
-          }
-
-
-          ROS_DEBUG_STREAM_NAMED("perception","pre imshow");
-          cv::imshow( "Copy conversion", block_image );
-          ROS_DEBUG_STREAM_NAMED("perception","imshow");
-          cv::waitKey(1000); // 50 milisec to allow gui to catch up
-          */
-
-          // -------------------------------------------------------------------------------------------------------
           // Get the four farthest corners of the block - use OpenCV only on the region identified by PCL
 
           // Get the pixel coordinates of the xmax and ymax indicies
@@ -837,9 +792,28 @@ public:
           angle_point = cv::Point(new_x, new_y);
           cv::line( output_image, block_center, angle_point, cv::Scalar(255,0,255), 2, CV_AA);
 
+
+          // -------------------------------------------------------------------------------------------------------
+          // Get world coordinates
+
+          // Find the block's center point
+          double world_x1 = xmin+(xside)/2.0;
+          double world_y1 = ymin+(yside)/2.0;
+          double world_z1 = table_height + block_size / 2;
+
+          // Convert pixel coordiantes back to world coordinates
+          double world_x2 = cloud_transformed->at(new_x, new_y).x;
+          double world_y2 = cloud_transformed->at(new_x, new_y).y;
+          double world_z2 = world_z1; // is this even necessary?
+
+          // Get angle from two world coordinates...
+          double world_theta = abs( atan2(world_y2 - world_y1, world_x2 - world_x1) );
+
+          // Attempt to make all angles point in same direction
+          makeAnglesUniform( world_theta );
+
           // -------------------------------------------------------------------------------------------------------
           // GUI Stuff
-
 
           // Copy the cluster image to the main image in the top left corner
           if( top_image_overlay_x + mini_width < image_width )
@@ -849,23 +823,6 @@ public:
             cv::Rect small_roi_row1 = cv::Rect(top_image_overlay_x, common_height*1, mini_width, mini_height);
             cv::Rect small_roi_row2 = cv::Rect(top_image_overlay_x, common_height*2, mini_width, mini_height);
             cv::Rect small_roi_row3 = cv::Rect(top_image_overlay_x, common_height*3, mini_width, mini_height);
-
-            /*
-            // Copy cropped image to avoid CopyTo bug ?
-            //          cv::Mat small_image = cv::Mat::zeros( mini_size, CV_8UC3 );
-            cv::Mat small_image(cropped_image.rows,cropped_image.cols,cropped_image.type());
-            ROS_INFO_STREAM_NAMED("perception","before copy");
-            //          cropped_image.copyTo(small_image(cv::Rect(0,0,cropped_image.rows,
-            //                                                            cropped_image.cols)));
-            cropped_image.copyTo(small_image);
-
-            cv::imshow( "ss", small_image );
-            ROS_INFO_STREAM_NAMED("perception","imshow waitkey...");
-            cv::waitKey(10000); // 1 sec to allow gui to catch up
-            ROS_INFO_STREAM_NAMED("perception","after copy");
-
-            small_image.copyTo(          output_image(small_roi_row0) );
-            */
 
             drawing.copyTo(              output_image(small_roi_row0) );
             hough_input_color.copyTo(    output_image(small_roi_row1) );
@@ -880,20 +837,11 @@ public:
           //double angle = atan( (xmaxy - xminy) / (xmax - xmin ) );
           // Then add it to our set
           //addBlock( xmin+(xside)/2.0, ymin+(yside)/2.0, zmax - block_size/2.0, angle);
+          //ROS_INFO_STREAM_NAMED("perception","FOUND -> xside: " << xside << " yside: " << yside << " angle: " << block_angle);
 
-          //          ROS_INFO_STREAM_NAMED("perception","FOUND -> xside: " << xside << " yside: " << yside << " angle: " << block_angle);
 
-
-          // -------------------------------------------------------------------------------------------------------
-          // Find the block's center point
-          /*
-          double x_origin = xmin+(xside)/2.0;
-          double y_origin = ymin+(yside)/2.0;
-          double z_origin = table_height + block_size / 2;
-          */
-
-          //addBlock( x_origin, y_origin, z_origin, block_angle);
-          addBlock( block_center_x, block_center_y, block_center_z, block_angle);
+          addBlock( world_x1, world_y1, world_z1, world_theta );
+          //addBlock( block_center_x, block_center_y, block_center_z, block_angle);
         }
         else
         {
@@ -917,7 +865,7 @@ public:
 
   void addBlock(double x, double y, double z, double angle)
   {
-    ROS_INFO_STREAM_NAMED("perception","Adding block in pixel coordinates (" << x << "," << y << "," << z << ") and angle " << angle );
+    ROS_INFO_STREAM_NAMED("perception","Adding block in world coordinates (" << x << "," << y << "," << z << ") and angle " << angle );
 
     geometry_msgs::Pose block_pose;
     block_pose.position.x = x;
@@ -949,7 +897,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = camera_link;
+    marker.header.frame_id = base_link;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -1194,6 +1142,90 @@ public:
     }
     ROS_DEBUG_STREAM_NAMED("perception","  Angle sum " << sum*180.0/CV_PI << " divided by " << input.size() );
     return sum / input.size();
+  }
+
+  // Just a temp code placeholder
+  void convertPCLtoOpenCVImage()
+  {
+
+    // -------------------------------------------------------------------------------------------------------
+    // Convert to OpenCV Mat format
+    /*
+    //cv::Mat block_image = cv::Mat::zeros( image_height, image_width, CV_8UC3 );
+    RGBImage block_image = RGBImage::zeros(image_height, image_width); //, CV_8UC3 );
+
+    // Loop though all the indicies and copy to OpenCV
+    for(size_t i = 0; i < cluster_indices[c].indices.size(); i++)
+    {
+    int j = cluster_indices[c].indices[i];
+
+    // Get RGB from point cloud
+    pcl::PointXYZRGB p = cloud.points[j];
+    int row = 0;
+    int col = 0;
+
+    // Get the pixel coordinates of the index
+    getXYCoordinates( j, image_height, image_width, col, row);
+
+    // unpack rgb into r/g/b
+    uint32_t rgb = *reinterpret_cast<int*>(&p.rgb);
+    uint8_t r = (rgb >> 16) & 0x0000ff;
+    uint8_t g = (rgb >> 8)  & 0x0000ff;
+    uint8_t b = (rgb)       & 0x0000ff;
+    //ROS_DEBUG_STREAM_NAMED("perception","RGB is " << int(r) << ", " << int(g) << ", " << int(b) << " at ROW,COL " << row << ", " << col);
+
+    if( isnan(row) || isnan(col) )
+    {
+    ROS_ERROR_STREAM_NAMED("perception","is nan");
+    continue;
+    }
+
+    block_image.at<cv::Vec3b>(row,col)[0] = r;
+    block_image.at<cv::Vec3b>(row,col)[1] = g;
+    block_image.at<cv::Vec3b>(row,col)[2] = b;
+    //ROS_DEBUG_STREAM_NAMED("perception","done assigning rgb");
+    }
+
+
+    ROS_DEBUG_STREAM_NAMED("perception","pre imshow");
+    cv::imshow( "Copy conversion", block_image );
+    ROS_DEBUG_STREAM_NAMED("perception","imshow");
+    cv::waitKey(1000); // 50 milisec to allow gui to catch up
+    */
+
+  }
+
+  void makeAnglesUniform( double& world_theta )
+  {
+    // Filter angle to be in one direction
+    static const double GOAL_ANGLE = CV_PI;
+
+    ROS_INFO_STREAM("Goal angle " << GOAL_ANGLE*180.0/CV_PI);
+    ROS_INFO_STREAM("Orig angle " << world_theta*180.0/CV_PI);
+
+    std::vector<double> new_angles;
+    new_angles.push_back( world_theta + CV_PI / 2 ); // increase by 90d
+    new_angles.push_back( world_theta + CV_PI     ); // increase by 180d
+    new_angles.push_back( world_theta - CV_PI / 2 ); // decrease by 90d
+    new_angles.push_back( world_theta - CV_PI     ); // decrease by 180d
+    new_angles.push_back( world_theta             ); // keep as is
+
+    double best_difference = CV_PI*2; // really big number
+    double best_angle;
+    
+    for( std::vector<double>::const_iterator angle_it = new_angles.begin(); 
+         angle_it < new_angles.end(); ++angle_it)
+    {
+      if( abs( GOAL_ANGLE - *angle_it ) < best_difference )
+      {
+        best_difference = abs( GOAL_ANGLE - *angle_it );
+        best_angle = *angle_it;
+      }
+    }
+
+    world_theta = best_angle;
+
+    ROS_INFO_STREAM("New angle " << world_theta*180.0/CV_PI);
   }
 
 };

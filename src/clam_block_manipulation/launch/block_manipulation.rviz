@@ -5,10 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /DepthCloudFiltered1
-        - /BlockPoseArray1
+        - /RecognizedBlocks2
       Splitter Ratio: 0.392982
-    Tree Height: 906
+    Tree Height: 927
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -74,12 +73,13 @@ Visualization Manager:
       Value: false
       Visual Enabled: true
     - Class: rviz/InteractiveMarkers
-      Enabled: true
+      Enabled: false
       Name: Move Arm Control
       Show Axes: false
       Show Descriptions: true
+      Show Visual Aids: false
       Update Topic: /clam_marker_server/update
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -117,6 +117,8 @@ Visualization Manager:
       Depth Map Transport Hint: raw
       Enabled: true
       Name: DepthCloud
+      Occlusion Compensation: false
+      Occlusion Time-Out: 30
       Position Transformer: XYZ
       Queue Size: 5
       Selectable: true
@@ -197,12 +199,13 @@ Visualization Manager:
       Topic: /block_detection_server/block_orientation
       Value: true
     - Class: rviz/InteractiveMarkers
-      Enabled: false
+      Enabled: true
       Name: RecognizedBlocks
       Show Axes: false
       Show Descriptions: false
+      Show Visual Aids: false
       Update Topic: /block_controls/update
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: visualization_marker
@@ -212,13 +215,13 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /block_detection_server/block_marker
+      Enabled: true
+      Marker Topic: /block_perception_server/block_marker
       Name: RecognizedBlocks
       Namespaces:
-        {}
+        Block: true
       Queue Size: 100
-      Value: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -226,37 +229,36 @@ Visualization Manager:
   Name: root
   Tools:
     - Class: rviz/Interact
+      Hide Inactive Objects: true
     - Class: rviz/MoveCamera
     - Class: rviz/Select
   Value: true
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 0.771965
+      Distance: 0.405156
       Focal Point:
-        X: 0.3867
-        Y: 0.0530886
+        X: 0.413504
+        Y: 0.0251958
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5698
+      Pitch: 0.894797
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 0.0417838
+      Yaw: 0.286782
     Saved: ~
 Window Geometry:
-  Camera:
-    collapsed: false
   Displays:
     collapsed: false
-  Height: 1186
+  Height: 1200
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000023e0000041ffc0200000005fb000000100044006900730070006c00610079007301000000410000041f000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003380000017e0000000000000000fb0000000c00430061006d00650072006100000002ff0000016100000016000000160000040c0000041f00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000001000000000000023e00000434fc0200000005fb000000100044006900730070006c006100790073010000004100000434000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003380000017e0000000000000000fb0000000c00430061006d00650072006100000002ff000001610000000000000000000003fa0000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1632
-  X: 3821
-  Y: 36
+  Width: 1600
+  X: 3819
+  Y: -20

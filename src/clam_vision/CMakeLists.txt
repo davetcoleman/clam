@@ -72,12 +72,6 @@ add_executable(calibrate_kinect_checkerboard
   )
 target_link_libraries(calibrate_kinect_checkerboard ${catkin_LIBRARIES})
 
-add_executable(findContours_demo
-  src/findContours_demo.cpp
-  )
-target_link_libraries(findContours_demo ${catkin_LIBRARIES})
-
-
 add_executable(manual_square_calibrate src/manual_square_calibrate.cpp)
 target_link_libraries(manual_square_calibrate ${catkin_LIBRARIES})
 
