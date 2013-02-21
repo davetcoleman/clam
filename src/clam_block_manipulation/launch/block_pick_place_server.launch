@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Launch controller manager in this namespace -->
-  <include ns="pick_place_server" file="$(find clam_moveit_config)/launch/trajectory_execution.launch">
+  <include ns="block_pick_place_server" file="$(find clam_moveit_config)/launch/trajectory_execution.launch">
     <arg name="moveit_controller_manager" value="clam" /> 
     <arg name="moveit_manage_controllers" value="true" />
   </include>

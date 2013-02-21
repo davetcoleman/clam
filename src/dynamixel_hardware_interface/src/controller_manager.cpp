@@ -290,7 +290,7 @@ bool ControllerManager::startController(std::string name, std::string port)
     sjc->start();
 
     sj_controllers_[name] = sjc;
-    ROS_DEBUG("Initialized controller '%s' succesful", name.c_str());
+    ROS_DEBUG("Initialized controller '%s' successful", name.c_str());
   }
   else
   {
@@ -577,7 +577,7 @@ void ControllerManager::checkDeps()
       mj_waiting_controllers_.erase(name);
       waiting_mjcs_.erase(it++);
 
-      ROS_DEBUG("Initialized controller '%s' succesful", name.c_str());
+      ROS_DEBUG("Initialized controller '%s' successful", name.c_str());
     }
     else
     {

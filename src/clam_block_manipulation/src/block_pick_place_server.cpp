@@ -323,6 +323,9 @@ public:
 
     // -------------------------------------------------------------------------------------------
     // Plan
+    feedback_.status = "Sending goal to move_group action server";
+    action_server_.publishFeedback(feedback_);
+
     movegroup_action_.sendGoal(goal);
     ros::Duration(5.0).sleep();
 

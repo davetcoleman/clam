@@ -11,3 +11,4 @@ string topic
 bool success                        # whether command worked successfully
 ---
 #feedback
+string status                       # what is currently going on

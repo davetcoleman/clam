@@ -33,8 +33,8 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   This script combines the three components of block manipulation: block perception, block logic, 
-           and pick & place into one coherent program using actionlib action servers.
+   Desc:   This script combines the three components of block manipulation: block perception, block logic,
+   and pick & place into one coherent program using actionlib action servers.
 */
 
 #include <ros/ros.h>
@@ -92,7 +92,8 @@ public:
     //ROS_INFO_STREAM_NAMED("logic","Block size %f", block_size_);
     //ROS_INFO_STREAM_NAMED("logic","Table height %f", z_down_);
 
-    // Initialize goals -------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------
+    // Initialize goals
 
     // Block Perception
     block_perception_goal_.frame = base_link_;
@@ -104,19 +105,12 @@ public:
     pick_place_goal_.z_up = z_up_;
     pick_place_goal_.topic = pick_place_topic;
 
-    // Wait for servers -------------------------------------------------------------------
-    ROS_INFO_STREAM_NAMED("logic","Finished initializing, waiting for servers:");
+    // -----------------------------------------------------------------------------------------------
+    // Connect to the needed action servers
+    connectToServers();
 
-    ROS_INFO_STREAM_NAMED("logic","- Waiting for block perception server.");
-    block_perception_action_.waitForServer();
-
-    ROS_INFO_STREAM_NAMED("logic","- Waiting for pick and place server.");
-    pick_place_action_.waitForServer();
-
-    ROS_INFO_STREAM_NAMED("logic","- Waiting for clam arm server.");
-    clam_arm_client_.waitForServer();
-
-    ROS_INFO_STREAM_NAMED("logic","Startup complete.");
+    // -----------------------------------------------------------------------------------------------
+    // Begin pipeline
     resetArm();
   }
 
@@ -133,6 +127,23 @@ public:
     {
       ROS_ERROR_STREAM_NAMED("logic","Timeout: Unable to move to shutdown position");
     }
+  }
+
+  void connectToServers()
+  {
+    // Wait for servers -------------------------------------------------------------------
+    ROS_INFO_STREAM_NAMED("logic","Finished initializing, waiting for servers:");
+
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for block perception server.");
+    block_perception_action_.waitForServer();
+
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for pick and place server.");
+    pick_place_action_.waitForServer();
+
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for clam arm server.");
+    clam_arm_client_.waitForServer();
+
+    ROS_INFO_STREAM_NAMED("logic","Startup complete.");
   }
 
   // Send arm to home position
@@ -154,7 +165,7 @@ public:
                                       boost::bind( &BlockManipulationLogic::receivedBlockPoses, this, _1, _2));
   }
 
-  void receivedBlockPoses(const actionlib::SimpleClientGoalState& state, 
+  void receivedBlockPoses(const actionlib::SimpleClientGoalState& state,
                           const clam_msgs::BlockPerceptionResultConstPtr& result)
   {
     // Check that the action succeeded with no erors
@@ -164,10 +175,19 @@ public:
     }
     else
     {
-      ROS_ERROR_STREAM_NAMED("logic","3. Failed to get detected blocks: " << state.toString());
-      ros::shutdown();
+      // Try to recover from error
+      if( state == actionlib::SimpleClientGoalState::LOST )
+      {
+        ROS_ERROR_STREAM_NAMED("logic","3. Lost action server. Attempting to reconnect...");
+        // Try to reconnect
+        connectToServers();
+      }
+      else
+      {
+        ROS_ERROR_STREAM_NAMED("logic","3. Failed to get detected blocks: " << state.toString());
+        ros::shutdown();
+      }
     }
-
 
 
     // --------------------------------------------------------------------------------------------
@@ -248,10 +268,23 @@ public:
     // Send the goal
     ROS_INFO_NAMED("logic","4. Sending pick place goal to action server");
     pick_place_action_.sendGoal(pick_place_goal_,
-                                boost::bind( &BlockManipulationLogic::finish, this, _1, _2));
+                                boost::bind( &BlockManipulationLogic::pickPlaceComplete, this, _1, _2), // Done callback
+                                boost::bind( &BlockManipulationLogic::pickPlaceActive, this),   // Active callback
+                                boost::bind( &BlockManipulationLogic::pickPlaceFeedback, this, _1)  // Feedback callback
+                                );
   }
 
-  void finish(const actionlib::SimpleClientGoalState& state, 
+  void pickPlaceActive()
+  {
+    ROS_INFO_NAMED("logic","4b. Pick place goal just went active");
+  }
+
+  void pickPlaceFeedback(const clam_msgs::PickPlaceFeedbackConstPtr& feedback)
+  {
+    ROS_INFO_STREAM_NAMED("logic","4c. Pick place feedback: " << feedback->status); // TODO ->status?
+  }
+
+  void pickPlaceComplete(const actionlib::SimpleClientGoalState& state,
               const clam_msgs::PickPlaceResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
@@ -272,6 +305,10 @@ public:
 
     if (once_)
     {
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      ros::Duration(5.0).sleep();
+
       ROS_INFO_STREAM_NAMED("logic","Shutting down");
       ros::shutdown();
     }
