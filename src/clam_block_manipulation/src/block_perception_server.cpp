@@ -39,7 +39,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <actionlib/server/simple_action_server.h>
-#include <clam_msgs/BlockDetectionAction.h>
+#include <clam_msgs/BlockPerceptionAction.h>
 
 #include <tf/transform_listener.h>
 
@@ -84,13 +84,13 @@ private:
   ros::NodeHandle nh_;
 
   // Actionlib
-  actionlib::SimpleActionServer<clam_msgs::BlockDetectionAction> action_server_;
+  actionlib::SimpleActionServer<clam_msgs::BlockPerceptionAction> action_server_;
   std::string action_name_;
 
   // Actionlib messages
-  clam_msgs::BlockDetectionFeedback feedback_;
-  clam_msgs::BlockDetectionResult result_;
-  clam_msgs::BlockDetectionGoalConstPtr goal_;
+  clam_msgs::BlockPerceptionFeedback feedback_;
+  clam_msgs::BlockPerceptionResult result_;
+  clam_msgs::BlockPerceptionGoalConstPtr goal_;
 
   // ROS Connections
   ros::Subscriber point_cloud_sub_;
@@ -175,7 +175,6 @@ public:
     // Announce state
     ROS_INFO_STREAM_NAMED("perception", "Server ready.");
     ROS_INFO_STREAM_NAMED("perception", "Waiting for point clouds...");
-
   }
 
   ~BlockPerceptionServer()
@@ -185,7 +184,7 @@ public:
 
   void goalCB()
   {
-    ROS_INFO_STREAM_NAMED("perception","Starting detection");
+    ROS_INFO_STREAM_NAMED("perception","Current scene requested");
 
     // Accept the new goal and save data
     goal_ = action_server_.acceptNewGoal();
@@ -194,10 +193,10 @@ public:
     base_link = goal_->frame;
   }
 
-  // Cancel the detection
+  // Cancel the perception
   void preemptCB()
   {
-    ROS_INFO_NAMED("perception","%s: Preempted", action_name_.c_str());
+    ROS_INFO_NAMED("perception","Preempted");
 
     // set the action state to preempted
     action_server_.setPreempted();
@@ -230,7 +229,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Start making result
-    result_.blocks.poses.clear();    // Clear last block detection result
+    result_.blocks.poses.clear();    // Clear last block perception result
     result_.blocks.header.stamp = pointcloud_msg->header.stamp;
     result_.blocks.header.frame_id = base_link;
 
@@ -890,7 +889,6 @@ public:
     ROS_INFO_STREAM_NAMED("perception","Added block: \n" << block_pose );
 
     result_.blocks.poses.push_back(block_pose);
-
   }
 
   void publishBlockLocation()

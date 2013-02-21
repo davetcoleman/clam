@@ -28,7 +28,7 @@ add_action_files(
     action 
   FILES 
     ClamArm.action
-    BlockDetection.action
+    BlockPerception.action
     BlockLogic.action
     PickPlace.action
 )

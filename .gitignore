@@ -26,3 +26,6 @@ devel/
 
 # Silly OSX Files
 .DS_Store
+
+# CSV Files of Data
+*.csv

@@ -45,6 +45,10 @@ catkin_package(DEPENDS
 #  LIBRARIES ${PROJECT_NAME}
 )
 
+# Enable gdb to show line numbers
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+set(CMAKE_BUILD_TYPE Debug)
+
 ## Build 
 include_directories(
   include 
@@ -55,18 +59,11 @@ link_directories(${catkin_LIBRARY_DIRS})
 add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
-add_executable(block_logic_server src/block_logic_server.cpp)
-target_link_libraries(block_logic_server ${catkin_LIBRARIES})
-
 add_executable(pick_place_server src/pick_place_server.cpp)
 target_link_libraries(pick_place_server ${catkin_LIBRARIES})
 
-add_executable(block_manipulation_demo src/demo/block_manipulation_demo.cpp)
-target_link_libraries(block_manipulation_demo ${catkin_LIBRARIES})
-
-#include_directories(${Boost_INCLUDE_DIRS})
-#target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
-
+add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
+target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
 
 
 
