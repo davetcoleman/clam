@@ -12,10 +12,13 @@
   <!-- Rviz -->
   <include file="$(find clam_block_manipulation)/launch/block_manipulation_rviz.launch" />
 
-  <!-- Block manipulation servers -->
-  <include file="$(find clam_block_manipulation)/launch/block_manipulation_servers.launch" />
+  <!-- Block Perception Servers -->
+  <include file="$(find clam_block_manipulation)/launch/block_perception_server.launch" />
 
-  <!-- Block manipulation demo -->
-  <!--include file="$(find clam_block_manipulation)/launch/block_demo.launch" /-->
+  <!-- Block Pick and Place Servers -->
+  <include file="$(find clam_block_manipulation)/launch/block_pick_place_server.launch" />
+
+  <!-- Block Manipulation Logic Demo -->
+  <include file="$(find clam_block_manipulation)/launch/block_manipulation_logic.launch" />
 
 </launch>
