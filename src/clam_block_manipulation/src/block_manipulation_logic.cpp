@@ -91,7 +91,7 @@ public:
     nh_.param<double>("/block_manipulation_action_demo/z_up", z_up, 0.12);
     nh_.param<double>("/block_manipulation_action_demo/table_height", z_down, 0.01);
     nh_.param<double>("/block_manipulation_action_demo/block_size", block_size, 0.03);
-    nh_.param<bool>("once", once, false);
+    nh_.param<bool>("once", once, true);
 
     //ROS_INFO_STREAM_NAMED("logic","Block size %f", block_size);
     //ROS_INFO_STREAM_NAMED("logic","Table height %f", z_down);
@@ -113,16 +113,16 @@ public:
     // Wait for servers -------------------------------------------------------------------
     ROS_INFO_STREAM_NAMED("logic","Finished initializing, waiting for servers:");
 
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for block perception server.");
     block_perception_action_.waitForServer();
-    ROS_INFO_STREAM_NAMED("logic","- Found block perception server.");
 
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for pick and place server.");
     pick_place_action_.waitForServer();
-    ROS_INFO_STREAM_NAMED("logic","- Found pick and place server.");
 
+    ROS_INFO_STREAM_NAMED("logic","- Waiting for clam arm server.");
     clam_arm_client_.waitForServer();
-    ROS_INFO_STREAM_NAMED("logic","- Found clam arm server.");
 
-    ROS_INFO_STREAM_NAMED("logic"," ");
+    ROS_INFO_STREAM_NAMED("logic","Startup complete.");
     resetArm();
   }
 
@@ -161,12 +161,12 @@ public:
   }
 
   void receivedBlockPoses(const actionlib::SimpleClientGoalState& state, 
-                          const BlockPerceptionResultConstPtr& result)
+                          const clam_msgs::BlockPerceptionResultConstPtr& result)
   {
     // Check that the action succeeded with no erors
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO_STREAM_NAMED("logic","3. Recieved detected blocks, deciding what to do next.");
+      ROS_INFO_STREAM_NAMED("logic","3. Received detected blocks, deciding what to do next.");
     }
     else
     {
@@ -237,37 +237,43 @@ public:
 
   void moveBlock(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
   {
-    geometry_msgs::Pose start_pose_bumped, end_pose_bumped;
     double bump_size = 0;
 
-    start_pose_bumped = start_pose;
+    // Copy the start and end poses to 'bumped' versions
+    geometry_msgs::Pose start_pose_bumped = start_pose;
     start_pose_bumped.position.y -= bump_size;
-    //start_pose_bumped.position.z -= block_size/2.0 - bump_size;
-    start_pose_bumped.position.z = CUBE_Z_HEIGHT;
-    action_result_.pickup_pose = start_pose_bumped;
+    start_pose_bumped.position.z -= block_size/2.0 - bump_size;
 
-    end_pose_bumped = end_pose;
-    //end_pose_bumped.position.z -= block_size/2.0 - bump_size;
-    end_pose_bumped.position.z = CUBE_Z_HEIGHT;
-    action_result_.place_pose = end_pose_bumped;
+    geometry_msgs::Pose end_pose_bumped = end_pose;
+    end_pose_bumped.position.z -= block_size/2.0 - bump_size;
 
+    // Copy the bumped poses to the pick place goal
     pick_place_goal_.pickup_pose = start_pose_bumped;
-    pick_place_goal_.place_pose = place_pose_bumped;
+    pick_place_goal_.place_pose = end_pose_bumped;
 
-
+    // Send the goal
+    ROS_INFO_NAMED("logic","4. Sending pick place goal to action server");
     pick_place_action_.sendGoal(pick_place_goal_,
                                 boost::bind( &BlockManipulationLogic::finish, this, _1, _2));
   }
 
-  void finish(const actionlib::SimpleClientGoalState& state, const PickPlaceResultConstPtr& result)
+  void finish(const actionlib::SimpleClientGoalState& state, 
+              const clam_msgs::PickPlaceResultConstPtr& result)
   {
     if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO_STREAM_NAMED("logic","5. Pick and place commands successfull");
+      if(result->success == true)
+      {
+        ROS_INFO_STREAM_NAMED("logic","5. Pick and place commands successfull");
+      }
+      else
+      {
+        ROS_ERROR_STREAM_NAMED("logic","5. Pick and place did not succeed");
+      }
     }
     else
     {
-      ROS_ERROR_STREAM_NAMED("logic","5. Pick and place did not succeed: " <<  state.toString().c_str());
+      ROS_ERROR_STREAM_NAMED("logic","5. Pick and place action failed: " <<  state.toString().c_str());
     }
 
     if (once)
@@ -292,7 +298,7 @@ int main(int argc, char** argv)
   // initialize node
   ros::init(argc, argv, "block_manipulation");
 
-  clam_msgs::BlockManipulationLogic demo;
+  clam_block_manipulation::BlockManipulationLogic demo;
 
   // everything is done in cloud callback, just spin
   ros::spin();

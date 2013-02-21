@@ -248,7 +248,7 @@ public:
     joint_state_map["gripper_roll_joint"] = 0.0;
     joint_state_map["shoulder_pan_joint"] = 0.0;
     joint_state_map["shoulder_pitch_joint"] = 0.0;
-    joint_state_map["wrist_pitch_joint"] = 1.6622;
+    joint_state_map["wrist_pitch_joint"] = 0.0; //1.6622;
     joint_state_map["wrist_roll_joint"] = 0.0;
     joint_state_group.setVariableValues(joint_state_map);
 

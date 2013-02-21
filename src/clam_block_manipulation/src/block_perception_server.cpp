@@ -161,7 +161,8 @@ public:
     camera_link = "/camera_rgb_frame";
     //    camera_link = "/camera_rgb_optical_frame";
     block_size = 0.04;
-    table_height = 0.001;
+    //    table_height = 0.001;
+    table_height = 0.0;
 
     // Subscribe to point cloud
     point_cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &BlockPerceptionServer::pointCloudCallback, this);
@@ -187,10 +188,10 @@ public:
     ROS_INFO_STREAM_NAMED("perception","Current scene requested");
 
     // Accept the new goal and save data
-    goal_ = action_server_.acceptNewGoal();
-    block_size = goal_->block_size;
+    goal_        = action_server_.acceptNewGoal();
+    block_size   = goal_->block_size;
     table_height = goal_->table_height;
-    base_link = goal_->frame;
+    base_link    = goal_->frame;
   }
 
   // Cancel the perception
@@ -905,14 +906,14 @@ public:
     marker.type = visualization_msgs::Marker::CUBE;
 
     // Set marker size
-    marker.scale.x = block_size;
-    marker.scale.y = block_size;
-    marker.scale.z = block_size - 0.01;
+    marker.scale.x = block_size - 0.001;
+    marker.scale.y = block_size - 0.001;
+    marker.scale.z = block_size - 0.001;
 
     // Set marker color
     marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
     marker.color.a = 0.5;
 
     // Keep track of the max number of blocks ever published so that we can delete them if some are lost

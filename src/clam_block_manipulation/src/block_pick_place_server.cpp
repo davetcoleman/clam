@@ -69,7 +69,7 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
-namespace clam_msgs
+namespace clam_block_manipulation
 {
 
 // Static const vars
@@ -79,7 +79,7 @@ static const std::string EE_LINK = "gripper_roll_link";
 static const double PREGRASP_Z_HEIGHT = 0.09;
 
 // Class
-class PickPlaceServer
+class BlockPickPlaceServer
 {
 private:
   // A shared node handle
@@ -105,9 +105,6 @@ private:
   trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager_;
   boost::shared_ptr<plan_execution::PlanExecution> plan_execution_;
 
-  // Subscriber
-  ros::Subscriber pick_place_sub_;
-
   // Parameters from goal
   std::string arm_link;
   double gripper_open;
@@ -117,7 +114,7 @@ private:
 public:
 
   // Constructor
-  PickPlaceServer(const std::string name) :
+  BlockPickPlaceServer(const std::string name) :
     action_server_(name, false),
     clam_arm_client_("clam_arm", true),
     movegroup_action_("move_group", true)
@@ -126,13 +123,13 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
     while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
-      ROS_INFO("[pick place] Waiting for the clam_arm action server");
+      ROS_INFO_STREAM_NAMED("pick place","Waiting for the clam_arm action server");
     }
 
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
-      ROS_INFO("[pick place] Waiting for the move_group action server");
+      ROS_INFO_STREAM_NAMED("pick place","Waiting for the move_group action server");
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -148,14 +145,13 @@ public:
     // Check planning scene monitor
     if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
     {
-      //ROS_INFO("Planning scene configured");
       planning_scene_monitor_->startWorldGeometryMonitor();
       planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
       planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
     }
     else
     {
-      ROS_ERROR("[pick place] Planning scene not configured");
+      ROS_ERROR_STREAM_NAMED("pick_place","Planning scene not configured");
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -173,18 +169,18 @@ public:
     {
       ros::Duration(0.1).sleep();
       ros::spinOnce();
-      ROS_INFO("[pick place] Waiting for complete state...");
+      ROS_INFO_STREAM_NAMED("pick place","Waiting for complete state...");
 
       // Show unpublished joints
       planning_scene_monitor_->getStateMonitor()->haveCompleteState( missing_joints );
       for(int i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM("[pick place] Unpublished joints: " << missing_joints[i]);
+        ROS_WARN_STREAM_NAMED("pick_place","Unpublished joints: " << missing_joints[i]);
     }
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
-    action_server_.registerGoalCallback(boost::bind(&PickPlaceServer::goalCB, this));
-    action_server_.registerPreemptCallback(boost::bind(&PickPlaceServer::preemptCB, this));
+    action_server_.registerGoalCallback(boost::bind(&BlockPickPlaceServer::goalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&BlockPickPlaceServer::preemptCB, this));
     action_server_.start();
 
     // Announce state
@@ -195,7 +191,7 @@ public:
   // Action server sends goals here
   void goalCB()
   {
-    ROS_INFO("[pick_place] Received goal -----------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Received goal -----------------------------------------------");
 
     goal_ = action_server_.acceptNewGoal();
     arm_link = goal_->frame;
@@ -210,25 +206,13 @@ public:
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
-    // Check if our listener has recieved a goal from the topic yet
-    if (goal_->topic.length() < 1)
-    {
-      ROS_INFO("[pick_place] Goal has already been recieved, start moving arm");
 
-      if( !pickAndPlace(goal_->pickup_pose, goal_->place_pose) ) // yes, start moving arm
-      {
-        ROS_ERROR("[pick_place] Pick and place failed");
-        result_.success = false;
-        action_server_.setSucceeded(result_);
-      }
-    }
-    else
+    if( !pickAndPlace(goal_->pickup_pose, goal_->place_pose) )
     {
-      ROS_INFO_STREAM("[pick_place] Waiting for goal to be received on topic " << goal_->topic);
-      pick_place_sub_ = nh_.subscribe(goal_->topic, 1, // no, wait for topic
-                                      &PickPlaceServer::sendGoalFromTopic, this);
+      ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
+      result_.success = false;
+      action_server_.setSucceeded(result_);
     }
-
 
     /*
     // Skip perception
@@ -245,28 +229,26 @@ public:
 
     if( !pickAndPlace(start_pose, end_pose) )
     {
-    ROS_ERROR("[pick_place] Pick and place failed");
+    ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
     result_.success = false;
     action_server_.setSucceeded(result_);
     }
     */
-
 
   }
 
   // The goal is not actually recieved from ActionLib, but from a regular ros topic
   void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr& msg)
   {
-    ROS_INFO("[pick_place] Got goal from topic! %s", goal_->topic.c_str());
+    ROS_INFO_STREAM_NAMED("pick_place","Got goal from topic!" << goal_->topic);
 
     if( !pickAndPlace(msg->poses[0], msg->poses[1]) )
     {
-      ROS_ERROR("[pick_place] Pick and place failed");
+      ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
       result_.success = false;
       action_server_.setSucceeded(result_);
     }
 
-    pick_place_sub_.shutdown();
   }
 
   // Cancel the action
@@ -274,7 +256,7 @@ public:
   {
     //TODO
 
-    ROS_INFO("[pick_place] Preempted");
+    ROS_INFO_STREAM_NAMED("pick_place","Preempted");
     action_server_.setPreempted();
   }
 
@@ -318,7 +300,7 @@ public:
       kinematic_constraints::constructGoalConstraints(EE_LINK, goal_pose,
                                                       tolerance_pose, tolerance_angle);
 
-    ROS_INFO_STREAM("[pick_place] Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
+    ROS_INFO_STREAM_NAMED("pick_place","Goal pose with x_offset of: " << x_offset << "\n" << goal_pose);
 
     // Create offset constraint
     goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
@@ -330,7 +312,7 @@ public:
 
     // -------------------------------------------------------------------------------------------
     // Visualize goals in rviz
-    ROS_INFO_STREAM("[pick_place] Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x <<
+    ROS_INFO_STREAM_NAMED("pick_place","Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x <<
                     " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
     publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
     publishMesh(goal_pose.pose.position.x,
@@ -346,22 +328,21 @@ public:
 
     if(!movegroup_action_.waitForResult(ros::Duration(5.0)))
     {
-      ROS_INFO_STREAM("[pick_place] Returned early?");
+      ROS_INFO_STREAM_NAMED("pick_place","Returned early?");
       return false;
     }
     if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO("[pick_place] Plan successful!");
+      ROS_INFO_STREAM_NAMED("pick_place","Plan successful!");
     }
     else
     {
-      ROS_ERROR_STREAM("[pick_place] FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      ROS_ERROR_STREAM_NAMED("pick_place","FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
       return false;
     }
 
     return true;
   }
-
 
   /* Function for testing multiple directions
    * \param approach_direction - direction to move end effector straight
@@ -377,7 +358,6 @@ public:
     robot_state::RobotState approach_state = planning_scene->getCurrentState();
 
     // Output state info
-    ROS_INFO("\nState info: \n");
     approach_state.printStateInfo();
     approach_state.printTransforms();
 
@@ -403,12 +383,12 @@ public:
       const std::pair<robot_model::SolverAllocatorFn, robot_model::SolverAllocatorMapFn> &allocators =
         approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
       if( !allocators.first)
-        ROS_ERROR("No IK Solver loaded - make sure moveit_config/kinamatics.yaml is loaded in this namespace");
+        ROS_ERROR_STREAM_NAMED("pick_place","No IK Solver loaded - make sure moveit_config/kinamatics.yaml is loaded in this namespace");
     }
 
     // -----------------------------------------------------------------------------------------------
     // Compute Cartesian Path
-    ROS_INFO("Preparing to computer cartesian path");
+    ROS_INFO_STREAM_NAMED("pick_place","Preparing to computer cartesian path");
 
 
     /** \brief Compute the sequence of joint values that correspond to a Cartesian path.
@@ -466,7 +446,7 @@ public:
     ROS_INFO_STREAM("Approach distance: " << d_approach );
     if( d_approach == 0 )
     {
-      ROS_ERROR("Failed to computer cartesian path: distance is 0");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to computer cartesian path: distance is 0");
       return false;
     }
 
@@ -495,10 +475,10 @@ public:
     // Perform iterative parabolic smoothing
     iterative_smoother.computeTimeStamps( *approach_traj );
     /*                                         approach_traj,
-                                         trajectory_out,
-                                         joint_limits,
-                                         this_robot_state // start_state
-                                         );
+                                               trajectory_out,
+                                               joint_limits,
+                                               this_robot_state // start_state
+                                               );
     */
 
     // Copy results to robot trajectory message:
@@ -528,15 +508,15 @@ public:
 
     // Publish message
     display_path_publisher_.publish(rviz_display);
-    ROS_INFO("Sent display trajectory message");
+    ROS_INFO_STREAM_NAMED("pick_place","Sent display trajectory message");
 
-    ROS_INFO("Sleeping 1...\n\n");
+    ROS_INFO_STREAM_NAMED("pick_place","Sleeping 1...\n\n");
     ros::Duration(1.0).sleep();
 
     // -----------------------------------------------------------------------------------------------
     // Execute the planned trajectory
-    ROS_INFO("Executing trajectory");
-    
+    ROS_INFO_STREAM_NAMED("pick_place","Executing trajectory");
+
     // Convert trajectory to a message
     moveit_msgs::RobotTrajectory traj_msg;
     approach_traj->getRobotTrajectoryMsg(traj_msg);
@@ -549,22 +529,22 @@ public:
       // wait for the trajectory to complete
       moveit_controller_manager::ExecutionStatus es = plan_execution_->getTrajectoryExecutionManager()->waitForExecution();
       if (es == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
-        ROS_INFO("Trajectory execution succeeded");
+        ROS_INFO_STREAM_NAMED("pick_place","Trajectory execution succeeded");
       else
       {
         if (es == moveit_controller_manager::ExecutionStatus::PREEMPTED)
-          ROS_INFO("Trajectory execution preempted");
+          ROS_INFO_STREAM_NAMED("pick_place","Trajectory execution preempted");
         else
           if (es == moveit_controller_manager::ExecutionStatus::TIMED_OUT)
-            ROS_INFO("Trajectory execution timed out");
+            ROS_INFO_STREAM_NAMED("pick_place","Trajectory execution timed out");
           else
-            ROS_INFO("Trajectory execution control failed");
+            ROS_INFO_STREAM_NAMED("pick_place","Trajectory execution control failed");
         return false;
       }
     }
     else
     {
-      ROS_ERROR("Failed to push trajectory");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to push trajectory");
       return false;
     }
 
@@ -576,11 +556,11 @@ public:
   {
     geometry_msgs::Pose desired_pose = start_pose;
 
-    ROS_INFO("[pick_place] Pick and place started");
+    ROS_INFO_STREAM_NAMED("pick_place","Pick and place started");
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
-    ROS_INFO("[pick_place] Opening gripper");
+    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -588,32 +568,32 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Hover over block
-    ROS_INFO("[pick_place] Sending arm to pre-grasp position ----------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to pre-grasp position ----------------------------------");
     desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
     if(!sendGraspPoseCommand(desired_pose))
     {
-      ROS_ERROR("[pick_place] Failed to go to pre-grasp position");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to pre-grasp position");
       return false;
     }
 
     // ---------------------------------------------------------------------------------------------
     // Lower over block
     // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO("[pick_place] Lowering over block -------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Lowering over block -------------------------------------------");
     Eigen::Vector3d approach_direction; // Approach direction (negative z axis)
     approach_direction << 0, 0, -1;
     double desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
     if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
     {
-      ROS_ERROR("[pick_place] Failed to follow straight line path");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
       return false;
     }
     ros::Duration(0.5).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Close gripper
-    ROS_INFO("[pick_place] Closing gripper");
+    ROS_INFO_STREAM_NAMED("pick_place","Closing gripper");
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -622,14 +602,14 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Lifting block
     // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO("[pick_place] Lifting block -------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
 
     approach_direction << 0, 0, 1; // Approach direction (negative z axis)
     desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
     if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
     {
-      ROS_ERROR("[pick_place] Failed to follow straight line path");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
       return false;
     }
     ros::Duration(0.5).sleep();
@@ -637,13 +617,13 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
-    ROS_INFO("[pick_place] Sending arm to new position ------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to new position ------------------------------------------");
     desired_pose = end_pose;
     desired_pose.position.z = PREGRASP_Z_HEIGHT;
-    //ROS_INFO_STREAM("[pick_place] Pose: \n" << desired_pose );
+    //ROS_INFO_STREAM_NAMED("pick_place","Pose: \n" << desired_pose );
     if(!sendGraspPoseCommand(desired_pose))
     {
-      ROS_ERROR("[pick_place] Failed to go to goal position");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to goal position");
       return false;
     }
     ros::Duration(1.0).sleep();
@@ -652,21 +632,21 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Lower block
     // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO("[pick_place] Lifting block -------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
 
     approach_direction << 0, 0, -1; // Approach direction (negative z axis)
     desired_approach_distance = .040; // The distance the origin of a robot link needs to travel
 
     if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
     {
-      ROS_ERROR("[pick_place] Failed to follow straight line path");
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
       return false;
     }
     ros::Duration(0.5).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
-    ROS_INFO("[pick_place] Opening gripper");
+    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
     clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
     clam_arm_client_.sendGoal(clam_arm_goal_);
     while(!clam_arm_client_.getState().isDone() && ros::ok())
@@ -675,8 +655,8 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Demo will automatically reset arm
-    ROS_INFO("[pick_place] Finished ------------------------------------------------");
-    ROS_INFO(" ");
+    ROS_INFO_STREAM_NAMED("pick_place","Finished ------------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place"," ");
 
     result_.success = true;
     action_server_.setSucceeded(result_);
@@ -812,9 +792,9 @@ public:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "pick_place_action_server");
+  ros::init(argc, argv, "block_pick_place_server");
 
-  clam_msgs::PickPlaceServer server("pick_place");
+  clam_block_manipulation::BlockPickPlaceServer server("pick_place");
 
   // Allow the action server to recieve and send ros messages
   ros::AsyncSpinner spinner(1);
