@@ -158,7 +158,7 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Start up the trajectory client
-    trajectory_client_ = new TrajClient("/clam_arm_controller/follow_joint_trajectory", true);
+    trajectory_client_ = new TrajClient("/clam_trajectory_controller/follow_joint_trajectory", true);
     while(!trajectory_client_->waitForServer(ros::Duration(1.0)))
     {
       ROS_INFO("[clam arm] Waiting for the joint_trajectory_action server");
@@ -176,11 +176,11 @@ public:
 
 
     // Change the goal constraints on the servos to be less strict, so that the controllers don't die. this is a hack
-    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
-    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
-    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
-    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
-    nh_.setParam("/clam_arm_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
+    nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
     // -----------------------------------------------------------------------------------------------
     // Register the goal and feeback callbacks

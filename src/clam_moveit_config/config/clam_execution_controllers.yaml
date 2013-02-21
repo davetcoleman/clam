@@ -1,6 +1,6 @@
 controller_manager_ns: clam_controller_manager
 controller_list:
-  - name: clam_arm_controller
+  - name: clam_trajectory_controller
     ns: follow_joint_trajectory
     default: true
     joints:

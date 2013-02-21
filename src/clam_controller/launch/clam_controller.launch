@@ -41,7 +41,7 @@
   <node name="arm_trajectory_controller_spawner" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
         args="--manager=clam_controller_manager
               --port=multi_joint_dummy_port
-              clam_arm_controller"
+              clam_trajectory_controller"
         output="screen"/>
 
   <!-- Publish combined joint info -->

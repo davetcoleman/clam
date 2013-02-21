@@ -1,4 +1,4 @@
-clam_arm_controller:
+clam_trajectory_controller:
     type: dynamixel_hardware_interface/JointTrajectoryActionController
     dependencies:
         - shoulder_pan_controller

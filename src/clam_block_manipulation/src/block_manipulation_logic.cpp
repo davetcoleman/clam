@@ -68,13 +68,11 @@ private:
   clam_msgs::ClamArmGoal clam_arm_goal_;
 
   // Parameters
-  std::string base_link;
-  double gripper_open;
-  double gripper_closed;
-  double z_up;
-  double z_down;
-  double block_size;
-  bool once;
+  std::string base_link_;
+  double z_up_;
+  double z_down_;
+  double block_size_;
+  bool once_;
 
 public:
 
@@ -85,29 +83,25 @@ public:
   {
     // Load parameters -------------------------------------------------------------------
 
-    nh_.param<std::string>("/block_manipulation_action_demo/base_link", base_link, "/base_link");
-    nh_.param<double>("/block_manipulation_action_demo/gripper_open", gripper_open, 0.042);
-    nh_.param<double>("/block_manipulation_action_demo/gripper_closed", gripper_closed, 0.024);
-    nh_.param<double>("/block_manipulation_action_demo/z_up", z_up, 0.12);
-    nh_.param<double>("/block_manipulation_action_demo/table_height", z_down, 0.01);
-    nh_.param<double>("/block_manipulation_action_demo/block_size", block_size, 0.03);
-    nh_.param<bool>("once", once, true);
+    nh_.param<std::string>("/block_manipulation_action_demo/base_link", base_link_, "/base_link");
+    nh_.param<double>("/block_manipulation_action_demo/z_up", z_up_, 0.12);
+    nh_.param<double>("/block_manipulation_action_demo/table_height", z_down_, 0.01);
+    nh_.param<double>("/block_manipulation_action_demo/block_size", block_size_, 0.03);
+    nh_.param<bool>("once", once_, true);
 
-    //ROS_INFO_STREAM_NAMED("logic","Block size %f", block_size);
-    //ROS_INFO_STREAM_NAMED("logic","Table height %f", z_down);
+    //ROS_INFO_STREAM_NAMED("logic","Block size %f", block_size_);
+    //ROS_INFO_STREAM_NAMED("logic","Table height %f", z_down_);
 
     // Initialize goals -------------------------------------------------------------------
 
     // Block Perception
-    block_perception_goal_.frame = base_link;
-    block_perception_goal_.table_height = z_down;
-    block_perception_goal_.block_size = block_size;
+    block_perception_goal_.frame = base_link_;
+    block_perception_goal_.table_height = z_down_;
+    block_perception_goal_.block_size = block_size_;
 
     // Pick and Place
-    pick_place_goal_.frame = base_link;
-    pick_place_goal_.z_up = z_up;
-    pick_place_goal_.gripper_open = gripper_open;
-    pick_place_goal_.gripper_closed = gripper_closed;
+    pick_place_goal_.frame = base_link_;
+    pick_place_goal_.z_up = z_up_;
     pick_place_goal_.topic = pick_place_topic;
 
     // Wait for servers -------------------------------------------------------------------
@@ -242,10 +236,10 @@ public:
     // Copy the start and end poses to 'bumped' versions
     geometry_msgs::Pose start_pose_bumped = start_pose;
     start_pose_bumped.position.y -= bump_size;
-    start_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    start_pose_bumped.position.z -= block_size_/2.0 - bump_size;
 
     geometry_msgs::Pose end_pose_bumped = end_pose;
-    end_pose_bumped.position.z -= block_size/2.0 - bump_size;
+    end_pose_bumped.position.z -= block_size_/2.0 - bump_size;
 
     // Copy the bumped poses to the pick place goal
     pick_place_goal_.pickup_pose = start_pose_bumped;
@@ -276,7 +270,7 @@ public:
       ROS_ERROR_STREAM_NAMED("logic","5. Pick and place action failed: " <<  state.toString().c_str());
     }
 
-    if (once)
+    if (once_)
     {
       ROS_INFO_STREAM_NAMED("logic","Shutting down");
       ros::shutdown();
