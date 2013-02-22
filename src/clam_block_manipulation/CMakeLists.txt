@@ -62,6 +62,9 @@ target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 add_executable(block_pick_place_server src/block_pick_place_server.cpp)
 target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
 
+add_executable(grasp_generator_server src/grasp_generator_server.cpp)
+target_link_libraries(grasp_generator_server ${catkin_LIBRARIES})
+
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
 

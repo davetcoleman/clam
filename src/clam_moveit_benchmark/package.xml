@@ -1,0 +1,18 @@
+<package>
+  <name>clam_moveit_benchmark</name>
+  <version>1.0.0</version>
+  <description>Launch and configuration files for benchmarking planning algorithms.</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+
+  <author>Dave Coleman</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>

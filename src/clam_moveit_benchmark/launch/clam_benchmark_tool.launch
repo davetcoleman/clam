@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="moveit_benchmark_tool" pkg="moveit_ros_benchmarks" type="benchmark_tool" respawn="false" output="screen">
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
+    <rosparam command="load" file="$(find clam_moveit_config)/config/ompl_planning.yaml"/>
+  </node>
+
+</launch>

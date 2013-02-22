@@ -39,6 +39,7 @@
 // ROS
 #include <ros/ros.h>
 #include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
@@ -106,7 +107,7 @@ private:
   boost::shared_ptr<plan_execution::PlanExecution> plan_execution_;
 
   // Parameters from goal
-  std::string arm_link;
+  std::string base_link;
   double gripper_open;
   double gripper_closed;
   double z_up;
@@ -120,6 +121,14 @@ public:
     movegroup_action_("move_group", true)
   {
 
+    // -----------------------------------------------------------------------------------------------
+    // Rviz Visualizations
+    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
+
+
+    generateGrasps();
+
+
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
     while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
@@ -131,10 +140,6 @@ public:
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
       ROS_INFO_STREAM_NAMED("pick place","Waiting for the move_group action server");
     }
-
-    // -----------------------------------------------------------------------------------------------
-    // Rviz Visualizations
-    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
 
     // ---------------------------------------------------------------------------------------------
     // Create planning scene monitor
@@ -186,6 +191,8 @@ public:
     // Announce state
     ROS_INFO_STREAM_NAMED("pick_place", "Server ready.");
     ROS_INFO_STREAM_NAMED("pick_place", "Waiting for pick command...");
+
+
   }
 
   // Action server sends goals here
@@ -194,7 +201,7 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place","Received goal -----------------------------------------------");
 
     goal_ = action_server_.acceptNewGoal();
-    arm_link = goal_->frame;
+    base_link = goal_->frame;
     gripper_open = goal_->gripper_open;
     gripper_closed = goal_->gripper_closed;
     z_up = goal_->z_up;
@@ -237,25 +244,9 @@ public:
 
   }
 
-  // The goal is not actually recieved from ActionLib, but from a regular ros topic
-  void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr& msg)
-  {
-    ROS_INFO_STREAM_NAMED("pick_place","Got goal from topic!" << goal_->topic);
-
-    if( !pickAndPlace(msg->poses[0], msg->poses[1]) )
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
-      result_.success = false;
-      action_server_.setSucceeded(result_);
-    }
-
-  }
-
   // Cancel the action
   void preemptCB()
   {
-    //TODO
-
     ROS_INFO_STREAM_NAMED("pick_place","Preempted");
     action_server_.setPreempted();
   }
@@ -293,7 +284,7 @@ public:
 
     // -------------------------------------------------------------------------------------------
     // Create goal state
-    goal_pose.header.frame_id = "base_link";
+    goal_pose.header.frame_id = base_link;
     double tolerance_pose = 1e-4; // default: 1e-3... meters
     double tolerance_angle = 1e-2; // default 1e-2... radians
     moveit_msgs::Constraints goal_constraint0 =
@@ -313,7 +304,7 @@ public:
     // -------------------------------------------------------------------------------------------
     // Visualize goals in rviz
     ROS_INFO_STREAM_NAMED("pick_place","Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x <<
-                    " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
+                          " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
     publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
     publishMesh(goal_pose.pose.position.x,
                 goal_pose.pose.position.y,
@@ -416,18 +407,6 @@ public:
         double computeCartesianPath(std::vector<boost::shared_ptr<RobotState> > &traj, const std::string &link_name, const Eigen::Vector3d &direction, bool global_reference_frame,
         ............................double distance, double max_step, double jump_threshold, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn());
     */
-
-    /** OLD VERSION: DELETE THIS:
-        \brief Compute the sequence of joint values that correspond to a Cartesian path. The Cartesian path to be followed is specified
-        as a direction of motion (\e direction) for the origin of a robot link (\e link_name).  The link needs to move in a straight
-        line, following the specified direction, for the desired \e distance. The resulting joint values are stored in the vector \e states,
-        one by one. The maximum distance in Cartesian space between consecutive points on the resulting path is specified by \e max_step.
-        If a \e validCallback is specified, this is passed to the internal call to setFromIK(). In case of failure, the computation of the path
-        stops and the value returned corresponds to the distance that was computed and for which corresponding states were added to the path.
-        At the end of the function call, the state of the group corresponds to the last attempted Cartesian pose
-
-        double computeCartesianPath(moveit_msgs::RobotTrajectory &traj, const std::string &link_name, const Eigen::Vector3d &direction,
-        ........................... double distance, double max_step, const StateValidityCallbackFn &validCallback = StateValidityCallbackFn()); */
 
     //moveit_msgs::RobotTrajectory approach_traj_result; // create resulting generated trajectory (result)
     std::vector<robot_state::RobotStatePtr> approach_traj_result; // create resulting generated trajectory (result)
@@ -674,7 +653,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/base_link";
+    marker.header.frame_id = base_link;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -733,7 +712,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/base_link";
+    marker.header.frame_id = base_link;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -787,6 +766,37 @@ public:
     marker_pub_.publish( marker );
   }
 
+  void generateGrasps()
+  {
+    // Test pose
+    geometry_msgs::Pose start_pose;
+    start_pose.position.x = 0.2;
+    start_pose.position.y = 0.0;
+    start_pose.position.z = 0.1;
+    start_pose.orientation.x = 0.5;
+    start_pose.orientation.y = 0.0;
+    start_pose.orientation.z = 0.0;
+    start_pose.orientation.w = 1.0;
+
+    // TF
+    tf::TransformBroadcaster br;
+    tf::Transform transform;
+    // transform.setOrigin( tf::Vector3(0.0, 2.0, 0.0) );
+    // transform.setRotation( tf::Quaternion(0, 0, 0) );
+    tf::Vector3 origin = tf::Vector3( start_pose.position.x, start_pose.position.y, start_pose.position.z );
+    tf::Quaternion angle = tf::Quaternion( 1, 0, 0 );
+    transform.setOrigin( origin );
+    transform.setRotation( angle );
+
+    ros::Rate rate(10.0);
+    while (nh_.ok())
+    {
+      br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "pick_block"));
+      rate.sleep();
+    }
+
+
+  }
 
 
 }; // end of class
