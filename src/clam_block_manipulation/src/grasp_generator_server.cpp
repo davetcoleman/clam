@@ -286,7 +286,7 @@ public:
         grasp_pose.pose.position.y = xb;
         grasp_pose.pose.position.z = zb;
 
-        axis = Eigen::Vector3f(0,1,0);
+        axis = Eigen::Vector3f(1,0,0);
         break;
       case Y_AXIS:
         grasp_pose.pose.position.x = xb;
