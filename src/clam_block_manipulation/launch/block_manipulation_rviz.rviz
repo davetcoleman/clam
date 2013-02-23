@@ -4,13 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
-        - /MotionPlanning1/Planning Request1
-        - /MotionPlanning1/Planning Metrics1
-        - /MotionPlanning1/Planned Path1
+        - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
     Tree Height: 538
   - Class: rviz/Help
@@ -41,30 +37,6 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /move_clam_arm_markers
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 10000
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /move_clam_arm_markers_array
-      Name: MoveArm Collisions
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /allowed_contact_regions_array
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -77,156 +49,6 @@ Visualization Manager:
       Update Interval: 0
       Value: false
       Visual Enabled: true
-    - Class: rviz/InteractiveMarkers
-      Enabled: false
-      Name: Move Arm Control
-      Show Axes: false
-      Show Descriptions: true
-      Show Visual Aids: false
-      Update Topic: /clam_marker_server/update
-      Value: false
-    - Class: rviz/TF
-      Enabled: false
-      Frame Timeout: 15
-      Frames:
-        All Enabled: true
-      Marker Scale: 0.1
-      Name: ClamArmTF
-      Show Arrows: true
-      Show Axes: false
-      Show Names: true
-      Tree:
-        {}
-      Update Interval: 0
-      Value: false
-    - Alpha: 1
-      Auto Size: true
-      Auto Size Factor: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/DepthCloud
-      Color: 255; 255; 255
-      Color Image Topic: /camera/rgb/image_color
-      Color Transformer: RGB8
-      Color Transport Hint: raw
-      Decay Time: 0
-      Depth Map Topic: /camera/depth_registered/image_rect
-      Depth Map Transport Hint: raw
-      Enabled: true
-      Name: DepthCloud
-      Occlusion Compensation: false
-      Occlusion Time-Out: 30
-      Position Transformer: XYZ
-      Queue Size: 5
-      Selectable: true
-      Size (Pixels): 3
-      Style: Spheres
-      Topic Filter: true
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 0.350458
-        Min Value: -0.727807
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
-      Enabled: true
-      Name: DepthCloudFiltered
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: false
-      Size (Pixels): 15
-      Size (m): 0.01
-      Style: Points
-      Topic: /block_detection_server/block_output
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 0; 0; 255
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: false
-      Name: DepthCloudTable
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.01
-      Style: Points
-      Topic: /block_detection_server/plane_output
-      Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
-      Value: false
-    - Arrow Length: 0.1
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Name: BlockPoseArray
-      Topic: /block_detection_server/block_orientation
-      Value: true
-    - Class: rviz/InteractiveMarkers
-      Enabled: true
-      Name: RecognizedBlocks
-      Show Axes: false
-      Show Descriptions: false
-      Show Visual Aids: false
-      Update Topic: /block_controls/update
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: visualization_marker
-      Name: Goal Gripper Location
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /block_perception_server/block_marker
-      Name: RecognizedBlocks
-      Namespaces:
-        Block: true
-      Queue Size: 100
-      Value: true
     - Class: moveit_rviz_plugin/MotionPlanning
       Enabled: true
       MoveIt_Goal_Tolerance: 0
@@ -328,7 +150,7 @@ Visualization Manager:
         Scene Alpha: 0.9
         Scene Color: 50; 230; 50
         Scene Display Time: 0.2
-        Show Scene Geometry: true
+        Show Scene Geometry: false
         Voxel Coloring: Z-Axis
         Voxel Rendering: Occupied Voxels
       Scene Robot:
@@ -395,7 +217,203 @@ Visualization Manager:
             Show Trail: false
             Value: true
         Robot Alpha: 0.5
-        Show Scene Robot: true
+        Show Scene Robot: false
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        /base_link:
+          Value: true
+        /block_link:
+          Value: true
+        /elbow_pitch_link:
+          Value: true
+        /elbow_roll_link:
+          Value: true
+        /gripper_fake_tip_link:
+          Value: true
+        /gripper_finger_link:
+          Value: true
+        /gripper_fixed_finger_link:
+          Value: true
+        /gripper_roll_link:
+          Value: true
+        /shoulder_pan_link:
+          Value: true
+        /shoulder_pitch_link:
+          Value: true
+        /tabletop_link:
+          Value: true
+        /wrist_pitch_link:
+          Value: true
+        /wrist_roll_link:
+          Value: true
+        All Enabled: true
+      Marker Scale: 0.3
+      Name: ClamArmTF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        /base_link:
+          /block_link:
+            {}
+          /shoulder_pan_link:
+            /shoulder_pitch_link:
+              /elbow_roll_link:
+                /elbow_pitch_link:
+                  /wrist_roll_link:
+                    /wrist_pitch_link:
+                      /gripper_roll_link:
+                        /gripper_fake_tip_link:
+                          {}
+                        /gripper_finger_link:
+                          {}
+                        /gripper_fixed_finger_link:
+                          {}
+          /tabletop_link:
+            {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Auto Size:
+        Auto Size Factor: 1
+        Value: true
+      Autocompute Intensity Bounds:
+        Max Intensity: 4096
+        Min Intensity: 0
+        Value: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/DepthCloud
+      Color: 255; 255; 255
+      Color Image Topic: /camera/rgb/image_color
+      Color Transformer: RGB8
+      Color Transport Hint: raw
+      Decay Time: 0
+      Depth Map Topic: /camera/depth_registered/image_rect
+      Depth Map Transport Hint: raw
+      Enabled: true
+      Name: DepthCloud
+      Occlusion Compensation:
+        Occlusion Time-Out: 30
+        Value: false
+      Position Transformer: XYZ
+      Queue Size: 5
+      Selectable: true
+      Size (Pixels): 3
+      Style: Spheres
+      Topic Filter: true
+      Use Fixed Frame: true
+      Use rainbow:
+        Max Color: 255; 255; 255
+        Min Color: 0; 0; 0
+        Value: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds:
+        Max Intensity: 4096
+        Min Intensity: 0
+        Value: true
+      Autocompute Value Bounds:
+        Max Value: 0.350458
+        Min Value: -0.727807
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: false
+      Name: DepthCloudFiltered
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: false
+      Size (Pixels): 15
+      Size (m): 0.01
+      Style: Points
+      Topic: /block_detection_server/block_output
+      Use Fixed Frame: true
+      Use rainbow:
+        Max Color: 255; 255; 255
+        Min Color: 0; 0; 0
+        Value: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds:
+        Max Intensity: 4096
+        Min Intensity: 0
+        Value: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 0; 0; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Name: DepthCloudTable
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.01
+      Style: Points
+      Topic: /block_detection_server/plane_output
+      Use Fixed Frame: true
+      Use rainbow:
+        Max Color: 255; 255; 255
+        Min Color: 0; 0; 0
+        Value: true
+      Value: false
+    - Arrow Length: 0.1
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Name: BlockPoseArray
+      Topic: /block_detection_server/block_orientation
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /move_clam_arm_markers_array
+      Name: MoveArm Collisions
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /block_perception_server/block_marker
+      Name: RecognizedBlocks
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /end_effector_marker
+      Name: EE Grasp Poses
+      Namespaces:
+        Arrow: true
+        Sphere: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: EE Grasp Mesh
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -411,17 +429,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.33863
+      Distance: 0.836205
       Focal Point:
-        X: 0.532062
-        Y: -0.0262214
-        Z: -1.19209e-07
+        X: 0.284494
+        Y: -0.0200065
+        Z: -5.96044e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.934797
+      Pitch: 0.174797
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.44497
+      Yaw: 0.176794
     Saved: ~
 Window Geometry:
   Displays:
@@ -437,5 +455,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3818
-  Y: -48
+  X: 3817
+  Y: -76

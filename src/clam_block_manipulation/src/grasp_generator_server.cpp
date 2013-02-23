@@ -41,6 +41,7 @@
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 #include <actionlib/server/simple_action_server.h>
 #include <geometry_msgs/PoseArray.h>
 #include <Eigen/Core>
@@ -50,11 +51,23 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
+// MoveIt
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_interaction/robot_interaction.h>
+
+// C++
 #include <math.h>
 #define _USE_MATH_DEFINES
 
 namespace clam_block_manipulation
 {
+
+static const std::string ROBOT_DESCRIPTION="robot_description";
+static const std::string EE_LINK = "gripper_roll_link";
+static const std::string EE_GROUP = "gripper_group";
+static const std::string EE_NAME = "end_effector";
+static const std::string GROUP_NAME = "arm";
 
 // Class
 class GraspGeneratorServer
@@ -77,6 +90,7 @@ private:
 
   // MoveIt Components
   boost::shared_ptr<tf::TransformListener> tf_;
+  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // Parameters from goal
   std::string base_link;
@@ -95,6 +109,26 @@ public:
     // Rviz Visualizations
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
 
+
+    // ---------------------------------------------------------------------------------------------
+    // Create planning scene monitor
+    tf_.reset(new tf::TransformListener());
+    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION, tf_));
+
+    // ---------------------------------------------------------------------------------------------
+    // Check planning scene monitor
+    if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
+    {
+      /*
+        planning_scene_monitor_->startWorldGeometryMonitor();
+        planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
+        planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+      */
+    }
+    else
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Planning scene not configured");
+    }
 
     generateGrasps();
 
@@ -122,68 +156,6 @@ public:
     //    action_server_.setPreempted();
   }
 
-
-  // *********************************************************************************************************
-  // Helper Function
-  // *********************************************************************************************************
-  void publishMesh(double x, double y, double z, double qx, double qy, double qz, double qw )
-  {
-    visualization_msgs::Marker marker;
-    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link;
-    marker.header.stamp = ros::Time::now();
-
-    // Set the namespace and id for this marker.  This serves to create a unique ID
-    marker.ns = "Mesh";
-
-    // Set the marker type.
-    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker.mesh_resource = "package://clam_description/stl/gripper_base_link.STL";
-
-    // Set the marker action.  Options are ADD and DELETE
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 0;
-
-    marker.pose.position.x = x;
-    marker.pose.position.y = y;
-    marker.pose.position.z = z;
-
-    marker.pose.orientation.x = qx;
-    marker.pose.orientation.y = qy;
-    marker.pose.orientation.z = qz;
-    marker.pose.orientation.w = qw;
-
-    marker.scale.x = 0.001;
-    marker.scale.y = 0.001;
-    marker.scale.z = 0.001;
-
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
-
-    // Make line color
-    std_msgs::ColorRGBA color;
-    color.r = 0.8;
-    color.g = 0.1;
-    color.b = 0.1;
-    color.a = 1.0;
-
-
-    // Point
-    geometry_msgs::Point point_a;
-    point_a.x = x;
-    point_a.y = y;
-    point_a.z = z;
-    //ROS_INFO_STREAM("Publishing marker \n" << point_a );
-
-    // Add the point pair to the line message
-    marker.points.push_back( point_a );
-    marker.colors.push_back( color );
-
-
-    marker_pub_.publish( marker );
-  }
 
   void generateGrasps()
   {
@@ -216,10 +188,12 @@ public:
     double xb;
     double yb = 0; // stay in the y plane of the block
     double zb;
-    double theta = 0;
-    double angle_resolution = 20;
+    double theta1 = 0;
+    double theta2;
+    double angle_resolution = 8;
 
-    geometry_msgs::Pose arrow_pose;
+    geometry_msgs::Pose grasp_pose;
+    static const double RAD2DEG = 57.2957795;
 
     ros::Rate rate(0.5);
     while (nh_.ok())
@@ -228,33 +202,186 @@ public:
       br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), base_link, block_link));
 
       // Calculate grasp
-      xb = r*cos(theta);
-      zb = r*sin(theta);
-      theta += M_PI / angle_resolution;
+      xb = r*cos(theta1);
+      zb = r*sin(theta1);
 
-      arrow_pose.position.x = xb;
-      arrow_pose.position.y = yb;
-      arrow_pose.position.z = zb;
+      theta2 = 3*M_PI/2; // straight up
+      theta2 = 0; // left
+      theta2 = theta1 + 0.5*M_PI;
+      theta2 = M_PI - theta1;
 
-      Eigen::Quaternionf quat(Eigen::AngleAxis<float>(float(theta+M_PI), Eigen::Vector3f(0,-1,0)));
-      arrow_pose.orientation.x = quat.x();
-      arrow_pose.orientation.y = quat.y();
-      arrow_pose.orientation.z = quat.z();
-      arrow_pose.orientation.w = quat.w();
+      ROS_INFO_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG << " Theta2: " << theta2*RAD2DEG);
 
-      publishSphere(xb, yb, zb);
-      publishArrow(arrow_pose);
+      // Calculate the theta1 for next time
+      theta1 += M_PI / angle_resolution;
+
+      grasp_pose.position.x = xb;
+      grasp_pose.position.y = yb;
+      grasp_pose.position.z = zb;
+
+      Eigen::Quaternionf quat(Eigen::AngleAxis<float>(float(theta2), Eigen::Vector3f(0,1,0)));
+      grasp_pose.orientation.x = quat.x();
+      grasp_pose.orientation.y = quat.y();
+      grasp_pose.orientation.z = quat.z();
+      grasp_pose.orientation.w = quat.w();
+
+      publishSphere(grasp_pose);
+      publishArrow(grasp_pose);
+      publishMesh(grasp_pose);
+
 
       ROS_INFO("sleeping\n");
       rate.sleep();
+
+
     }
 
 
   }
 
-  void publishSphere(double x, double y, double z)
+  // *********************************************************************************************************
+  // Helper Function
+  // *********************************************************************************************************
+  void publishMesh(geometry_msgs::Pose &ee_pose)
   {
-    ROS_INFO_STREAM("Sphere (" << x << ","<< y << ","<< z << ")");
+    ROS_INFO_STREAM("Mesh (" << ee_pose.position.x << ","<< ee_pose.position.y << ","<< ee_pose.position.z << ")");
+
+
+    // -----------------------------------------------------------------------------------------------
+    // Get end effector group
+
+    // Create color
+    std_msgs::ColorRGBA marker_color;
+    marker_color.r = 1.0;
+    marker_color.g = 0.1;
+    marker_color.b = 0.1;
+    marker_color.a = 0.5;
+
+    ROS_INFO("getting robot state");
+
+    // Get robot state
+    robot_state::RobotState robot_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
+
+    ROS_INFO("getting link names");
+
+    // Get link names that are in end effector
+    const std::vector<std::string>
+      &ee_link_names = robot_state.getJointStateGroup(EE_GROUP)->getJointModelGroup()->getLinkModelNames();
+    ROS_INFO_STREAM_NAMED("grasp","Number of links in group " << EE_GROUP << ": " << ee_link_names.size());
+
+
+    ROS_INFO("robot interaction");
+
+    // Robot Interaction thing
+    //    robot_interaction::RobotInteraction robot_interaction("some_name", robot_state, tf_);
+    ///  RobotInteraction(const robot_model::RobotModelConstPtr &kmodel, const std::string &ns = "");
+    robot_interaction::RobotInteraction robot_interaction( planning_scene_monitor_->getRobotModel() );
+
+    ROS_INFO("decide active end effector");
+
+    robot_interaction.decideActiveEndEffectors("arm");
+
+    // EE Group?
+    std::vector<robot_interaction::RobotInteraction::EndEffector> 
+      active_eef = robot_interaction.getActiveEndEffectors();
+
+    ROS_INFO_STREAM_NAMED("grasp","Number of end effectors: " << active_eef.size());
+    
+    if( !active_eef.size() )
+    {
+      ROS_ERROR_STREAM_NAMED("grasp","No end effectors found!");
+      return;
+    }
+    robot_interaction::RobotInteraction::EndEffector eef = active_eef[0];
+
+    // Create marker array
+    visualization_msgs::MarkerArray marker_array;
+    robot_state.getRobotMarkers(marker_array, ee_link_names, marker_color, eef.eef_group, ros::Duration());
+
+    // Change pose?
+    tf::Pose tf_root_to_link;
+    try{
+      tf::poseEigenToTF(robot_state.getLinkState(eef.parent_link)->getGlobalLinkTransform(), tf_root_to_link);
+    }
+    catch(...)
+    {
+      ROS_ERROR_STREAM_NAMED("grasp","Didn't find link state for " << eef.parent_link);
+    }
+    // Release the ptr count on the kinematic state
+    //    robot_state.reset();
+
+    // Create a generic marker for copying properties
+    visualization_msgs::Marker generic_marker;
+    generic_marker.header.frame_id = block_link;
+    generic_marker.header.stamp = ros::Time::now();
+
+    // Allow a transform from our pose to the end effector position
+    geometry_msgs::Pose pose_to_eef;
+    pose_to_eef.position.x = 0;
+    pose_to_eef.position.y = 0;
+    pose_to_eef.position.z = 0;
+    pose_to_eef.orientation.x = 0;
+    pose_to_eef.orientation.x = 0;
+    pose_to_eef.orientation.x = 0;
+    pose_to_eef.orientation.x = 1;
+
+    ROS_INFO_STREAM_NAMED("grasp","Number of markers in end effector: " << marker_array.markers.size());
+
+    // Process each link of the end effector
+    for (std::size_t i = 0 ; i < marker_array.markers.size() ; ++i)
+    {
+      marker_array.markers[i].header = generic_marker.header;
+      marker_array.markers[i].mesh_use_embedded_materials = true;
+
+      // - - - - - - Do some math for the offset - - - - - -
+      tf::Pose tf_root_to_im, tf_root_to_mesh, tf_pose_to_eef;
+      tf::poseMsgToTF(ee_pose, tf_root_to_im);
+      tf::poseMsgToTF(marker_array.markers[i].pose, tf_root_to_mesh);
+      tf::poseMsgToTF(pose_to_eef, tf_pose_to_eef);
+      tf::Pose tf_eef_to_mesh = tf_root_to_link.inverse() * tf_root_to_mesh;
+      tf::Pose tf_im_to_mesh = tf_pose_to_eef * tf_eef_to_mesh;
+      tf::Pose tf_root_to_mesh_new = tf_root_to_im * tf_im_to_mesh;
+      tf::poseTFToMsg(tf_root_to_mesh_new, marker_array.markers[i].pose);
+      // - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array.markers[i]);
+
+
+      marker_pub_.publish( marker_array.markers[i] );
+      ros::Duration(2.0).sleep();
+    }
+
+
+    /*
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    marker.ns = "Mesh";
+
+    // Set the marker type.
+    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+    marker.mesh_resource = "package://clam_description/stl/gripper_base_link.STL";
+
+    // Set the marker action.  Options are ADD and DELETE
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.id = 0;
+
+    marker.pose = pose;
+
+    marker.scale.x = 0.001;
+    marker.scale.y = 0.001;
+    marker.scale.z = 0.001;
+
+    marker.color.r = 0.1;
+    marker.color.g = 8.0;
+    marker.color.b = 0.1;
+    marker.color.a = 1.0;
+
+    marker_pub_.publish( marker );
+    */
+  }
+
+  void publishSphere(geometry_msgs::Pose &pose)
+  {
+    ROS_INFO_STREAM("Sphere (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -269,7 +396,9 @@ public:
 
     // Set the marker action.  Options are ADD and DELETE
     marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 0;
+
+    static int arrow_id = 0;
+    marker.id = ++arrow_id;
 
     marker.pose.position.x = 0;
     marker.pose.position.y = 0;
@@ -296,13 +425,8 @@ public:
     color.b = 0.1;
     color.a = 1.0;
 
-
     // Point
-    geometry_msgs::Point point_a;
-    point_a.x = x;
-    point_a.y = y;
-    point_a.z = z;
-    //ROS_INFO_STREAM("Publishing marker \n" << point_a );
+    geometry_msgs::Point point_a = pose.position;
 
     // Add the point pair to the line message
     marker.points.push_back( point_a );
@@ -329,7 +453,9 @@ public:
 
     // Set the marker action.  Options are ADD and DELETE
     marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 0;
+
+    static int arrow_id = 0;
+    marker.id = ++arrow_id;
 
     marker.pose = pose;
 

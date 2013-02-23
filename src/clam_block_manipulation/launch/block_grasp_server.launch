@@ -1,0 +1,8 @@
+<launch>
+
+  <!-- Launch pick and place -->
+  <node name="grasp_generator_server" pkg="clam_block_manipulation" type="grasp_generator_server" output="screen">
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/> <!-- this allows the computeCartesianPath() func to have an IK solver -->
+  </node>
+
+</launch>

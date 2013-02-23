@@ -18,7 +18,10 @@ find_package(catkin REQUIRED
   opencv2
   eigen_conversions 
   moveit_ros_planning 
+  moveit_ros_planning_interface
   moveit_core
+  tf
+  tf_conversions
 )
 
 generate_messages(DEPENDENCIES
@@ -40,7 +43,10 @@ catkin_package(DEPENDS
   opencv2
   eigen_conversions 
   moveit_ros_planning 
+  moveit_ros_planning_interface
   moveit_core
+  tf
+  tf_conversions
 #  INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
 )
