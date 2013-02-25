@@ -108,6 +108,7 @@ private:
 
   // Grasp axis orientation
   enum grasp_axis_t {X_AXIS, Y_AXIS, Z_AXIS};
+  enum grasp_direction_t {UP, DOWN};
 
   // End Effector Markers
   bool ee_marker_is_loaded_; // determines if we have loaded the marker or not
@@ -121,7 +122,7 @@ public:
   // Constructor
   GraspGeneratorServer(const std::string name):
     ee_marker_is_loaded_(false)
-  //    action_server_(name, false),
+    //    action_server_(name, false),
   {
     base_link_ = "base_link";
     block_link_ = "block_link";
@@ -248,23 +249,30 @@ public:
     boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
 
     // Calculate grasps in two axis
-    generateAxisGrasps( possible_grasps, Y_AXIS );
-    generateAxisGrasps( possible_grasps, X_AXIS );
-    //    generateAxisGrasps( possible_grasps, Z_AXIS );
+    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+    generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
+    //    generateAxisGrasps( possible_grasps, X_AXIS );
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
   }
 
   // Create grasp positions in one axis
-  void generateAxisGrasps( std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t direction )
+  bool generateAxisGrasps( std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis, grasp_direction_t direction )
   {
     double radius = 0.15;
     double xb;
-    double yb = 0; // stay in the y plane of the block
+    double yb = 0.0; // stay in the y plane of the block
     double zb;
-    double theta1 = 0;
-    double angle_resolution = 8;
+    double theta1 = 0.0; // UP
+    double theta2 = 0.0;
+    double angle_resolution = 8.0;
+
+    // Gripper direction (UP/DOWN) rotation. UP set by default
+    if( direction == DOWN )
+    {
+      theta2 = M_PI;
+    }
 
     // Create a blank pose
     geometry_msgs::PoseStamped grasp_pose;
@@ -282,7 +290,7 @@ public:
       ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG);
 
       Eigen::Matrix3d rotation_matrix;
-      switch(direction)
+      switch(axis)
       {
       case X_AXIS:
         grasp_pose.pose.position.x = yb;
@@ -299,22 +307,16 @@ public:
         grasp_pose.pose.position.y = yb;
         grasp_pose.pose.position.z = zb;
 
-        rotation_matrix = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
+
+        rotation_matrix = Eigen::AngleAxisd(theta2, Eigen::Vector3d::UnitX())
           * Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
           * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ());
 
         break;
       case Z_AXIS:
         ROS_ERROR_STREAM_NAMED("grasp","Z Axis not implemented!");
-        return;
-
-        grasp_pose.pose.position.x = xb;
-        grasp_pose.pose.position.y = zb;
-        grasp_pose.pose.position.z = yb;
-
-        rotation_matrix = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
-          * Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
-          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ());
+        ros::Shutdown();
+        return false;
 
         break;
       }
@@ -377,6 +379,7 @@ public:
       //      rate.sleep();
     }
 
+    return true;
   }
 
   // Show all grasps in Rviz
@@ -475,8 +478,6 @@ public:
       marker_poses_.push_back( marker_array_.markers[i].pose );
     }
 
-
-
     // Record that we have loaded the gripper
     ee_marker_is_loaded_ = true;
   }
@@ -521,7 +522,6 @@ public:
 
       // Simple conversion from geometry_msgs::Pose to tf::Pose
       tf::poseMsgToTF(grasp_pose, tf_root_to_marker);
-      //      tf::poseMsgToTF(marker_array_.markers[i].pose, tf_root_to_mesh);
       tf::poseMsgToTF(marker_poses_[i], tf_root_to_mesh);
       tf::poseMsgToTF(grasp_pose_to_eef_pose_, tf_pose_to_eef);
 
