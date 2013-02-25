@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Generates grasps
+   Desc:   Generates grasps for a cube
 */
 
 // ROS
@@ -153,14 +153,14 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Test pose
-    float angle = M_PI / 1.5;
+    double angle = M_PI / 1.5;
 
     geometry_msgs::Pose block_pose;
     block_pose.position.x = 0.4;
     block_pose.position.y = 0.0;
     block_pose.position.z = 0.02;
 
-    Eigen::Quaternionf quat(Eigen::AngleAxis<float>(float(angle), Eigen::Vector3f(0,0,1)));
+    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d(0.0,0.0,1.0))); // TODO: convert this to UnitZ
     block_pose.orientation.x = quat.x();
     block_pose.orientation.y = quat.y();
     block_pose.orientation.z = quat.z();
@@ -238,7 +238,8 @@ public:
 
     // Calculate grasps in two axis
     generateAxisGrasps( possible_grasps, Y_AXIS );
-    generateAxisGrasps( possible_grasps, X_AXIS );
+    // generateAxisGrasps( possible_grasps, X_AXIS );
+    //    generateAxisGrasps( possible_grasps, Z_AXIS );
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
@@ -268,17 +269,15 @@ public:
       xb = radius*cos(theta1);
       zb = radius*sin(theta1);
 
-      theta2 = 3*M_PI/2; // straight up
-      theta2 = 0; // left
-      theta2 = theta1 + 0.5*M_PI;
-      theta2 = M_PI - theta1;
+      theta2 = M_PI - theta1; 
 
-      ROS_INFO_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG << " Theta2: " << theta2*RAD2DEG);
+      ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG << " Theta2: " << theta2*RAD2DEG);
 
       // Calculate the theta1 for next time
       theta1 += M_PI / angle_resolution;
 
-      Eigen::Vector3f axis;
+      Eigen::Vector3d axis;
+
       switch(direction)
       {
       case X_AXIS:
@@ -286,28 +285,43 @@ public:
         grasp_pose.pose.position.y = xb;
         grasp_pose.pose.position.z = zb;
 
-        axis = Eigen::Vector3f(1,0,0);
+        axis = Eigen::Vector3d::UnitX();
         break;
       case Y_AXIS:
         grasp_pose.pose.position.x = xb;
         grasp_pose.pose.position.y = yb;
         grasp_pose.pose.position.z = zb;
 
-        axis = Eigen::Vector3f(0,1,0);
+        axis = Eigen::Vector3d::UnitY();
         break;
       case Z_AXIS:
         grasp_pose.pose.position.x = xb;
         grasp_pose.pose.position.y = zb;
         grasp_pose.pose.position.z = yb;
 
-        axis = Eigen::Vector3f(0,0,1);
+        axis = Eigen::Vector3d::UnitZ();
         break;
       }
-      Eigen::Quaternionf quat(Eigen::AngleAxis<float>(float(theta2), axis));
-      grasp_pose.pose.orientation.x = quat.x();
-      grasp_pose.pose.orientation.y = quat.y();
-      grasp_pose.pose.orientation.z = quat.z();
+
+      //      Eigen::Matrix3d thing = Eigen::AngleAxisd(theta2, axis);
+      //      ROS_INFO_STREAM("AngleAxis:\n"<<thing);
+
+      /*
+      Eigen::Matrix3f m;
+      m = Eigen::AngleAxisf(0.25*M_PI, Eigen::Vector3f::UnitX())
+        * Eigen::AngleAxisf(0.5*M_PI, Eigen::Vector3f::UnitY())
+        * Eigen::AngleAxisf(0.33*M_PI, Eigen::Vector3f::UnitZ());
+      std::cout << m << std::endl << "is unitary: " << m.isUnitary() << std::endl;
+      */
+
+      //      Eigen::Quaternionf quat(m);
+      Eigen::Quaterniond quat(Eigen::AngleAxisd(theta2, axis));
+      grasp_pose.pose.orientation.x = quat.x();  
+      grasp_pose.pose.orientation.y = quat.y();  
+      grasp_pose.pose.orientation.z = quat.z();  
       grasp_pose.pose.orientation.w = quat.w();
+
+      ROS_INFO_STREAM("\n" << grasp_pose.pose);
 
       // ---------------------------------------------------------------------------------------------
       // Create a Grasp message
@@ -362,11 +376,12 @@ public:
   void visualizeGrasps(std::vector<manipulation_msgs::Grasp> possible_grasps,
                        geometry_msgs::Pose block_pose)
   {
-    ros::Rate rate(1.0);
+    ros::Rate rate(2.0);
 
     for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
         grasp_it < possible_grasps.end(); ++grasp_it)
     {
+      ROS_DEBUG_STREAM_NAMED("grasp","Showing grasp");
       geometry_msgs::Pose grasp_pose = grasp_it->grasp_pose.pose;
       publishSphere(grasp_pose);
       publishArrow(grasp_pose);
@@ -490,16 +505,14 @@ public:
       //ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array.markers[i]);
 
       marker_pub_.publish( marker_array.markers[i] );
-
-      // Sleep to prevent markers from being 'skipped' in rviz
-      ros::Duration(0.05).sleep();
+      ros::Duration(0.05).sleep();  // Sleep to prevent markers from being 'skipped' in rviz
     }
 
   }
 
   void publishSphere(geometry_msgs::Pose &pose)
   {
-    ROS_INFO_STREAM("Sphere (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
+    //ROS_INFO_STREAM("Sphere (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -554,11 +567,12 @@ public:
 
 
     marker_pub_.publish( marker );
+    ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
   void publishArrow(geometry_msgs::Pose &pose)
   {
-    ROS_INFO_STREAM("Arrow (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
+    //ROS_INFO_STREAM("Arrow (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -591,6 +605,7 @@ public:
     marker.lifetime = ros::Duration(30.0);
 
     marker_pub_.publish( marker );
+    ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
   void publishBlock(geometry_msgs::Pose &pose, const double& block_size)
@@ -625,7 +640,7 @@ public:
     marker.color.a = 0.5;
 
     marker_pub_.publish( marker );
-    ros::Duration(0.05).sleep();
+    ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
 }; // end of class
@@ -639,10 +654,10 @@ int main(int argc, char** argv)
   clam_block_manipulation::GraspGeneratorServer server("grap_gen");
 
   // Allow the action server to recieve and send ros messages
-  ros::AsyncSpinner spinner(1);
+  //  ros::spin(); // keep the action server alive
+  ros::AsyncSpinner spinner(4); // Use 4 threads
   spinner.start();
-
-  ros::spin(); // keep the action server alive
+  ros::waitForShutdown();
 
   return 0;
 }
