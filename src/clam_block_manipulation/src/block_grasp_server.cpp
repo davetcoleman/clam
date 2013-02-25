@@ -71,10 +71,11 @@ static const std::string EE_LINK = "gripper_roll_link";
 static const std::string EE_GROUP = "gripper_group";
 static const std::string EE_NAME = "end_effector";
 static const std::string GROUP_NAME = "arm";
+static const std::string MARKER_NAME = "/end_effector_marker";
 static const double RAD2DEG = 57.2957795;
 
 // Class
-class GraspGeneratorServer
+class BlockGraspServer
 {
 private:
   // A shared node handle
@@ -104,6 +105,7 @@ private:
   boost::thread tf_frame_thread_;
   tf::TransformBroadcaster tf_broadcaster_;
   tf::Transform transform_;
+  bool transform_is_set_;
   boost::mutex transform_mutex_;
 
   // Grasp axis orientation
@@ -120,8 +122,10 @@ private:
 public:
 
   // Constructor
-  GraspGeneratorServer(const std::string name):
-    ee_marker_is_loaded_(false)
+  BlockGraspServer(const std::string name):
+    nh_("~"),
+    ee_marker_is_loaded_(false),
+    transform_is_set_(false)
     //    action_server_(name, false),
   {
     base_link_ = "base_link";
@@ -129,7 +133,7 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
-    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
+    marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_NAME, 1);
 
 
     // ---------------------------------------------------------------------------------------------
@@ -156,11 +160,7 @@ public:
     // Create a TF transform and start publishing in a seperate thread
 
     // Make the frame just be at the origin to start with
-    /*
-      transform_.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
-      transform_.setRotation( tf::Quaternion(0.0, 0.0, 0.0, 1.0) );
-      boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
-    */
+    boost::thread tf_frame_thread_(boost::bind(&BlockGraspServer::tfFrameThread, this));
 
     // ---------------------------------------------------------------------------------------------
     // Test pose
@@ -171,7 +171,7 @@ public:
     block_pose.position.y = 0.0;
     block_pose.position.z = 0.02;
 
-    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d(0.0,0.0,1.0))); // TODO: convert this to UnitZ
+    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
     block_pose.orientation.x = quat.x();
     block_pose.orientation.y = quat.y();
     block_pose.orientation.z = quat.z();
@@ -183,8 +183,8 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
-    /*    action_server_.registerGoalCallback(boost::bind(&GraspGeneratorServer::goalCB, this));
-          action_server_.registerPreemptCallback(boost::bind(&GraspGeneratorServer::preemptCB, this));
+    /*    action_server_.registerGoalCallback(boost::bind(&BlockGraspServer::goalCB, this));
+          action_server_.registerPreemptCallback(boost::bind(&BlockGraspServer::preemptCB, this));
           action_server_.start();
     */
 
@@ -194,7 +194,7 @@ public:
   }
 
   // Destructor
-  ~GraspGeneratorServer()
+  ~BlockGraspServer()
   {
     // join the thread back before exiting
     tf_frame_thread_.join();
@@ -218,11 +218,14 @@ public:
     ros::Rate rate(0.5);
     while (nh_.ok())
     {
-      // Do not access transform_ if it is being updated
+      if( transform_is_set_ ) // do not start publishing until we have an intial transform loaded
       {
-        boost::mutex::scoped_lock transform_lock(transform_mutex_);
-        // Send Transform
-        tf_broadcaster_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), base_link_, block_link_));
+        // Do not access transform_ if it is being updated
+        {
+          boost::mutex::scoped_lock transform_lock(transform_mutex_);
+          // Send Transform
+          tf_broadcaster_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), base_link_, block_link_));
+        }
       }
 
       rate.sleep();
@@ -237,21 +240,21 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Update the published frame to now be at the block's location
-    tf::Vector3 origin = tf::Vector3( block_pose.position.x, block_pose.position.y, block_pose.position.z );
-    tf::Quaternion rotation = tf::Quaternion( block_pose.orientation.x,block_pose.orientation.y,
-                                              block_pose.orientation.z,block_pose.orientation.w );
+    tf::Pose tf_block_pose;
+    tf::poseMsgToTF(block_pose, tf_block_pose);
+
     // Do not access transform_ if it is being updated
     {
       boost::mutex::scoped_lock transform_lock(transform_mutex_);
-      transform_.setOrigin( origin );
-      transform_.setRotation( rotation );
+      transform_ = tf_block_pose;
+      transform_is_set_ = true; // do not start publishing until we have an intial transform loaded
     }
-    boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
 
     // Calculate grasps in two axis
-    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+    generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+    generateAxisGrasps( possible_grasps, X_AXIS, UP );
     generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-    //    generateAxisGrasps( possible_grasps, X_AXIS );
+    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
@@ -264,8 +267,8 @@ public:
     double xb;
     double yb = 0.0; // stay in the y plane of the block
     double zb;
-    double theta1 = 0.0; // UP
-    double theta2 = 0.0;
+    double theta1 = 0.0; // Where the point is located around the block
+    double theta2 = 0.0; // UP 'direction'
     double angle_resolution = 8.0;
 
     // Gripper direction (UP/DOWN) rotation. UP set by default
@@ -281,13 +284,13 @@ public:
     // Create angles 180 degrees around the chosen axis at given resolution
     for(int i = 0; i <= angle_resolution; ++i)
     {
-      ROS_INFO_STREAM_NAMED("grasp", "Generating grasp " << i );
+      ROS_DEBUG_STREAM_NAMED("grasp", "Generating grasp " << i );
 
       // Calculate grasp
       xb = radius*cos(theta1);
       zb = radius*sin(theta1);
 
-      ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG);
+      //ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG);
 
       Eigen::Matrix3d rotation_matrix;
       switch(axis)
@@ -298,8 +301,8 @@ public:
         grasp_pose.pose.position.z = zb;
 
         rotation_matrix = Eigen::AngleAxisd(theta1, Eigen::Vector3d::UnitX())
-          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY())
-          * Eigen::AngleAxisd(-0.5*M_PI, Eigen::Vector3d::UnitZ());
+          * Eigen::AngleAxisd(-0.5*M_PI, Eigen::Vector3d::UnitZ())
+          * Eigen::AngleAxisd(theta2, Eigen::Vector3d::UnitX()); // Flip 'direction'
 
         break;
       case Y_AXIS:
@@ -307,15 +310,13 @@ public:
         grasp_pose.pose.position.y = yb;
         grasp_pose.pose.position.z = zb;
 
-
-        rotation_matrix = Eigen::AngleAxisd(theta2, Eigen::Vector3d::UnitX())
-          * Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
-          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ());
+        rotation_matrix =
+          Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
+          *Eigen::AngleAxisd(theta2, Eigen::Vector3d::UnitX()); // Flip 'direction'
 
         break;
       case Z_AXIS:
         ROS_ERROR_STREAM_NAMED("grasp","Z Axis not implemented!");
-        ros::Shutdown();
         return false;
 
         break;
@@ -329,8 +330,6 @@ public:
 
       // Calculate the theta1 for next time
       theta1 += M_PI / angle_resolution;
-
-      ROS_INFO_STREAM("\n" << grasp_pose.pose);
 
       // ---------------------------------------------------------------------------------------------
       // Create a Grasp message
@@ -373,12 +372,10 @@ public:
       possible_grasps.push_back(new_grasp);
 
 
-      // ---------------------------------------------------------------------------------------------
-      // Loop
-      //      ROS_INFO("sleeping\n");
-      //      rate.sleep();
     }
 
+
+    ROS_INFO_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps sucessfully." );
     return true;
   }
 
@@ -386,12 +383,13 @@ public:
   void visualizeGrasps(std::vector<manipulation_msgs::Grasp> possible_grasps,
                        geometry_msgs::Pose block_pose)
   {
-    ros::Rate rate(0.5);
+    ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_NAME);
+    ros::Rate rate(1.0);
 
     for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
         grasp_it < possible_grasps.end(); ++grasp_it)
     {
-      ROS_DEBUG_STREAM_NAMED("grasp","Showing grasp");
+      ROS_DEBUG_STREAM_NAMED("grasp","Visualizing grasp pose");
       geometry_msgs::Pose grasp_pose = grasp_it->grasp_pose.pose;
       publishSphere(grasp_pose);
       publishArrow(grasp_pose);
@@ -424,7 +422,7 @@ public:
     // Get link names that are in end effector
     const std::vector<std::string>
       &ee_link_names = robot_state.getJointStateGroup(EE_GROUP)->getJointModelGroup()->getLinkModelNames();
-    ROS_INFO_STREAM_NAMED("grasp","Number of links in group " << EE_GROUP << ": " << ee_link_names.size());
+    ROS_DEBUG_STREAM_NAMED("grasp","Number of links in group " << EE_GROUP << ": " << ee_link_names.size());
 
     // Robot Interaction - finds the end effector associated with a planning group
     robot_interaction::RobotInteraction robot_interaction( planning_scene_monitor_->getRobotModel() );
@@ -484,7 +482,7 @@ public:
 
   void publishEEMarkers(geometry_msgs::Pose &grasp_pose)
   {
-    ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
+    //ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
 
     // -----------------------------------------------------------------------------------------------
     // Make sure EE Marker is loaded
@@ -503,7 +501,7 @@ public:
       marker_array_.markers[i].header.stamp = ros::Time::now();
 
       // Options
-      marker_array_.markers[i].lifetime = ros::Duration(30.0);
+      //marker_array_.markers[i].lifetime = ros::Duration(30.0);
 
       // Options for meshes
       if( marker_array_.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE )
@@ -579,7 +577,7 @@ public:
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    marker.lifetime = ros::Duration(30.0);
+    //marker.lifetime = ros::Duration(30.0);
 
     // Make line color
     std_msgs::ColorRGBA color;
@@ -632,7 +630,7 @@ public:
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    marker.lifetime = ros::Duration(30.0);
+    //marker.lifetime = ros::Duration(30.0);
 
     marker_pub_.publish( marker );
     ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
@@ -679,9 +677,9 @@ public:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "grasp_generator_server");
+  ros::init(argc, argv, "block_grasp_server");
 
-  clam_block_manipulation::GraspGeneratorServer server("grap_gen");
+  clam_block_manipulation::BlockGraspServer server("grap_gen");
 
   // Allow the action server to recieve and send ros messages
   //  ros::spin(); // keep the action server alive
