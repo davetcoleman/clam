@@ -109,10 +109,18 @@ private:
   // Grasp axis orientation
   enum grasp_axis_t {X_AXIS, Y_AXIS, Z_AXIS};
 
+  // End Effector Markers
+  bool ee_marker_is_loaded_; // determines if we have loaded the marker or not
+  visualization_msgs::MarkerArray marker_array_;
+  tf::Pose tf_root_to_link_;
+  geometry_msgs::Pose grasp_pose_to_eef_pose_;
+  std::vector<geometry_msgs::Pose> marker_poses_;
+
 public:
 
   // Constructor
-  GraspGeneratorServer(const std::string name) //:
+  GraspGeneratorServer(const std::string name):
+    ee_marker_is_loaded_(false)
   //    action_server_(name, false),
   {
     base_link_ = "base_link";
@@ -147,9 +155,11 @@ public:
     // Create a TF transform and start publishing in a seperate thread
 
     // Make the frame just be at the origin to start with
-    transform_.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
-    transform_.setRotation( tf::Quaternion(0.0, 0.0, 0.0, 1.0) );
-    boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
+    /*
+      transform_.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
+      transform_.setRotation( tf::Quaternion(0.0, 0.0, 0.0, 1.0) );
+      boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
+    */
 
     // ---------------------------------------------------------------------------------------------
     // Test pose
@@ -235,10 +245,11 @@ public:
       transform_.setOrigin( origin );
       transform_.setRotation( rotation );
     }
+    boost::thread tf_frame_thread_(boost::bind(&GraspGeneratorServer::tfFrameThread, this));
 
     // Calculate grasps in two axis
     generateAxisGrasps( possible_grasps, Y_AXIS );
-    // generateAxisGrasps( possible_grasps, X_AXIS );
+    generateAxisGrasps( possible_grasps, X_AXIS );
     //    generateAxisGrasps( possible_grasps, Z_AXIS );
 
     // Visualize results
@@ -253,7 +264,6 @@ public:
     double yb = 0; // stay in the y plane of the block
     double zb;
     double theta1 = 0;
-    double theta2;
     double angle_resolution = 8;
 
     // Create a blank pose
@@ -269,15 +279,9 @@ public:
       xb = radius*cos(theta1);
       zb = radius*sin(theta1);
 
-      theta2 = M_PI - theta1; 
+      ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG);
 
-      ROS_DEBUG_STREAM_NAMED("grasp","Theta1: " << theta1*RAD2DEG << " Theta2: " << theta2*RAD2DEG);
-
-      // Calculate the theta1 for next time
-      theta1 += M_PI / angle_resolution;
-
-      Eigen::Vector3d axis;
-
+      Eigen::Matrix3d rotation_matrix;
       switch(direction)
       {
       case X_AXIS:
@@ -285,41 +289,44 @@ public:
         grasp_pose.pose.position.y = xb;
         grasp_pose.pose.position.z = zb;
 
-        axis = Eigen::Vector3d::UnitX();
+        rotation_matrix = Eigen::AngleAxisd(theta1, Eigen::Vector3d::UnitX())
+          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY())
+          * Eigen::AngleAxisd(-0.5*M_PI, Eigen::Vector3d::UnitZ());
+
         break;
       case Y_AXIS:
         grasp_pose.pose.position.x = xb;
         grasp_pose.pose.position.y = yb;
         grasp_pose.pose.position.z = zb;
 
-        axis = Eigen::Vector3d::UnitY();
+        rotation_matrix = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
+          * Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
+          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ());
+
         break;
       case Z_AXIS:
+        ROS_ERROR_STREAM_NAMED("grasp","Z Axis not implemented!");
+        return;
+
         grasp_pose.pose.position.x = xb;
         grasp_pose.pose.position.y = zb;
         grasp_pose.pose.position.z = yb;
 
-        axis = Eigen::Vector3d::UnitZ();
+        rotation_matrix = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
+          * Eigen::AngleAxisd(M_PI - theta1, Eigen::Vector3d::UnitY())
+          * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ());
+
         break;
       }
 
-      //      Eigen::Matrix3d thing = Eigen::AngleAxisd(theta2, axis);
-      //      ROS_INFO_STREAM("AngleAxis:\n"<<thing);
-
-      /*
-      Eigen::Matrix3f m;
-      m = Eigen::AngleAxisf(0.25*M_PI, Eigen::Vector3f::UnitX())
-        * Eigen::AngleAxisf(0.5*M_PI, Eigen::Vector3f::UnitY())
-        * Eigen::AngleAxisf(0.33*M_PI, Eigen::Vector3f::UnitZ());
-      std::cout << m << std::endl << "is unitary: " << m.isUnitary() << std::endl;
-      */
-
-      //      Eigen::Quaternionf quat(m);
-      Eigen::Quaterniond quat(Eigen::AngleAxisd(theta2, axis));
-      grasp_pose.pose.orientation.x = quat.x();  
-      grasp_pose.pose.orientation.y = quat.y();  
-      grasp_pose.pose.orientation.z = quat.z();  
+      Eigen::Quaterniond quat(rotation_matrix);
+      grasp_pose.pose.orientation.x = quat.x();
+      grasp_pose.pose.orientation.y = quat.y();
+      grasp_pose.pose.orientation.z = quat.z();
       grasp_pose.pose.orientation.w = quat.w();
+
+      // Calculate the theta1 for next time
+      theta1 += M_PI / angle_resolution;
 
       ROS_INFO_STREAM("\n" << grasp_pose.pose);
 
@@ -376,7 +383,7 @@ public:
   void visualizeGrasps(std::vector<manipulation_msgs::Grasp> possible_grasps,
                        geometry_msgs::Pose block_pose)
   {
-    ros::Rate rate(2.0);
+    ros::Rate rate(0.5);
 
     for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
         grasp_it < possible_grasps.end(); ++grasp_it)
@@ -385,7 +392,7 @@ public:
       geometry_msgs::Pose grasp_pose = grasp_it->grasp_pose.pose;
       publishSphere(grasp_pose);
       publishArrow(grasp_pose);
-      //      publishMesh(grasp_pose);
+      publishEEMarkers(grasp_pose);
       publishBlock(block_pose, 0.04 - 0.001);
       rate.sleep();
     }
@@ -394,14 +401,14 @@ public:
   // *********************************************************************************************************
   // Helper Function
   // *********************************************************************************************************
-  void publishMesh(geometry_msgs::Pose &grasp_pose)
-  {
-    ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
 
+  // Call this once at begining to load the robot marker
+  void loadEEMarker()
+  {
     // -----------------------------------------------------------------------------------------------
     // Get end effector group
 
-    // Create color
+    // Create color to use for EE markers
     std_msgs::ColorRGBA marker_color;
     marker_color.r = 1.0;
     marker_color.g = 1.0;
@@ -437,74 +444,97 @@ public:
 
     // -----------------------------------------------------------------------------------------------
     // Get EE link markers for Rviz
-    visualization_msgs::MarkerArray marker_array;
-    robot_state.getRobotMarkers(marker_array, ee_link_names, marker_color, eef.eef_group, ros::Duration());
+    robot_state.getRobotMarkers(marker_array_, ee_link_names, marker_color, eef.eef_group, ros::Duration());
+    ROS_DEBUG_STREAM_NAMED("grasp","Number of rviz markers in end effector: " << marker_array_.markers.size());
 
     // Change pose from Eigen to TF
-    tf::Pose tf_root_to_link;
     try{
-      tf::poseEigenToTF(robot_state.getLinkState(eef.parent_link)->getGlobalLinkTransform(), tf_root_to_link);
+      tf::poseEigenToTF(robot_state.getLinkState(eef.parent_link)->getGlobalLinkTransform(), tf_root_to_link_);
     }
     catch(...)
     {
       ROS_ERROR_STREAM_NAMED("grasp","Didn't find link state for " << eef.parent_link);
     }
 
+    // Offset from gasp_pose to end effector
     static const double X_OFFSET = 0.0; //0.15;
 
     // Allow a transform from our pose to the end effector position
-    geometry_msgs::Pose grasp_pose_to_eef_pose;
-    grasp_pose_to_eef_pose.position.x = X_OFFSET;
-    grasp_pose_to_eef_pose.position.y = 0;
-    grasp_pose_to_eef_pose.position.z = 0;
-    grasp_pose_to_eef_pose.orientation.x = 0;
-    grasp_pose_to_eef_pose.orientation.y = 0;
-    grasp_pose_to_eef_pose.orientation.z = 0;
-    grasp_pose_to_eef_pose.orientation.w = 1;
+    grasp_pose_to_eef_pose_.position.x = X_OFFSET;
+    grasp_pose_to_eef_pose_.position.y = 0;
+    grasp_pose_to_eef_pose_.position.z = 0;
+    grasp_pose_to_eef_pose_.orientation.x = 0;
+    grasp_pose_to_eef_pose_.orientation.y = 0;
+    grasp_pose_to_eef_pose_.orientation.z = 0;
+    grasp_pose_to_eef_pose_.orientation.w = 1;
 
-    ROS_DEBUG_STREAM_NAMED("grasp","Number of rviz markers in end effector: " << marker_array.markers.size());
+
+    // Copy original marker poses to a vector
+    for (std::size_t i = 0 ; i < marker_array_.markers.size() ; ++i)
+    {
+      marker_poses_.push_back( marker_array_.markers[i].pose );
+    }
+
+
+
+    // Record that we have loaded the gripper
+    ee_marker_is_loaded_ = true;
+  }
+
+  void publishEEMarkers(geometry_msgs::Pose &grasp_pose)
+  {
+    ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
+
+    // -----------------------------------------------------------------------------------------------
+    // Make sure EE Marker is loaded
+    if( !ee_marker_is_loaded_ )
+    {
+      ROS_INFO_STREAM_NAMED("grasp","Loading end effector rviz markers");
+      loadEEMarker();
+    }
 
     // -----------------------------------------------------------------------------------------------
     // Process each link of the end effector
-    for (std::size_t i = 0 ; i < marker_array.markers.size() ; ++i)
+    for (std::size_t i = 0 ; i < marker_array_.markers.size() ; ++i)
     {
       // Header
-      marker_array.markers[i].header.frame_id = block_link_;
-      marker_array.markers[i].header.stamp = ros::Time::now();
+      marker_array_.markers[i].header.frame_id = block_link_;
+      marker_array_.markers[i].header.stamp = ros::Time::now();
 
       // Options
-      marker_array.markers[i].lifetime = ros::Duration(30.0);
+      marker_array_.markers[i].lifetime = ros::Duration(30.0);
 
       // Options for meshes
-      if( marker_array.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE )
+      if( marker_array_.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE )
       {
-        marker_array.markers[i].mesh_use_embedded_materials = true;
+        marker_array_.markers[i].mesh_use_embedded_materials = true;
       }
 
       // -----------------------------------------------------------------------------------------------
       // Do some math for the offset
       // grasp_pose             - our generated grasp
       // markers[i].pose        - an ee link's pose relative to the whole end effector
-      // grasp_pose_to_eef_pose - the offset from the grasp pose to eef_pose - probably nothing
+      // grasp_pose_to_eef_pose_ - the offset from the grasp pose to eef_pose - probably nothing
       tf::Pose tf_root_to_marker;
       tf::Pose tf_root_to_mesh;
       tf::Pose tf_pose_to_eef;
 
       // Simple conversion from geometry_msgs::Pose to tf::Pose
       tf::poseMsgToTF(grasp_pose, tf_root_to_marker);
-      tf::poseMsgToTF(marker_array.markers[i].pose, tf_root_to_mesh);
-      tf::poseMsgToTF(grasp_pose_to_eef_pose, tf_pose_to_eef);
+      //      tf::poseMsgToTF(marker_array_.markers[i].pose, tf_root_to_mesh);
+      tf::poseMsgToTF(marker_poses_[i], tf_root_to_mesh);
+      tf::poseMsgToTF(grasp_pose_to_eef_pose_, tf_pose_to_eef);
 
       // Conversions
-      tf::Pose tf_eef_to_mesh = tf_root_to_link.inverse() * tf_root_to_mesh;
+      tf::Pose tf_eef_to_mesh = tf_root_to_link_.inverse() * tf_root_to_mesh;
       tf::Pose tf_marker_to_mesh = tf_pose_to_eef * tf_eef_to_mesh;
       tf::Pose tf_root_to_mesh_new = tf_root_to_marker * tf_marker_to_mesh;
-      tf::poseTFToMsg(tf_root_to_mesh_new, marker_array.markers[i].pose);
+      tf::poseTFToMsg(tf_root_to_mesh_new, marker_array_.markers[i].pose);
       // -----------------------------------------------------------------------------------------------
 
-      //ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array.markers[i]);
+      //ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array_.markers[i]);
 
-      marker_pub_.publish( marker_array.markers[i] );
+      marker_pub_.publish( marker_array_.markers[i] );
       ros::Duration(0.05).sleep();  // Sleep to prevent markers from being 'skipped' in rviz
     }
 
