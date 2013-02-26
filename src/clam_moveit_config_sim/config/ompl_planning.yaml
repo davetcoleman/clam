@@ -27,7 +27,9 @@ arm:
     - KPIECEkConfigDefault
     - BKPIECEkConfigDefault
     - RRTStarkConfigDefault
-gripper:
+  projection_evaluator: joints(shoulder_pan_joint,shoulder_pitch_joint)
+  longest_valid_segment_fraction: 0.05
+gripper_group:
   planner_configs:
     - SBLkConfigDefault
     - LBKPIECEkConfigDefault

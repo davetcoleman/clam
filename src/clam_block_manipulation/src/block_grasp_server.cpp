@@ -43,6 +43,7 @@
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 #include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <manipulation_msgs/Grasp.h>
@@ -57,6 +58,7 @@
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/robot_interaction/robot_interaction.h>
+#include <moveit_msgs/PickupAction.h> // TODO: remove
 
 // C++
 #include <boost/thread.hpp>
@@ -70,10 +72,11 @@ static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_LINK = "gripper_roll_link";
 static const std::string EE_GROUP = "gripper_group";
 static const std::string EE_NAME = "end_effector";
-static const std::string GROUP_NAME = "arm";
-static const std::string MARKER_NAME = "/end_effector_marker";
+static const std::string PLANNING_GROUP_NAME = "arm";
+static const std::string MARKER_TOPIC = "/end_effector_marker";
+static const std::string COLLISION_TOPIC = "/collision_object";
 static const double RAD2DEG = 57.2957795;
-
+static const double BLOCK_SIZE = 0.04;
 // Class
 class BlockGraspServer
 {
@@ -81,8 +84,14 @@ private:
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // A ROS publisher
-  ros::Publisher marker_pub_;
+  // ROS publishers
+  ros::Publisher rviz_marker_pub_;
+  ros::Publisher collision_obj_pub_;
+
+  // TODO: remove
+  actionlib::SimpleActionClient<moveit_msgs::PickupAction> movegroup_action_;
+
+
 
   // Action Servers and Clients
   /*  actionlib::SimpleActionServer<clam_msgs::PickPlaceAction> action_server_;
@@ -99,7 +108,6 @@ private:
 
   // Parameters from goal
   std::string base_link_;
-  std::string block_link_;
 
   // TF Frame Transform stuff
   boost::thread tf_frame_thread_;
@@ -124,17 +132,26 @@ public:
   // Constructor
   BlockGraspServer(const std::string name):
     nh_("~"),
+    movegroup_action_("pickup", true), //TODO: remove
     ee_marker_is_loaded_(false),
     transform_is_set_(false)
     //    action_server_(name, false),
   {
     base_link_ = "base_link";
-    block_link_ = "block_link";
 
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
-    marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_NAME, 1);
+    rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
 
+    // -----------------------------------------------------------------------------------------------
+    // Adding collision objects
+    collision_obj_pub_ = nh_.advertise<moveit_msgs::CollisionObject>(COLLISION_TOPIC, 1);
+
+    // -----------------------------------------------------------------------------------------------
+    // Connect to move_group/Pickup action server
+    while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
+      ROS_INFO_STREAM_NAMED("grasp","Waiting for the move_group/Pickup action server");
+    }
 
     // ---------------------------------------------------------------------------------------------
     // Create planning scene monitor
@@ -160,14 +177,14 @@ public:
     // Create a TF transform and start publishing in a seperate thread
 
     // Make the frame just be at the origin to start with
-    boost::thread tf_frame_thread_(boost::bind(&BlockGraspServer::tfFrameThread, this));
+    //boost::thread tf_frame_thread_(boost::bind(&BlockGraspServer::tfFrameThread, this));
 
     // ---------------------------------------------------------------------------------------------
     // Test pose
-    double angle = M_PI / 1.5;
+    double angle = 0; //M_PI / 1.5;
 
     geometry_msgs::Pose block_pose;
-    block_pose.position.x = 0.4;
+    block_pose.position.x = 0.25;
     block_pose.position.y = 0.0;
     block_pose.position.z = 0.02;
 
@@ -197,7 +214,7 @@ public:
   ~BlockGraspServer()
   {
     // join the thread back before exiting
-    tf_frame_thread_.join();
+    //tf_frame_thread_.join();
   }
 
   // Action server sends goals here
@@ -213,51 +230,60 @@ public:
   }
 
   // Publish our custom TF frame asyncronously
-  void tfFrameThread()
-  {
-    ros::Rate rate(0.5);
+  /*
+    void tfFrameThread()
+    {
+    ros::Rate rate(2.0);
     while (nh_.ok())
     {
-      if( transform_is_set_ ) // do not start publishing until we have an intial transform loaded
-      {
-        // Do not access transform_ if it is being updated
-        {
-          boost::mutex::scoped_lock transform_lock(transform_mutex_);
-          // Send Transform
-          tf_broadcaster_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), base_link_, block_link_));
-        }
-      }
-
-      rate.sleep();
+    if( transform_is_set_ ) // do not start publishing until we have an intial transform loaded
+    {
+    // Do not access transform_ if it is being updated
+    {
+    boost::mutex::scoped_lock transform_lock(transform_mutex_);
+    // Send Transform
+    tf_broadcaster_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), base_link_, block_frame_));
     }
-  }
+    }
+
+    rate.sleep();
+    }
+    }
+  */
 
   // Create all possible grasp positions for a block
   void generateGrasps( geometry_msgs::Pose& block_pose )
   {
+    // ---------------------------------------------------------------------------------------------
+    // Create the transform from block_frame to base_frame
+    tf::Pose tf_block_pose;
+    tf::poseMsgToTF(block_pose, tf_block_pose);
+    transform_ = tf_block_pose;
+
+    // ---------------------------------------------------------------------------------------------
+    // Generate grasps
+
     // List of possible block grasps
     std::vector<manipulation_msgs::Grasp> possible_grasps;
 
-    // ---------------------------------------------------------------------------------------------
-    // Update the published frame to now be at the block's location
-    tf::Pose tf_block_pose;
-    tf::poseMsgToTF(block_pose, tf_block_pose);
-
-    // Do not access transform_ if it is being updated
-    {
-      boost::mutex::scoped_lock transform_lock(transform_mutex_);
-      transform_ = tf_block_pose;
-      transform_is_set_ = true; // do not start publishing until we have an intial transform loaded
-    }
-
     // Calculate grasps in two axis
-    generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-    generateAxisGrasps( possible_grasps, X_AXIS, UP );
-    generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
+    //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+    //generateAxisGrasps( possible_grasps, X_AXIS, UP );
+    //generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
     generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+
+    // Filter grasp poses
+    filterGrasps( possible_grasps );
+
+    ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
+
+    //ros::Duration(5.0).sleep();
+
+    // Plan the results
+    executeGrasps(possible_grasps, block_pose);
   }
 
   // Create grasp positions in one axis
@@ -270,15 +296,19 @@ public:
     // Create re-usable approach motion
     manipulation_msgs::GripperTranslation gripper_approach;
     gripper_approach.direction.header.stamp = ros::Time::now();
-    gripper_approach.direction.vector.x = 0;
+    gripper_approach.direction.header.frame_id = base_link_;
+    gripper_approach.direction.vector.x = 1;
     gripper_approach.direction.vector.y = 0;
-    gripper_approach.direction.vector.z = -1; // Approach direction (negative z axis)
+    gripper_approach.direction.vector.z = 0; // Approach direction (negative z axis)
+    //gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
+    //gripper_approach.min_distance = .025; // half of the desired? Untested.
     gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
     gripper_approach.min_distance = .025; // half of the desired? Untested.
 
     // Create re-usable retreat motion
     manipulation_msgs::GripperTranslation gripper_retreat;
     gripper_retreat.direction.header.stamp = ros::Time::now();
+    gripper_retreat.direction.header.frame_id = base_link_;
     gripper_retreat.direction.vector.x = 0;
     gripper_retreat.direction.vector.y = 0;
     gripper_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
@@ -288,6 +318,7 @@ public:
     // Create re-usable blank pose
     geometry_msgs::PoseStamped grasp_pose;
     grasp_pose.header.stamp = ros::Time::now();
+    grasp_pose.header.frame_id = base_link_;
 
     // ---------------------------------------------------------------------------------------------
     // Variables needed for calculations
@@ -305,7 +336,11 @@ public:
       theta2 = M_PI;
     }
 
-    // Create angles 180 degrees around the chosen axis at given resolution
+    /* Developer Note:
+     * Create angles 180 degrees around the chosen axis at given resolution
+     * We create the grasps in the reference frame of the block, then convert it to the base link
+     *
+     */
     for(int i = 0; i <= angle_resolution; ++i)
     {
       ROS_DEBUG_STREAM_NAMED("grasp", "Generating grasp " << i );
@@ -366,10 +401,19 @@ public:
       // The internal posture of the hand for the pre-grasp
       // only positions are used
       //sensor_msgs/JointState pre_grasp_posture
+      new_grasp.pre_grasp_posture.header.frame_id = base_link_;
 
       // The internal posture of the hand for the grasp
       // positions and efforts are used
       //sensor_msgs/JointState grasp_posture
+      new_grasp.grasp_posture.header.frame_id = base_link_;
+
+      // Convert pose to TF, transform it, then convert it back to geometry_msg
+      tf::Pose tf_grasp_pose_block_frame;
+      tf::Pose tf_grasp_pose_base_frame;
+      tf::poseMsgToTF(grasp_pose.pose, tf_grasp_pose_block_frame);
+      tf_grasp_pose_base_frame = transform_ * tf_grasp_pose_block_frame;
+      tf::poseTFToMsg(tf_grasp_pose_base_frame, grasp_pose.pose);
 
       // The position of the end-effector for the grasp relative to a reference frame
       // (that is always specified elsewhere, not in this message)
@@ -401,11 +445,205 @@ public:
     return true;
   }
 
-  // Show all grasps in Rviz
-  void visualizeGrasps(std::vector<manipulation_msgs::Grasp> possible_grasps,
-                       geometry_msgs::Pose block_pose)
+  void filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
   {
-    ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_NAME);
+    // Only choose the 4th grasp
+    std::vector<manipulation_msgs::Grasp> single_grasp;
+    single_grasp.push_back(possible_grasps[4]);
+    possible_grasps = single_grasp;
+
+    ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
+  }
+
+  void createCollisionObject(const geometry_msgs::Pose& block_pose, moveit_msgs::CollisionObject& block_object)
+  {
+    ROS_INFO_STREAM_NAMED("grasp","Creating the collision object");
+    // ---------------------------------------------------------------------------------------------
+    // Create Solid Primitive
+    shape_msgs::SolidPrimitive block_shape;
+
+    // type of the shape
+    block_shape.type = shape_msgs::SolidPrimitive::BOX;
+
+    // dimensions of the shape
+    //    block_shape.dimensions.resize(3);
+    block_shape.dimensions.push_back(BLOCK_SIZE); // x
+    block_shape.dimensions.push_back(BLOCK_SIZE); // y
+    block_shape.dimensions.push_back(BLOCK_SIZE); // z
+
+    // ---------------------------------------------------------------------------------------------
+    // Add the block to the collision environment
+
+    // a header, used for interpreting the poses
+    block_object.header.frame_id = base_link_;
+    block_object.header.stamp = ros::Time::now();
+
+    // the id of the object
+    static int block_id = 0;
+    block_object.id = "Block" + boost::lexical_cast<std::string>(block_id);
+
+    // the the collision geometries associated with the object;
+    // their poses are with respect to the specified header
+
+    // solid geometric primitives
+    //shape_msgs/SolidPrimitive[] primitives // TODO?
+    block_object.primitives.push_back(block_shape);
+
+    //geometry_msgs/Pose[] primitive_poses
+    block_object.primitive_poses.push_back( block_pose );
+
+    // meshes
+    //shape_msgs/Mesh[] meshes
+    //geometry_msgs/Pose[] mesh_poses
+
+    // bounding planes (equation is specified, but the plane can be oriented using an additional pose)
+    //shape_msgs/Plane[] planes
+    //geometry_msgs/Pose[] plane_poses
+
+    // Operation to be performed
+    block_object.operation = moveit_msgs::CollisionObject::ADD; // Puts the object into the environment or updates the object if already added
+
+  }
+
+  void addCollisionObject(const geometry_msgs::Pose& block_pose, moveit_msgs::CollisionObject& block_object)
+  {
+    ROS_INFO_STREAM_NAMED("grasp","Adding collision object");
+
+    // Create the object
+    createCollisionObject(block_pose, block_object);
+
+    // Send the object
+    collision_obj_pub_.publish(block_object);
+    ROS_INFO_STREAM_NAMED("grasp","Collision object published");
+  }
+
+  void executeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+                     const geometry_msgs::Pose& block_pose)
+  {
+    ROS_INFO_STREAM_NAMED("grasp","Creating Pickup Goal");
+
+    // ---------------------------------------------------------------------------------------------
+    // Create an empty collision object to be filled in by addCollisionObject
+    moveit_msgs::CollisionObject block_object;
+    addCollisionObject(block_pose, block_object);
+
+
+    //ROS_INFO_STREAM_NAMED("grasp","Temp done");
+    //return;
+
+    // ---------------------------------------------------------------------------------------------
+    // Create PlanningOptions
+    moveit_msgs::PlanningOptions options;
+
+    // The diff to consider for the planning scene (optional)
+    //PlanningScene planning_scene_diff
+
+    // If this flag is set to true, the action
+    // returns an executable plan in the response but does not attempt execution
+    options.plan_only = false;
+
+    // If this flag is set to true, the action of planning &
+    // executing is allowed to look around  (move sensors) if
+    // it seems that not enough information is available about
+    // the environment
+    options.look_around = false;
+
+    // If this value is positive, the action of planning & executing
+    // is allowed to look around for a maximum number of attempts;
+    // If the value is left as 0, the default value is used, as set
+    // with dynamic_reconfigure
+    //int32 look_around_attempts
+
+    // If set and if look_around is true, this value is used as
+    // the maximum cost allowed for a path to be considered executable.
+    // If the cost of a path is higher than this value, more sensing or
+    // a new plan needed. If left as 0.0 but look_around is true, then
+    // the default value set via dynamic_reconfigure is used
+    //float64 max_safe_execution_cost
+
+    // If the plan becomes invalidated during execution, it is possible to have
+    // that plan recomputed and execution restarted. This flag enables this
+    // functionality
+    options.replan = false;
+
+    // The maximum number of replanning attempts
+    //int32 replan_attempts
+
+    // ---------------------------------------------------------------------------------------------
+    // Create and populate the goal
+    moveit_msgs::PickupGoal goal;
+
+    // An action for picking up an object
+
+    // The name of the object to pick up (as known in the planning scene)
+    goal.target_name = block_object.id;
+
+    // which group should be used to plan for pickup
+    goal.group_name = PLANNING_GROUP_NAME;
+
+    // which end-effector to be used for pickup (ideally descending from the group above)
+    goal.end_effector = EE_NAME;
+
+    // a list of possible grasps to be used. At least one grasp must be filled in
+    goal.possible_grasps.resize(possible_grasps.size());
+    goal.possible_grasps = possible_grasps;
+
+    // the name that the support surface (e.g. table) has in the collision map
+    // can be left empty if no name is available
+    //string collision_support_surface_name
+
+    // whether collisions between the gripper and the support surface should be acceptable
+    // during move from pre-grasp to grasp and during lift. Collisions when moving to the
+    // pre-grasp location are still not allowed even if this is set to true.
+    goal.allow_gripper_support_collision = true;
+
+    // The names of the links the object to be attached is allowed to touch;
+    // If this is left empty, it defaults to the links in the used end-effector
+    //string[] attached_object_touch_links
+
+    // Optional constraints to be imposed on every point in the motion plan
+    //Constraints path_constraints
+
+    // an optional list of obstacles that we have semantic information about
+    // and that can be touched/pushed/moved in the course of grasping;
+    // CAREFUL: If the object name 'all' is used, collisions with all objects are disabled during the approach & lift.
+    //string[] allowed_touch_objects
+
+    // The maximum amount of time the motion planner is allowed to plan for
+    goal.allowed_planning_time = 10.0; // seconds?
+
+    // Planning options
+    goal.planning_options = options;
+
+    //ROS_INFO_STREAM_NAMED("grasp","Pause");
+    //ros::Duration(5.0).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Send the grasp to move_group/Pickup
+    ROS_INFO_STREAM_NAMED("grasp","Sending pick action to move_group/Pickup");
+
+    movegroup_action_.sendGoal(goal);
+    ros::Duration(5.0).sleep();
+
+    if(!movegroup_action_.waitForResult(ros::Duration(20.0)))
+    {
+      ROS_INFO_STREAM_NAMED("grasp","Returned early?");
+    }
+    if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      ROS_INFO_STREAM_NAMED("grasp","Plan successful!");
+    }
+    else
+    {
+      ROS_ERROR_STREAM_NAMED("grasp","FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+    }
+  }
+
+  // Show all grasps in Rviz
+  void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+                       const geometry_msgs::Pose& block_pose)
+  {
+    ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_TOPIC);
     ros::Rate rate(1.0);
 
     for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
@@ -416,7 +654,7 @@ public:
       publishSphere(grasp_pose);
       publishArrow(grasp_pose);
       publishEEMarkers(grasp_pose);
-      publishBlock(block_pose, 0.04 - 0.001);
+      //publishBlock(block_pose, BLOCK_SIZE - 0.001);
       rate.sleep();
     }
   }
@@ -426,7 +664,7 @@ public:
   // *********************************************************************************************************
 
   // Call this once at begining to load the robot marker
-  void loadEEMarker()
+  bool loadEEMarker()
   {
     // -----------------------------------------------------------------------------------------------
     // Get end effector group
@@ -436,21 +674,30 @@ public:
     marker_color.r = 1.0;
     marker_color.g = 1.0;
     marker_color.b = 1.0;
-    marker_color.a = 0.5;
+    marker_color.a = 0.85;
 
     // Get robot state
     robot_state::RobotState robot_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
 
+    // Get joint state group
+    robot_state::JointStateGroup* joint_state_group = robot_state.getJointStateGroup(EE_GROUP);
+    if( joint_state_group == NULL ) // make sure EE_GROUP exists
+    {
+      ROS_ERROR_STREAM_NAMED("grasp","Unable to find joint state group " << EE_GROUP );
+      return false;
+    }
+
+
     // Get link names that are in end effector
     const std::vector<std::string>
-      &ee_link_names = robot_state.getJointStateGroup(EE_GROUP)->getJointModelGroup()->getLinkModelNames();
+      &ee_link_names = joint_state_group->getJointModelGroup()->getLinkModelNames();
     ROS_DEBUG_STREAM_NAMED("grasp","Number of links in group " << EE_GROUP << ": " << ee_link_names.size());
 
     // Robot Interaction - finds the end effector associated with a planning group
     robot_interaction::RobotInteraction robot_interaction( planning_scene_monitor_->getRobotModel() );
 
     // Decide active end effectors
-    robot_interaction.decideActiveEndEffectors(GROUP_NAME);
+    robot_interaction.decideActiveEndEffectors(PLANNING_GROUP_NAME);
 
     // Get active EE
     std::vector<robot_interaction::RobotInteraction::EndEffector>
@@ -459,7 +706,7 @@ public:
     if( !active_eef.size() )
     {
       ROS_ERROR_STREAM_NAMED("grasp","No active end effectors found! Make sure kinematics.yaml is loaded in this node's namespace!");
-      return;
+      return false;
     }
 
     // Just choose the first end effector TODO: better logic?
@@ -500,6 +747,8 @@ public:
 
     // Record that we have loaded the gripper
     ee_marker_is_loaded_ = true;
+
+    return true;
   }
 
   void publishEEMarkers(geometry_msgs::Pose &grasp_pose)
@@ -511,7 +760,11 @@ public:
     if( !ee_marker_is_loaded_ )
     {
       ROS_INFO_STREAM_NAMED("grasp","Loading end effector rviz markers");
-      loadEEMarker();
+      if( !loadEEMarker() )
+      {
+        ROS_WARN_STREAM_NAMED("grasp","Unable to publish EE marker");
+        return;
+      }
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -519,7 +772,7 @@ public:
     for (std::size_t i = 0 ; i < marker_array_.markers.size() ; ++i)
     {
       // Header
-      marker_array_.markers[i].header.frame_id = block_link_;
+      marker_array_.markers[i].header.frame_id = base_link_;
       marker_array_.markers[i].header.stamp = ros::Time::now();
 
       // Options
@@ -554,7 +807,7 @@ public:
 
       //ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array_.markers[i]);
 
-      marker_pub_.publish( marker_array_.markers[i] );
+      rviz_marker_pub_.publish( marker_array_.markers[i] );
       ros::Duration(0.05).sleep();  // Sleep to prevent markers from being 'skipped' in rviz
     }
 
@@ -566,7 +819,7 @@ public:
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = block_link_;
+    marker.header.frame_id = base_link_;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -616,7 +869,7 @@ public:
     marker.colors.push_back( color );
 
 
-    marker_pub_.publish( marker );
+    rviz_marker_pub_.publish( marker );
     ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
@@ -626,7 +879,7 @@ public:
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = block_link_;
+    marker.header.frame_id = base_link_;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -654,11 +907,11 @@ public:
 
     //marker.lifetime = ros::Duration(30.0);
 
-    marker_pub_.publish( marker );
+    rviz_marker_pub_.publish( marker );
     ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
-  void publishBlock(geometry_msgs::Pose &pose, const double& block_size)
+  void publishBlock(const geometry_msgs::Pose &pose, const double& block_size)
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -689,7 +942,7 @@ public:
     marker.color.b = 0.0;
     marker.color.a = 0.5;
 
-    marker_pub_.publish( marker );
+    rviz_marker_pub_.publish( marker );
     ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
   }
 
