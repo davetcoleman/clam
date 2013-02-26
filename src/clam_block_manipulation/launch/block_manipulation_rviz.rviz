@@ -4,8 +4,10 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /MotionPlanning1
         - /MotionPlanning1/Scene Geometry1
         - /MotionPlanning1/Scene Robot1
+        - /MotionPlanning1/Planning Request1
         - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
     Tree Height: 538
@@ -139,8 +141,8 @@ Visualization Manager:
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
-        Query Goal State: false
-        Query Start State: false
+        Query Goal State: true
+        Query Start State: true
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
@@ -225,8 +227,6 @@ Visualization Manager:
       Frames:
         /base_link:
           Value: true
-        /block_link:
-          Value: true
         /elbow_pitch_link:
           Value: true
         /elbow_roll_link:
@@ -257,8 +257,6 @@ Visualization Manager:
       Show Names: false
       Tree:
         /base_link:
-          /block_link:
-            {}
           /shoulder_pan_link:
             /shoulder_pitch_link:
               /elbow_roll_link:
@@ -403,8 +401,7 @@ Visualization Manager:
       Marker Topic: /end_effector_marker
       Name: EE Grasp Poses
       Namespaces:
-        Arrow: true
-        Sphere: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -451,9 +448,9 @@ Window Geometry:
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000434fc0200000005fb000000100044006900730070006c0061007900730100000041000002af000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000002f60000017f0000017400ffffff000003960000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000434fc0200000005fb000000100044006900730070006c0061007900730100000041000002af000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000002f60000017f0000017f00ffffff000003960000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1600
-  X: 3817
-  Y: -76
+  X: 3816
+  Y: -104

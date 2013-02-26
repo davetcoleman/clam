@@ -263,23 +263,47 @@ public:
   // Create grasp positions in one axis
   bool generateAxisGrasps( std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis, grasp_direction_t direction )
   {
+
+    // ---------------------------------------------------------------------------------------------
+    // manipulation_msgs:Grasp parameters
+
+    // Create re-usable approach motion
+    manipulation_msgs::GripperTranslation gripper_approach;
+    gripper_approach.direction.header.stamp = ros::Time::now();
+    gripper_approach.direction.vector.x = 0;
+    gripper_approach.direction.vector.y = 0;
+    gripper_approach.direction.vector.z = -1; // Approach direction (negative z axis)
+    gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
+    gripper_approach.min_distance = .025; // half of the desired? Untested.
+
+    // Create re-usable retreat motion
+    manipulation_msgs::GripperTranslation gripper_retreat;
+    gripper_retreat.direction.header.stamp = ros::Time::now();
+    gripper_retreat.direction.vector.x = 0;
+    gripper_retreat.direction.vector.y = 0;
+    gripper_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
+    gripper_retreat.desired_distance = .050; // The distance the origin of a robot link needs to travel
+    gripper_retreat.min_distance = .025; // half of the desired? Untested.
+
+    // Create re-usable blank pose
+    geometry_msgs::PoseStamped grasp_pose;
+    grasp_pose.header.stamp = ros::Time::now();
+
+    // ---------------------------------------------------------------------------------------------
+    // Variables needed for calculations
     double radius = 0.15;
     double xb;
     double yb = 0.0; // stay in the y plane of the block
     double zb;
+    double angle_resolution = 8.0;
     double theta1 = 0.0; // Where the point is located around the block
     double theta2 = 0.0; // UP 'direction'
-    double angle_resolution = 8.0;
 
     // Gripper direction (UP/DOWN) rotation. UP set by default
     if( direction == DOWN )
     {
       theta2 = M_PI;
     }
-
-    // Create a blank pose
-    geometry_msgs::PoseStamped grasp_pose;
-    grasp_pose.header.stamp = ros::Time::now();
 
     // Create angles 180 degrees around the chosen axis at given resolution
     for(int i = 0; i <= angle_resolution; ++i)
@@ -356,10 +380,10 @@ public:
       new_grasp.grasp_quality = 1;
 
       // The approach motion
-      //GripperTranslation approach
+      new_grasp.approach = gripper_approach;
 
       // The retreat motion
-      //GripperTranslation retreat
+      new_grasp.retreat = gripper_retreat;
 
       // the maximum contact force to use while grasping (<=0 to disable)
       new_grasp.max_contact_force = 0;
@@ -370,8 +394,6 @@ public:
 
       // Add to vector
       possible_grasps.push_back(new_grasp);
-
-
     }
 
 

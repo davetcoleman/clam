@@ -586,7 +586,7 @@ public:
     // try to compute a straight line path that arrives at the goal using the specified approach direction
     ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
 
-    approach_direction << 0, 0, 1; // Approach direction (negative z axis)
+    approach_direction << 0, 0, 1; // Approach direction (positive z axis)
     desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
     if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
