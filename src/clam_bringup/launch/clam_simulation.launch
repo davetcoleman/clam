@@ -12,8 +12,9 @@
   <!-- Combine joint values -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
-  <!-- Show in Rviz -->
+  <!-- Show in Rviz 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find clam_bringup)/launch/rviz/clam_simulation.rviz">
     <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
   </node>
+  -->
 </launch>

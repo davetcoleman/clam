@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<package>
+  <name>dynamixel_simulator_interface</name>
+  <version>2.0.0</version>
+  <description>Drivers for simulating the control of dynamixel servos</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  
+  <author>Dave Coleman</author>
+  <license>BSD</license>
+
+  <url type="website">http://correll.cs.colorado.edu/clam/</url>
+  <url type="repository">https://github.com/davetcoleman/clam</url>
+  <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>gearbox</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>diagnostic_msgs</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>genmsg</build_depend>
+  
+  <run_depend>roscpp</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>gearbox</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+  <run_depend>diagnostic_msgs</run_depend>
+  <run_depend>diagnostic_updater</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>genmsg</run_depend>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"
+         lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ldynamixel_simulator_interface -ldynamixel_controllers" />
+    <dynamixel_simulator_interface plugin="${prefix}/controller_plugins.xml" />
+    <python path="${prefix}/lib" />
+    <python path="${prefix}/src" />
+  </export>
+
+</package>
+
+

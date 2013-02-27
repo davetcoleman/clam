@@ -1,0 +1,10 @@
+uint8 STEP1=2
+uint8 STEP2=4
+uint8 STEP3=8
+uint8 STEP4=16
+uint8 STEP5=32
+uint8 STEP6=64
+uint8 STEP7=128
+
+# slope can be any one of the seven constants defined above
+uint8 slope
