@@ -35,7 +35,7 @@
 
 //#include <dynamixel_simulator_interface/dynamixel_io.h>
 #include <dynamixel_simulator_interface/single_joint_controller.h>
-#include <dynamixel_simulator_interface/JointState.h>
+#include <dynamixel_hardware_interface/JointState.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
@@ -122,7 +122,7 @@ protected:
   std::map<std::string, boost::shared_ptr<controller::SingleJointController> > joint_to_controller_;
   std::map<std::string, std::vector<std::string> > port_to_joints_;
   //  std::map<std::string, dynamixel_simulator_interface::DynamixelIO*> port_to_io_;
-  std::map<std::string, const dynamixel_simulator_interface::JointState*> joint_states_;
+  std::map<std::string, const dynamixel_hardware_interface::JointState*> joint_states_;
 
 };
 

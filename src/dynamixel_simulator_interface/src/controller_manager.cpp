@@ -34,17 +34,17 @@
 //#include <dynamixel_simulator_interface/serial_proxy.h>
 #include <dynamixel_simulator_interface/single_joint_controller.h>
 #include <dynamixel_simulator_interface/multi_joint_controller.h>
-#include <dynamixel_simulator_interface/JointState.h>
+#include <dynamixel_hardware_interface/JointState.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
 //#include <diagnostic_updater/DiagnosticStatusWrapper.h>
 //#include <diagnostic_msgs/DiagnosticArray.h>
 
-#include <dynamixel_simulator_interface/StartController.h>
-#include <dynamixel_simulator_interface/StopController.h>
-#include <dynamixel_simulator_interface/RestartController.h>
-#include <dynamixel_simulator_interface/ListControllers.h>
+#include <dynamixel_hardware_interface/StartController.h>
+#include <dynamixel_hardware_interface/StopController.h>
+#include <dynamixel_hardware_interface/RestartController.h>
+#include <dynamixel_hardware_interface/ListControllers.h>
 
 namespace dynamixel_controller_manager
 {
@@ -71,11 +71,11 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
   }
 
   /*
-  std::string port_namespace;
-  XmlRpc::XmlRpcValue::iterator it;
+    std::string port_namespace;
+    XmlRpc::XmlRpcValue::iterator it;
 
-  for (it = serial_ports.begin(); it != serial_ports.end(); ++it)
-  {
+    for (it = serial_ports.begin(); it != serial_ports.end(); ++it)
+    {
     port_namespace = (*it).first;
     std::string prefix = "serial_ports/" + port_namespace + "/";
 
@@ -104,29 +104,29 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
     private_nh_.param<int>(prefix + "warn_level_temp", warn_level_temp, 60);
 
     dynamixel_simulator_interface::SerialProxy* serial_proxy =
-      new dynamixel_simulator_interface::SerialProxy(port_name,
-                                                    port_namespace,
-                                                    baud_rate,
-                                                    min_motor_id,
-                                                    max_motor_id,
-                                                    update_rate,
-                                                    diagnostics_rate_,
-                                                    error_level_temp,
-                                                    warn_level_temp);
+    new dynamixel_simulator_interface::SerialProxy(port_name,
+    port_namespace,
+    baud_rate,
+    min_motor_id,
+    max_motor_id,
+    update_rate,
+    diagnostics_rate_,
+    error_level_temp,
+    warn_level_temp);
     if (!serial_proxy->connect())
     {
-      delete serial_proxy;
-      continue;
+    delete serial_proxy;
+    continue;
     }
 
     serial_proxies_[port_namespace] = serial_proxy;
-  }
+    }
 
-  if (serial_proxies_.empty())
-  {
+    if (serial_proxies_.empty())
+    {
     ROS_FATAL("No motors found on any configured serial port, aborting");
     exit(1);
-  }
+    }
   */
   sjc_loader_.reset(new pluginlib::ClassLoader<controller::SingleJointController>("dynamixel_simulator_interface", "controller::SingleJointController"));
   mjc_loader_.reset(new pluginlib::ClassLoader<controller::MultiJointController>("dynamixel_simulator_interface", "controller::MultiJointController"));
@@ -150,15 +150,15 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
 ControllerManager::~ControllerManager()
 {
   /*
-  if (diagnostics_thread_)
-  {
+    if (diagnostics_thread_)
     {
-      boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
-      terminate_diagnostics_ = true;
+    {
+    boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
+    terminate_diagnostics_ = true;
     }
     diagnostics_thread_->join();
     delete diagnostics_thread_;
-  }
+    }
   */
 
   /*
@@ -209,17 +209,17 @@ bool ControllerManager::startController(std::string name, std::string port)
     ROS_DEBUG("Loading single-joint controller");
 
     /*
-    if (port.empty())
-    {
+      if (port.empty())
+      {
       ROS_ERROR("Port name is not specified for controller %s", name.c_str());
       return false;
-    }
+      }
 
-    if (serial_proxies_.find(port) == serial_proxies_.end())
-    {
+      if (serial_proxies_.find(port) == serial_proxies_.end())
+      {
       ROS_ERROR("Serial port %s is not managed by %s controller manager", port.c_str(), manager_namespace_.c_str());
       return false;
-    }
+      }
     */
 
     if (sj_controllers_.find(name) != sj_controllers_.end())
@@ -263,7 +263,10 @@ bool ControllerManager::startController(std::string name, std::string port)
 
     try
     {
-      initialized = sjc->initialize(name, port); //serial_proxies_[port]->getSerialPort());
+      dynamixel_simulator_interface::DynamixelIO* dxl_io;
+      ROS_DEBUG("Initializing controller 1");
+      initialized = sjc->initialize(name, port, dxl_io);
+      ROS_DEBUG("Initializing controller 2");
     }
     catch(std::exception &e)
     {
@@ -276,15 +279,16 @@ bool ControllerManager::startController(std::string name, std::string port)
       initialized = false;
     }
 
+    ROS_DEBUG("Initializing controller 3");
     if (!initialized)
     {
       //      delete sjc;
       ROS_ERROR("Initializing controller '%s' failed", name.c_str());
       return false;
     }
-
+    ROS_DEBUG("Initializing controller 4");
     sjc->start();
-
+    ROS_DEBUG("Initializing controller 5");
     sj_controllers_[name] = sjc;
     ROS_DEBUG("Initialized controller '%s' successful", name.c_str());
   }
@@ -551,8 +555,8 @@ void ControllerManager::checkDeps()
   }
 }
 
-bool ControllerManager::startControllerSrv(dynamixel_simulator_interface::StartController::Request& req,
-                                           dynamixel_simulator_interface::StartController::Response& res)
+bool ControllerManager::startControllerSrv(dynamixel_hardware_interface::StartController::Request& req,
+                                           dynamixel_hardware_interface::StartController::Response& res)
 {
   std::string name = req.name;
 
@@ -578,8 +582,8 @@ bool ControllerManager::startControllerSrv(dynamixel_simulator_interface::StartC
   return true;
 }
 
-bool ControllerManager::stopControllerSrv(dynamixel_simulator_interface::StopController::Request& req,
-                                          dynamixel_simulator_interface::StopController::Response& res)
+bool ControllerManager::stopControllerSrv(dynamixel_hardware_interface::StopController::Request& req,
+                                          dynamixel_hardware_interface::StopController::Response& res)
 {
   std::string name = req.name;
 
@@ -605,8 +609,8 @@ bool ControllerManager::stopControllerSrv(dynamixel_simulator_interface::StopCon
   return true;
 }
 
-bool ControllerManager::restartControllerSrv(dynamixel_simulator_interface::RestartController::Request& req,
-                                             dynamixel_simulator_interface::RestartController::Response& res)
+bool ControllerManager::restartControllerSrv(dynamixel_hardware_interface::RestartController::Request& req,
+                                             dynamixel_hardware_interface::RestartController::Response& res)
 {
   std::string name = req.name;
 
@@ -631,8 +635,8 @@ bool ControllerManager::restartControllerSrv(dynamixel_simulator_interface::Rest
   return true;
 }
 
-bool ControllerManager::listControllersSrv(dynamixel_simulator_interface::ListControllers::Request& req,
-                                           dynamixel_simulator_interface::ListControllers::Response& res)
+bool ControllerManager::listControllersSrv(dynamixel_hardware_interface::ListControllers::Request& req,
+                                           dynamixel_hardware_interface::ListControllers::Response& res)
 {
   ROS_DEBUG("List service called");
 

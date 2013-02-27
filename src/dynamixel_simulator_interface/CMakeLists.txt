@@ -13,29 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs 
   diagnostic_updater 
   std_srvs
+  dynamixel_hardware_interface
 )
-
-## Declare ROS messages and services
-add_message_files(DIRECTORY msg FILES
-  JointState.msg
-  MotorStateList.msg
-  MotorState.msg
-)
-
-add_service_files(DIRECTORY srv FILES 
-  ListControllers.srv
-  RestartController.srv
-  SetComplianceMargin.srv
-  SetComplianceSlope.srv
-  SetTorqueLimit.srv
-  SetVelocity.srv
-  StartController.srv
-  StopController.srv
-  TorqueEnable.srv
-)
-
-## Generate added messages and services
-generate_messages(DEPENDENCIES std_msgs)
 
 ## Declare a catkin package
 catkin_package(
@@ -50,6 +29,7 @@ catkin_package(
   trajectory_msgs 
   diagnostic_updater 
   std_srvs
+  dynamixel_hardware_interface
 )
 
 ## Build 
@@ -87,8 +67,8 @@ add_definitions(-DERROR_OUTPUT_LOG) # this tells the trajectory_action_controlle
 target_link_libraries(sim_dynamixel_controllers ${catkin_LIBRARIES})
 
 # Wait for messages to be ready
-add_dependencies(sim_controller_manager dynamixel_simulator_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
-add_dependencies(sim_dynamixel_controllers dynamixel_simulator_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
+add_dependencies(sim_controller_manager dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
+add_dependencies(sim_dynamixel_controllers dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
 
 
 

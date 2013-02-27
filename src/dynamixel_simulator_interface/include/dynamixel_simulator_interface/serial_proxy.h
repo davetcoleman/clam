@@ -36,7 +36,7 @@
 #include <boost/thread.hpp>
 
 #include <dynamixel_simulator_interface/dynamixel_io.h>
-#include <dynamixel_simulator_interface/MotorStateList.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
 
 #include <ros/ros.h>
 #include <diagnostic_updater/update_functions.h>

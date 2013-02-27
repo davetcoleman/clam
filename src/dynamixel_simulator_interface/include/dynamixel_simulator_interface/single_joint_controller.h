@@ -35,19 +35,32 @@
 
 //#include <dynamixel_simulator_interface/dynamixel_const.h>
 //#include <dynamixel_simulator_interface/dynamixel_io.h>
-#include <dynamixel_simulator_interface/JointState.h>
-#include <dynamixel_simulator_interface/MotorStateList.h>
-#include <dynamixel_simulator_interface/SetVelocity.h>
-#include <dynamixel_simulator_interface/TorqueEnable.h>
-#include <dynamixel_simulator_interface/SetTorqueLimit.h>
-#include <dynamixel_simulator_interface/SetComplianceMargin.h>
-#include <dynamixel_simulator_interface/SetComplianceSlope.h>
+#include <dynamixel_hardware_interface/JointState.h>
+#include <dynamixel_hardware_interface/MotorStateList.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
+#include <dynamixel_hardware_interface/SetTorqueLimit.h>
+#include <dynamixel_hardware_interface/SetComplianceMargin.h>
+#include <dynamixel_hardware_interface/SetComplianceSlope.h>
 
 #include <boost/thread.hpp>
 
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <std_srvs/Empty.h>
+
+namespace dynamixel_simulator_interface
+{
+
+// Fake class for making pluginlib to work
+class DynamixelIO
+{
+public:
+  DynamixelIO(){};
+  ~DynamixelIO(){};
+};
+
+}
 
 namespace controller
 {
@@ -60,22 +73,27 @@ public:
   // Deconstructor
   ~SingleJointController()
   {
+    ROS_DEBUG_STREAM_NAMED("single_joint_controller","terminating thread");
     if (feedback_thread_)
     {
+      ROS_DEBUG_STREAM_NAMED("single_joint_controller","feedback thread exists");
       {
         boost::mutex::scoped_lock terminate_lock(terminate_mutex_);
         terminate_feedback_ = true;
       }
+      ROS_DEBUG_STREAM_NAMED("single_joint_controller","joining thread");
       feedback_thread_->join();
       delete feedback_thread_;
+      ROS_DEBUG_STREAM_NAMED("single_joint_controller","deleting thread");
     }
   }
 
 
   virtual bool initialize(std::string name,
-                          std::string port_namespace)
-  //                          dynamixel_simulator_interface::DynamixelIO* dxl_io)
+                          std::string port_namespace,
+                          dynamixel_simulator_interface::DynamixelIO* dxl_io)
   {
+    ROS_DEBUG_NAMED("single_joint_controler","Initializing controller 1.1.1");
     name_ = name;
     port_namespace_ = port_namespace;
     //    dxl_io_ = dxl_io;
@@ -123,6 +141,7 @@ public:
     motor_ids_.resize(num_motors);
     //    motor_data_.resize(num_motors);
 
+    /*
     XmlRpc::XmlRpcValue available_ids;
     nh_.getParam("dynamixel/" + port_namespace_ + "/connected_ids", available_ids);
 
@@ -131,7 +150,9 @@ public:
       ROS_ERROR("%s: connected_ids paramater is not an array", name_.c_str());
       return false;
     }
+    */
 
+      /*
     for (int i = 0; i < num_motors; ++i)
     {
       XmlRpc::XmlRpcValue v = raw_motor_list[i];
@@ -208,15 +229,15 @@ public:
         }
 
         if (v.hasMember("compliance_slope")) { compliance_slope_ = static_cast<int>(v["compliance_slope"]); }
-        else 
-        { 
-          compliance_slope_ = 0.0; //          motor_data_[i]->cw_compliance_slope; 
+        else
+        {
+          compliance_slope_ = 0.0; //          motor_data_[i]->cw_compliance_slope;
         }
 
         std::string prefix = "dynamixel/" + port_namespace_ + "/" +
           boost::lexical_cast<std::string>(motor_id) + "/";
 
-        /***************** Joint velocity related parameters **********************/
+        /***************** Joint velocity related parameters ********************** /
         nh_.getParam(prefix + "max_velocity", motor_max_velocity_);
         c_nh_.param("max_velocity", max_velocity_, motor_max_velocity_);
 
@@ -276,13 +297,14 @@ public:
         ROS_ERROR("%s: unable to set complaince slopes for motor %d", name_.c_str(), motor_id);
         return false;
         }
-      */
+      * /
     }
+      */
 
     return true;
   }
 
-  const dynamixel_simulator_interface::JointState& getJointState() { return joint_state_; }
+  const dynamixel_hardware_interface::JointState& getJointState() { return joint_state_; }
   //  dynamixel_simulator_interface::DynamixelIO* getPort() { return dxl_io_; }
 
   std::string getName() { return name_; }
@@ -295,7 +317,7 @@ public:
   {
     //motor_states_sub_ = nh_.subscribe("motor_states/" + port_namespace_, 50, &SingleJointController::processMotorStates, this);
     joint_command_sub_ = c_nh_.subscribe("command", 50, &SingleJointController::processCommand, this);
-    joint_state_pub_ = c_nh_.advertise<dynamixel_simulator_interface::JointState>("state", 50);
+    joint_state_pub_ = c_nh_.advertise<dynamixel_hardware_interface::JointState>("state", 50);
     joint_velocity_srv_ = c_nh_.advertiseService("set_velocity", &SingleJointController::processSetVelocity, this);
     torque_enable_srv_ = c_nh_.advertiseService("torque_enable", &SingleJointController::processTorqueEnable, this);
     reset_overload_error_srv_ = c_nh_.advertiseService("reset_overload_error", &SingleJointController::processResetOverloadError, this);
@@ -321,8 +343,8 @@ public:
     set_compliance_slope_srv_.shutdown();
   }
 
-  virtual bool processTorqueEnable(dynamixel_simulator_interface::TorqueEnable::Request& req,
-                                   dynamixel_simulator_interface::TorqueEnable::Request& res)
+  virtual bool processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                   dynamixel_hardware_interface::TorqueEnable::Request& res)
   {
     return setTorqueEnable( req.torque_enable );
   }
@@ -366,8 +388,8 @@ public:
     //    return result;
   }
 
-  bool processSetTorqueLimit(dynamixel_simulator_interface::SetTorqueLimit::Request& req,
-                             dynamixel_simulator_interface::SetTorqueLimit::Request& res)
+  bool processSetTorqueLimit(dynamixel_hardware_interface::SetTorqueLimit::Request& req,
+                             dynamixel_hardware_interface::SetTorqueLimit::Request& res)
   {
     return setTorqueLimit( req.torque_limit );
   }
@@ -403,8 +425,8 @@ public:
   }
 
 
-  bool processSetComplianceMargin(dynamixel_simulator_interface::SetComplianceMargin::Request& req,
-                                  dynamixel_simulator_interface::SetComplianceMargin::Request& res)
+  bool processSetComplianceMargin(dynamixel_hardware_interface::SetComplianceMargin::Request& req,
+                                  dynamixel_hardware_interface::SetComplianceMargin::Request& res)
   {
     return setComplianceMargin( req.margin );
   }
@@ -429,8 +451,8 @@ public:
     //    return dxl_io_->setMultiComplianceMargins(mcv);
   }
 
-  bool processSetComplianceSlope(dynamixel_simulator_interface::SetComplianceSlope::Request& req,
-                                 dynamixel_simulator_interface::SetComplianceSlope::Request& res)
+  bool processSetComplianceSlope(dynamixel_hardware_interface::SetComplianceSlope::Request& req,
+                                 dynamixel_hardware_interface::SetComplianceSlope::Request& res)
   {
     return setComplianceSlope( req.slope );
   }
@@ -456,7 +478,7 @@ public:
   }
 
   // Monitor state and determine if servos stop responding. if so, show error message and when they come back up re-initialize them
-  void checkPowerFailure(dynamixel_simulator_interface::MotorState &state)
+  void checkPowerFailure(dynamixel_hardware_interface::MotorState &state)
   {
     if( dead_time_ > TIME_DECLARE_MOTOR_DEAD && state.alive )
     {
@@ -474,12 +496,12 @@ public:
 
   virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
 
-  virtual void processMotorStates() = 0; //const dynamixel_simulator_interface::MotorStateListConstPtr& msg) = 0;
+  virtual void processMotorStates() = 0; //const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
   virtual void processCommand(const std_msgs::Float64ConstPtr& msg) = 0;
 
   virtual bool setVelocity(double velocity) = 0;
-  virtual bool processSetVelocity(dynamixel_simulator_interface::SetVelocity::Request& req,
-                                  dynamixel_simulator_interface::SetVelocity::Request& res) = 0;
+  virtual bool processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                                  dynamixel_hardware_interface::SetVelocity::Request& res) = 0;
 
 protected:
   ros::NodeHandle nh_;
@@ -490,7 +512,7 @@ protected:
   //  dynamixel_simulator_interface::DynamixelIO* dxl_io_;
 
   std::string joint_;
-  dynamixel_simulator_interface::JointState joint_state_;
+  dynamixel_hardware_interface::JointState joint_state_;
 
   std::vector<int> motor_ids_;
   std::map<int, bool> drive_mode_reversed_;

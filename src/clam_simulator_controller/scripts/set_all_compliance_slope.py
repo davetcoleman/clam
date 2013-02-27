@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('clam_controller')
+import roslib; roslib.load_manifest('clam_simulator_controller')
 import rospy
 from std_msgs.msg import Float64
 from dynamixel_hardware_interface.msg import JointState

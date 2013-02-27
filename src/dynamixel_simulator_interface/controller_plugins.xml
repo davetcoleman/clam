@@ -1,4 +1,4 @@
-<library path="lib/libdynamixel_controllers">
+<library path="lib/libsim_dynamixel_controllers">
     <class name="dynamixel_simulator_interface/JointPositionController"
            type="controller::JointPositionController"
            base_class_type="controller::SingleJointController" />

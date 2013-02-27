@@ -1,5 +1,5 @@
 <package>
-  <name>clam_controller</name>
+  <name>clam_simulator_controller</name>
   <version>2.0.0</version>
   <description>8 degree-of-freedom robotic arm controller that uses dynamixel_hardware_interface for motor control.</description>
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>

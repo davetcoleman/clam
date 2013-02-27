@@ -1,0 +1,20 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <!-- debug capability -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- Startup the arm controller, dynamixel manager, hardware interface, etc -->
+  <include file="$(find clam_simulator_controller)/launch/clam_controller.launch">
+    <arg name="debug" value="$(arg debug)" />
+  </include>
+
+  <!-- Send robot XML description to param server -->
+  <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
+
+  <!-- Publish the robot state -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+</launch>

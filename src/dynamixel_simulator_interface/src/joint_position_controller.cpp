@@ -33,10 +33,10 @@
 //#include <dynamixel_simulator_interface/dynamixel_io.h>
 #include <dynamixel_simulator_interface/single_joint_controller.h>
 #include <dynamixel_simulator_interface/joint_position_controller.h>
-#include <dynamixel_simulator_interface/MotorState.h>
-#include <dynamixel_simulator_interface/SetVelocity.h>
-#include <dynamixel_simulator_interface/TorqueEnable.h>
-#include <dynamixel_simulator_interface/SetTorqueLimit.h>
+#include <dynamixel_hardware_interface/MotorState.h>
+#include <dynamixel_hardware_interface/SetVelocity.h>
+#include <dynamixel_hardware_interface/TorqueEnable.h>
+#include <dynamixel_hardware_interface/SetTorqueLimit.h>
 
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
@@ -53,13 +53,16 @@ namespace controller
 {
 
 bool JointPositionController::initialize(std::string name,
-                                         std::string port_namespace)
-//      dynamixel_simulator_interface::DynamixelIO* dxl_io)
+                                         std::string port_namespace,
+                                         dynamixel_simulator_interface::DynamixelIO* dxl_io)
 {
-  if (!SingleJointController::initialize(name, port_namespace)) //dxl_io))
+  ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.1");
+  if (!SingleJointController::initialize(name, port_namespace, dxl_io))
   {
+    ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.2");
     return false;
   }
+  ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.3");
 
   /*
     for (size_t i = 0; i < motor_ids_.size(); ++i)
@@ -79,13 +82,14 @@ bool JointPositionController::initialize(std::string name,
 
     }
   */
-
-  setVelocity(INIT_VELOCITY);
+  ROS_DEBUG("Initializing controller 1.4");
+  //  setVelocity(INIT_VELOCITY);
+  ROS_DEBUG("Initializing controller 1.5");
   return true;
 }
 
-bool JointPositionController::processTorqueEnable(dynamixel_simulator_interface::TorqueEnable::Request& req,
-                                                  dynamixel_simulator_interface::TorqueEnable::Request& res)
+bool JointPositionController::processTorqueEnable(dynamixel_hardware_interface::TorqueEnable::Request& req,
+                                                  dynamixel_hardware_interface::TorqueEnable::Request& res)
 {
   // set target position to current joint position
   // so the motor won't go crazy once torque is enabled again
@@ -141,7 +145,7 @@ std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(doub
 /*
   void JointPositionController::processMotorStates(const dynamixel_simulator_interface::MotorStateListConstPtr& msg)
   {
-  dynamixel_simulator_interface::MotorState state;
+  dynamixel_hardware_interface::MotorState state;
   int master_id = motor_ids_[0];
 
   for (size_t i = 0; i < msg->motor_states.size(); ++i)
@@ -176,7 +180,7 @@ std::vector<std::vector<int> > JointPositionController::getRawMotorCommands(doub
 
 void JointPositionController::processMotorStates()
 {
-  ros::Rate rate(10.0); // TODO: tune 10?
+  ros::Rate rate(5.0); // TODO: tune?
 
   while (nh_.ok())
   {
@@ -194,7 +198,7 @@ void JointPositionController::processMotorStates()
     joint_state_.moving = false; //state.moving;
     joint_state_.alive = true; //state.alive;
 
-    ROS_INFO_STREAM_NAMED("simulate","Publishing joint state: " << joint_state_);
+    //ROS_INFO_STREAM_NAMED("simulate","Publishing joint state: " << joint_state_);
     joint_state_pub_.publish(joint_state_);
 
     rate.sleep();
@@ -262,8 +266,8 @@ bool JointPositionController::setVelocity(double velocity)
   return true;
 }
 
-bool JointPositionController::processSetVelocity(dynamixel_simulator_interface::SetVelocity::Request& req,
-                                                 dynamixel_simulator_interface::SetVelocity::Request& res)
+bool JointPositionController::processSetVelocity(dynamixel_hardware_interface::SetVelocity::Request& req,
+                                                 dynamixel_hardware_interface::SetVelocity::Request& res)
 {
   return setVelocity(req.velocity);
 }

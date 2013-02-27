@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import roslib
-roslib.load_manifest('clam_controller')
+roslib.load_manifest('clam_simulator_controller')
 
 import time
 import rospy

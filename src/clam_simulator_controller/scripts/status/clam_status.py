@@ -2,7 +2,7 @@ __version__ = "0.1"
 __author__ = "Dave Coleman"
 
 import roslib
-roslib.load_manifest('clam_controller')
+roslib.load_manifest('clam_simulator_controller')
 
 import rospy
 import locale

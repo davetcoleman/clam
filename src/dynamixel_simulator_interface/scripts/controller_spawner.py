@@ -49,9 +49,9 @@ import roslib
 roslib.load_manifest('dynamixel_simulator_interface')
 
 import rospy
-from dynamixel_simulator_interface.srv import StartController
-from dynamixel_simulator_interface.srv import StopController
-from dynamixel_simulator_interface.srv import RestartController
+from dynamixel_hardware_interface.srv import StartController
+from dynamixel_hardware_interface.srv import StopController
+from dynamixel_hardware_interface.srv import RestartController
 
 
 if __name__ == '__main__':

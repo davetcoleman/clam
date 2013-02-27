@@ -41,11 +41,11 @@
 #include <dynamixel_simulator_interface/joint_trajectory_action_controller.h>
 
 // Services
-#include <dynamixel_simulator_interface/SetComplianceMargin.h>
-#include <dynamixel_simulator_interface/SetComplianceSlope.h>
+#include <dynamixel_hardware_interface/SetComplianceMargin.h>
+#include <dynamixel_hardware_interface/SetComplianceSlope.h>
 
 // Messages
-#include <dynamixel_simulator_interface/JointState.h>
+#include <dynamixel_hardware_interface/JointState.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
@@ -188,7 +188,7 @@ void JointTrajectoryActionController::updateState()
 
     for (size_t j = 0; j < joint_names_.size(); ++j)
     {
-      const dynamixel_simulator_interface::JointState* state = joint_states_[joint_names_[j]];
+      const dynamixel_hardware_interface::JointState* state = joint_states_[joint_names_[j]];
       feedback_msg_.desired.positions[j] = state->target_position;
       feedback_msg_.desired.velocities[j] = std::abs(state->target_velocity);
       feedback_msg_.actual.positions[j] = state->position;

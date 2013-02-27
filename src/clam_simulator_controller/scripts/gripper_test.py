@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import roslib
-roslib.load_manifest('clam_controller')
+roslib.load_manifest('clam_simulator_controller')
 from dynamixel_hardware_interface.msg import JointState
 from dynamixel_hardware_interface.srv import TorqueEnable
 import time

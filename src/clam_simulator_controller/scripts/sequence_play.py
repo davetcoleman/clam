@@ -1,4 +1,4 @@
-import roslib; roslib.load_manifest('clam_controller')
+import roslib; roslib.load_manifest('clam_simulator_controller')
 import time
 import rospy
 import pickle

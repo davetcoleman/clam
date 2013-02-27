@@ -1,5 +1,5 @@
 clam_trajectory_controller:
-    type: dynamixel_hardware_interface/JointTrajectoryActionController
+    type: dynamixel_simulator_interface/JointTrajectoryActionController
     dependencies:
         - shoulder_pan_controller
         - gripper_roll_controller

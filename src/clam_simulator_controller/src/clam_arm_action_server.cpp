@@ -35,7 +35,7 @@
 /* Author: Dave Coleman */
 
 /*
-  Allows you to perform various actions to the clam arm: (see clam_controller::ClamArmAction::command msg)
+  Allows you to perform various actions to the clam arm: (see clam_simulator_controller::ClamArmAction::command msg)
   - Reset the arm to its default/home pose
   - Open and close the end effector
   - Close end effector with feedback
@@ -77,7 +77,7 @@
 //#include <moveit/kinematics_planner/kinematics_planner.h>
 //#include <moveit/trajectory_processing/iterative_smoother.h>
 
-namespace clam_controller
+namespace clam_simulator_controller
 {
 
 typedef actionlib::SimpleActionClient< control_msgs::FollowJointTrajectoryAction > TrajClient;
@@ -837,7 +837,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "clam_arm_action_server");
 
-  clam_controller::ClamArmServer server("clam_arm");
+  clam_simulator_controller::ClamArmServer server("clam_arm");
 
   ros::spin();
 

@@ -41,10 +41,10 @@
 
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
-#include <dynamixel_simulator_interface/StartController.h>
-#include <dynamixel_simulator_interface/StopController.h>
-#include <dynamixel_simulator_interface/RestartController.h>
-#include <dynamixel_simulator_interface/ListControllers.h>
+#include <dynamixel_hardware_interface/StartController.h>
+#include <dynamixel_hardware_interface/StopController.h>
+#include <dynamixel_hardware_interface/RestartController.h>
+#include <dynamixel_hardware_interface/ListControllers.h>
 
 namespace dynamixel_controller_manager
 {
@@ -96,17 +96,17 @@ private:
   void publishDiagnosticInformation();
   void checkDeps();
 
-  bool startControllerSrv(dynamixel_simulator_interface::StartController::Request& req,
-                          dynamixel_simulator_interface::StartController::Response& res);
+  bool startControllerSrv(dynamixel_hardware_interface::StartController::Request& req,
+                          dynamixel_hardware_interface::StartController::Response& res);
 
-  bool stopControllerSrv(dynamixel_simulator_interface::StopController::Request& req,
-                         dynamixel_simulator_interface::StopController::Response& res);
+  bool stopControllerSrv(dynamixel_hardware_interface::StopController::Request& req,
+                         dynamixel_hardware_interface::StopController::Response& res);
 
-  bool restartControllerSrv(dynamixel_simulator_interface::RestartController::Request& req,
-                            dynamixel_simulator_interface::RestartController::Response& res);
+  bool restartControllerSrv(dynamixel_hardware_interface::RestartController::Request& req,
+                            dynamixel_hardware_interface::RestartController::Response& res);
 
-  bool listControllersSrv(dynamixel_simulator_interface::ListControllers::Request& req,
-                          dynamixel_simulator_interface::ListControllers::Response& res);
+  bool listControllersSrv(dynamixel_hardware_interface::ListControllers::Request& req,
+                          dynamixel_hardware_interface::ListControllers::Response& res);
 
 };
 

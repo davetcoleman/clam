@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(clam_controller)
+project(clam_simulator_controller)
 
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS 
@@ -41,14 +41,11 @@ include_directories(
 #include_directories(${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 
+#add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
+#target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
 
-
-
-add_executable(joint_state_aggregator src/joint_state_aggregator.cpp)
-target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
-
-add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
+#add_executable(clam_arm_action_server src/clam_arm_action_server.cpp)
 # This line is needed to ensure that messages are done being built before this is built
-add_dependencies(clam_arm_action_server dynamixel_hardware_interface_gencpp)
-target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
+#add_dependencies(clam_arm_action_server dynamixel_hardware_interface_gencpp)
+#target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
 

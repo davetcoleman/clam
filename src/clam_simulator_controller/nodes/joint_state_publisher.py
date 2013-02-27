@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import roslib; roslib.load_manifest('clam_controller')
+import roslib; roslib.load_manifest('clam_simulator_controller')
 import rospy
 import wx
 import xml.dom.minidom
