@@ -56,13 +56,11 @@ bool JointPositionController::initialize(std::string name,
                                          std::string port_namespace,
                                          dynamixel_simulator_interface::DynamixelIO* dxl_io)
 {
-  ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.1");
+  ROS_DEBUG_STREAM_NAMED("joint_position_controller","Initializing controller " << name);
   if (!SingleJointController::initialize(name, port_namespace, dxl_io))
   {
-    ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.2");
     return false;
   }
-  ROS_DEBUG_NAMED("joint_position_controler","Initializing controller 1.3");
 
   /*
     for (size_t i = 0; i < motor_ids_.size(); ++i)
@@ -82,9 +80,7 @@ bool JointPositionController::initialize(std::string name,
 
     }
   */
-  ROS_DEBUG("Initializing controller 1.4");
-  //  setVelocity(INIT_VELOCITY);
-  ROS_DEBUG("Initializing controller 1.5");
+
   return true;
 }
 
@@ -190,12 +186,12 @@ void JointPositionController::processMotorStates()
     }
 
     joint_state_.header.stamp = ros::Time::now();
-    joint_state_.target_position = 0.0; //convertToRadians(state.target_position);
-    joint_state_.target_velocity = 0.0; //((double)state.target_velocity / dynamixel_simulator_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
-    joint_state_.position = 0.0; //convertToRadians(state.position);
-    joint_state_.velocity = 0.0; //((double)state.velocity / dynamixel_simulator_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
+    joint_state_.target_position = current_position_; //convertToRadians(state.target_position);
+    joint_state_.target_velocity = current_velocity_; //((double)state.target_velocity / dynamixel_simulator_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
+    joint_state_.position = current_position_; //convertToRadians(state.position);
+    joint_state_.velocity = current_velocity_; //((double)state.velocity / dynamixel_simulator_interface::DXL_MAX_VELOCITY_ENCODER) * motor_max_velocity_;
     joint_state_.load = 0.0; //(double)state.load / dynamixel_simulator_interface::DXL_MAX_LOAD_ENCODER;
-    joint_state_.moving = false; //state.moving;
+    joint_state_.moving = ( current_velocity_ > 0 ); //state.moving;
     joint_state_.alive = true; //state.alive;
 
     //ROS_INFO_STREAM_NAMED("simulate","Publishing joint state: " << joint_state_);

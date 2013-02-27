@@ -93,11 +93,13 @@ public:
                           std::string port_namespace,
                           dynamixel_simulator_interface::DynamixelIO* dxl_io)
   {
-    ROS_DEBUG_NAMED("single_joint_controler","Initializing controller 1.1.1");
+    ROS_DEBUG_STREAM_NAMED("single_joint_controler","Initializing controller " << name);
     name_ = name;
     port_namespace_ = port_namespace;
     //    dxl_io_ = dxl_io;
     dead_time_ = 0;
+    current_position_ = 0;
+    current_velocity_ = 0;
 
     try
     {
@@ -141,6 +143,14 @@ public:
     motor_ids_.resize(num_motors);
     //    motor_data_.resize(num_motors);
 
+    //-------------------------------------------------------------------------------------------------------
+    // Create dummy values for joint controller simulation
+
+    max_velocity_ = 5.0;
+
+
+
+    //-------------------------------------------------------------------------------------------------------
     /*
     XmlRpc::XmlRpcValue available_ids;
     nh_.getParam("dynamixel/" + port_namespace_ + "/connected_ids", available_ids);
@@ -494,6 +504,13 @@ public:
       ++dead_time_;
   }
 
+  void setDesiredPositionVelocity(double desired_position, double desired_velocity)
+  {
+    // TODO: make this actually simulate
+    current_position_ = desired_position;
+    current_velocity_ = desired_velocity;
+  }
+
   virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
 
   virtual void processMotorStates() = 0; //const dynamixel_hardware_interface::MotorStateListConstPtr& msg) = 0;
@@ -521,7 +538,9 @@ protected:
   static const double INIT_VELOCITY = 0.5;
   double max_velocity_;
   double min_velocity_;
+
   double current_velocity_;
+  double current_position_; // for simulation purposes
 
   double min_angle_radians_;
   double max_angle_radians_;

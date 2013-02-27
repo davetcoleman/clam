@@ -258,17 +258,12 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     return;
   }
 
-  ROS_INFO("after initial");
-
   // Find out the duration of each segment in the trajectory
   std::vector<double> durations;
   durations.resize(num_points);
 
-  ROS_INFO("after initial");
   durations[0] = traj_msg.points[0].time_from_start.toSec();
-  ROS_INFO("after initial");
   double trajectory_duration = durations[0];
-  ROS_INFO("after initial");
   for (int i = 1; i < num_points; ++i)
   {
     durations[i] = (traj_msg.points[i].time_from_start - traj_msg.points[i-1].time_from_start).toSec();
@@ -276,7 +271,6 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     ROS_DEBUG("tpi: %f, tpi-1: %f", traj_msg.points[i].time_from_start.toSec(), traj_msg.points[i-1].time_from_start.toSec());
     ROS_DEBUG("i: %d, duration: %f, total: %f", i, durations[i], trajectory_duration);
   }
-
 
   // Loop through each trajectory point, do error checking and create a corresponding "segment"
   std::vector<Segment> trajectory;
@@ -460,7 +454,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     for ( std::map<std::string, std::vector<std::string> >::const_iterator port_it =
             port_to_joints_.begin(); port_it != port_to_joints_.end(); ++port_it)
     {
-      ROS_DEBUG_STREAM("Processing Port " << port_it->first );
+      ROS_DEBUG_STREAM("  Processing Port " << port_it->first );
 
       // List of all commands for a particular port
       std::vector<std::vector<int> > port_motor_commands;
@@ -510,6 +504,10 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
           return;
         }
 
+        // Set the simulated joint position and velocity
+        joint_to_controller_[*joint_it]->setDesiredPositionVelocity(desired_position, desired_velocity);
+
+        /*          
         // Generate raw motor commands
         std::vector<std::vector<int> > joint_motor_commands =
           joint_to_controller_[*joint_it]->getRawMotorCommands(desired_position, desired_velocity);
@@ -522,9 +520,11 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
 
         // Copy port vector to multi port vector
         multi_port_commands[port_it->first] = port_motor_commands;
+        */
       }
     }
 
+    /*
     // Loop through every port and send it their raw commands
     for ( std::map<std::string, std::vector<std::vector<int> > >::const_iterator
             multi_port_commands_it = multi_port_commands.begin();
@@ -532,6 +532,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     {
       //port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
     }
+    */
 
     // Now wait for the next segment to be ready to go
     while (time < seg_end_times[traj_seg])
@@ -573,6 +574,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
         {
           //          port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
           // TODO: zebra: copy the positions to the joint state publishers!
+          ROS_ERROR("implement copy pos and vel to simulation here!");
         }
 
         action_server_->setPreempted(traj_result, error_msg);
@@ -693,7 +695,7 @@ void JointTrajectoryActionController::getUniqueErrorLogPath(std::string &error_l
     ++file_id;
   } while( boost::filesystem::is_regular_file( error_log_path ) );
 
-  ROS_INFO_STREAM("Error logging to " << error_log_path);
+  ROS_INFO_STREAM("Path error is being logged to " << error_log_path);
   //error_log_path = "/home/dave/ros/clam/src/dynamixel_simulator_interface/data";
 }
 

@@ -264,9 +264,8 @@ bool ControllerManager::startController(std::string name, std::string port)
     try
     {
       dynamixel_simulator_interface::DynamixelIO* dxl_io;
-      ROS_DEBUG("Initializing controller 1");
+      ROS_DEBUG_STREAM_NAMED("controller_manager","Initializing controller " << name);
       initialized = sjc->initialize(name, port, dxl_io);
-      ROS_DEBUG("Initializing controller 2");
     }
     catch(std::exception &e)
     {
@@ -279,16 +278,13 @@ bool ControllerManager::startController(std::string name, std::string port)
       initialized = false;
     }
 
-    ROS_DEBUG("Initializing controller 3");
     if (!initialized)
     {
       //      delete sjc;
       ROS_ERROR("Initializing controller '%s' failed", name.c_str());
       return false;
     }
-    ROS_DEBUG("Initializing controller 4");
     sjc->start();
-    ROS_DEBUG("Initializing controller 5");
     sj_controllers_[name] = sjc;
     ROS_DEBUG("Initialized controller '%s' successful", name.c_str());
   }
