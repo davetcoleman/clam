@@ -100,7 +100,9 @@ public:
     dead_time_ = 0;
     current_position_ = 0;
     current_velocity_ = 0;
-
+    desired_position_ = 0;
+    desired_velocity_ = 0;
+    
     try
     {
       c_nh_ = ros::NodeHandle(nh_, name_);
@@ -507,8 +509,8 @@ public:
   void setDesiredPositionVelocity(double desired_position, double desired_velocity)
   {
     // TODO: make this actually simulate
-    current_position_ = desired_position;
-    current_velocity_ = desired_velocity;
+    desired_position_ = desired_position;
+    desired_velocity_ = desired_velocity;
   }
 
   virtual std::vector<std::vector<int> > getRawMotorCommands(double position, double velocity) = 0;
@@ -541,6 +543,9 @@ protected:
 
   double current_velocity_;
   double current_position_; // for simulation purposes
+  
+  double desired_velocity_;
+  double desired_position_; // for simulation purposes
 
   double min_angle_radians_;
   double max_angle_radians_;

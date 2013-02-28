@@ -125,7 +125,7 @@ Visualization Manager:
         Loop Animation: true
         Robot Alpha: 0.5
         Show Robot Collision: false
-        Show Robot Visual: true
+        Show Robot Visual: false
         Show Trail: false
         State Display Time: 0.05 s
         Trajectory Topic: /move_group/display_planned_path
@@ -139,10 +139,10 @@ Visualization Manager:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
         Goal State Color: 250; 128; 0
-        Interactive Marker Size: 0
+        Interactive Marker Size: 0.15
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
-        Query Goal State: false
+        Query Goal State: true
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
@@ -223,35 +223,9 @@ Visualization Manager:
         Show Scene Robot: true
       Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
-        /base_link:
-          Value: true
-        /block_link:
-          Value: true
-        /elbow_pitch_link:
-          Value: true
-        /elbow_roll_link:
-          Value: true
-        /gripper_fake_tip_link:
-          Value: true
-        /gripper_finger_link:
-          Value: true
-        /gripper_fixed_finger_link:
-          Value: true
-        /gripper_roll_link:
-          Value: true
-        /shoulder_pan_link:
-          Value: true
-        /shoulder_pitch_link:
-          Value: true
-        /tabletop_link:
-          Value: true
-        /wrist_pitch_link:
-          Value: true
-        /wrist_roll_link:
-          Value: true
         All Enabled: true
       Marker Scale: 0.3
       Name: ClamArmTF
@@ -259,26 +233,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        /base_link:
-          /block_link:
-            {}
-          /shoulder_pan_link:
-            /shoulder_pitch_link:
-              /elbow_roll_link:
-                /elbow_pitch_link:
-                  /wrist_roll_link:
-                    /wrist_pitch_link:
-                      /gripper_roll_link:
-                        /gripper_fake_tip_link:
-                          {}
-                        /gripper_finger_link:
-                          {}
-                        /gripper_fixed_finger_link:
-                          {}
-          /tabletop_link:
-            {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 1
       Auto Size:
         Auto Size Factor: 1
@@ -406,9 +363,7 @@ Visualization Manager:
       Marker Topic: /end_effector_marker
       Name: EE Grasp Poses
       Namespaces:
-        Arrow: true
-        Sphere: true
-        gripper_group: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -425,17 +380,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.12892
+      Distance: 1.41612
       Focal Point:
         X: 0.25346
         Y: 0.0404885
         Z: -5.96044e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.444797
+      Pitch: 0.264797
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.12677
+      Yaw: 5.49177
     Saved: ~
 Window Geometry:
   Displays:
@@ -451,5 +406,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3813
-  Y: -188
+  X: 3810
+  Y: -272
