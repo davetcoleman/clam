@@ -11,14 +11,14 @@
   <node name="dynamixel_manager" pkg="dynamixel_simulator_interface" type="sim_controller_manager"
         launch-prefix="$(arg launch_prefix)" output="screen" >
     <!-- Load all the servo properties -->
-    <rosparam file="$(find clam_simulator_controller)/config/dynamixel_ports.yaml" command="load"/>
+    <rosparam file="$(find clam_controller)/config/dynamixel_ports.yaml" command="load"/>
   </node>
 
   <!-- Load joint controller configuration from YAML file to parameter server -->
-  <rosparam file="$(find clam_simulator_controller)/config/clam_controller_configuration.yaml" command="load"/>
+  <rosparam file="$(find clam_controller)/config/clam_controller_configuration_sim.yaml" command="load"/>
 
   <!-- Start all ClamArm joint controllers -->
-  <node name="clam_simulator_controller_spawner_ttl" pkg="dynamixel_simulator_interface" type="controller_spawner.py"
+  <node name="clam_controller_spawner_ttl" pkg="dynamixel_simulator_interface" type="controller_spawner.py"
         args="--manager=clam_controller_manager
               --port=port_ttl
               shoulder_pan_controller
@@ -37,7 +37,7 @@
         output="screen"/>
 
   <!-- Start arm trajectory action controller. *Not sure what multi_joint_dummy_port implies... -->
-  <rosparam file="$(find clam_simulator_controller)/config/clam_trajectory_controller.yaml" command="load"/>
+  <rosparam file="$(find clam_controller)/config/clam_trajectory_controller_sim.yaml" command="load"/>
   <node name="arm_trajectory_controller_spawner" pkg="dynamixel_simulator_interface" type="controller_spawner.py"
         args="--manager=clam_controller_manager
               --port=multi_joint_dummy_port
@@ -45,16 +45,15 @@
         output="screen"/>
 
   <!-- Publish combined joint info -->
-  <include file="$(find clam_simulator_controller)/launch/joint_state_aggregator.launch" />
+  <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
 
   <!-- Launch fake joint state publisher -->
-  <node name="joint_state_publisher" pkg="clam_simulator_controller" type="joint_state_publisher.py" output="screen">
+  <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
     <rosparam param="source_list">[joint_states]</rosparam>
     <rosparam param="use_gui">FALSE</rosparam>
   </node>
 
   <!-- Start the ClamArm action server to help run low level functions -->
-  <!--node name="clam_arm_action_server" pkg="clam_simulator_controller" type="clam_arm_action_server" output="screen" /-->
+  <!--node name="clam_arm_action_server" pkg="clam_controller" type="clam_arm_action_server" output="screen" /-->
 
-  
 </launch>

@@ -1,7 +1,7 @@
 <package>
   <name>clam_controller</name>
   <version>2.0.0</version>
-  <description>8 degree-of-freedom robotic arm controller that uses dynamixel_hardware_interface for motor control.</description>
+  <description>Contains configuration and launch files for dynamixel_hardware_interface and dynamixel_simulator_interface for low level motor control.</description>
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
 
   <license>BSD</license>
@@ -10,7 +10,7 @@
   <url type="bugtracker">https://github.com/davetcoleman/clam/issues</url>
   <url type="repository">https://github.com/davetcoleman/clam</url>
 
-  <author>Dave Coleman</author>
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
 
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>

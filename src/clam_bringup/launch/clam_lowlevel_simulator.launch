@@ -7,7 +7,7 @@
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
   <!-- Startup the arm controller, dynamixel manager, hardware interface, etc -->
-  <include file="$(find clam_simulator_controller)/launch/clam_controller.launch">
+  <include file="$(find clam_controller)/launch/clam_controller_sim.launch">
     <arg name="debug" value="$(arg debug)" />
   </include>
 
