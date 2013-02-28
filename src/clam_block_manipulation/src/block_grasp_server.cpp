@@ -50,6 +50,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+// Clam
+#include <clam_msgs/ClamArmAction.h>
+
 // Rviz
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -90,8 +93,8 @@ private:
 
   // TODO: remove
   actionlib::SimpleActionClient<moveit_msgs::PickupAction> movegroup_action_;
-
-
+  actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
+  clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
 
   // Action Servers and Clients
   /*  actionlib::SimpleActionServer<clam_msgs::PickPlaceAction> action_server_;
@@ -101,6 +104,10 @@ private:
   clam_msgs::PickPlaceResult       result_;
   clam_msgs::PickPlaceGoalConstPtr goal_;
   */
+
+  // Save collision object so we can delete it later
+  moveit_msgs::CollisionObject chosen_block_object_;
+  bool block_published_;
 
   // MoveIt Components
   boost::shared_ptr<tf::TransformListener> tf_;
@@ -133,8 +140,10 @@ public:
   BlockGraspServer(const std::string name):
     nh_("~"),
     movegroup_action_("pickup", true), //TODO: remove
+    clam_arm_client_("clam_arm", true), //TODO: remove
     ee_marker_is_loaded_(false),
-    transform_is_set_(false)
+    transform_is_set_(false),
+    block_published_(false)
     //    action_server_(name, false),
   {
     base_link_ = "base_link";
@@ -151,6 +160,12 @@ public:
     // Connect to move_group/Pickup action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
       ROS_INFO_STREAM_NAMED("grasp","Waiting for the move_group/Pickup action server");
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Connect to ClamArm action server
+    while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
+      ROS_INFO_STREAM_NAMED("pick place","Waiting for the clam_arm action server");
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -195,8 +210,17 @@ public:
     block_pose.orientation.w = quat.w();
 
     // ---------------------------------------------------------------------------------------------
+    // Send home
+    ROS_INFO_STREAM_NAMED("grasp","Sending arm home");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+
+    // ---------------------------------------------------------------------------------------------
     // Create the grasps
-    generateGrasps(block_pose);
+    pickAndPlace(block_pose);
+    ros::shutdown();
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -229,30 +253,8 @@ public:
     //    action_server_.setPreempted();
   }
 
-  // Publish our custom TF frame asyncronously
-  /*
-    void tfFrameThread()
-    {
-    ros::Rate rate(2.0);
-    while (nh_.ok())
-    {
-    if( transform_is_set_ ) // do not start publishing until we have an intial transform loaded
-    {
-    // Do not access transform_ if it is being updated
-    {
-    boost::mutex::scoped_lock transform_lock(transform_mutex_);
-    // Send Transform
-    tf_broadcaster_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), base_link_, block_frame_));
-    }
-    }
-
-    rate.sleep();
-    }
-    }
-  */
-
-  // Create all possible grasp positions for a block
-  void generateGrasps( geometry_msgs::Pose& block_pose )
+  // Run pick and place
+  void pickAndPlace( geometry_msgs::Pose& block_pose )
   {
     // ---------------------------------------------------------------------------------------------
     // Create the transform from block_frame to base_frame
@@ -261,33 +263,75 @@ public:
     transform_ = tf_block_pose;
 
     // ---------------------------------------------------------------------------------------------
+    // Add the block to the planning scene
+    //    createCollisionObject(block_pose, chosen_block_object_);
+
+    // ---------------------------------------------------------------------------------------------
     // Generate grasps
-
-    // List of possible block grasps
-    std::vector<manipulation_msgs::Grasp> possible_grasps;
-
-    // Calculate grasps in two axis
-    //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-    //generateAxisGrasps( possible_grasps, X_AXIS, UP );
-    //generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+    std::vector<manipulation_msgs::Grasp> possible_grasps;     // List of possible block grasps
+    generateGrasps( block_pose, possible_grasps );
 
     // Filter grasp poses
-    filterGrasps( possible_grasps );
-
-    ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
+    //filterGrasps( possible_grasps );
+    //ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
 
-    //ros::Duration(5.0).sleep();
-
     // Plan the results
     executeGrasps(possible_grasps, block_pose);
+
+    return;
+
+
+    /*
+    std::vector<manipulation_msgs::Grasp> single_grasp;
+
+    // Loop through and plan for each individual grasp
+    for( int i = 3; i < possible_grasps.size(); ++i)
+    {
+      ROS_INFO_STREAM_NAMED("grasp","Trying grasp " << i );
+
+      // ---------------------------------------------------------------------------------------------
+      // Choose one
+      single_grasp.clear();
+      single_grasp.push_back(possible_grasps[i]);
+
+      // Visualize results
+      visualizeGrasps(single_grasp, block_pose);
+
+      // Plan the results
+      executeGrasps(single_grasp, block_pose);
+
+      // ---------------------------------------------------------------------------------------------
+      // Send home
+      ROS_INFO_STREAM_NAMED("grasp","Sending arm home");
+      clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+      clam_arm_client_.sendGoal(clam_arm_goal_);
+      while(!clam_arm_client_.getState().isDone() && ros::ok())
+        ros::Duration(0.1).sleep();
+
+      // Remove the attached object
+      //deleteCollisionObject(chosen_block_object_);
+    }
+    */
+  }
+
+  // Create all possible grasp positions for a block
+  void generateGrasps(geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  {
+    // ---------------------------------------------------------------------------------------------
+    // Calculate grasps in two axis
+
+    //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+    //generateAxisGrasps( possible_grasps, X_AXIS, UP );
+    //generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
+    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   }
 
   // Create grasp positions in one axis
-  bool generateAxisGrasps( std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis, grasp_direction_t direction )
+  bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis, 
+                          grasp_direction_t direction )
   {
 
     // ---------------------------------------------------------------------------------------------
@@ -457,6 +501,11 @@ public:
 
   void createCollisionObject(const geometry_msgs::Pose& block_pose, moveit_msgs::CollisionObject& block_object)
   {
+    if( block_published_ )
+    {
+      return; // only publish the block once!
+    }
+    
     ROS_INFO_STREAM_NAMED("grasp","Creating the collision object");
     // ---------------------------------------------------------------------------------------------
     // Create Solid Primitive
@@ -503,29 +552,28 @@ public:
     // Operation to be performed
     block_object.operation = moveit_msgs::CollisionObject::ADD; // Puts the object into the environment or updates the object if already added
 
-  }
-
-  void addCollisionObject(const geometry_msgs::Pose& block_pose, moveit_msgs::CollisionObject& block_object)
-  {
-    ROS_INFO_STREAM_NAMED("grasp","Adding collision object");
-
-    // Create the object
-    createCollisionObject(block_pose, block_object);
-
     // Send the object
     collision_obj_pub_.publish(block_object);
-    ROS_INFO_STREAM_NAMED("grasp","Collision object published");
+    block_published_ = true;
+    ROS_INFO_STREAM_NAMED("grasp","Collision object published for addition");
+  }
+
+  // *Requires that the object already be created
+  void deleteCollisionObject(moveit_msgs::CollisionObject& block_object)
+  {
+    // Operation to be performed
+    block_object.operation = moveit_msgs::CollisionObject::REMOVE;
+
+    // Send the object
+    block_published_ = false;
+    collision_obj_pub_.publish(block_object);
+    ROS_INFO_STREAM_NAMED("grasp","Collision object published for removal");
   }
 
   void executeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                      const geometry_msgs::Pose& block_pose)
   {
     ROS_INFO_STREAM_NAMED("grasp","Creating Pickup Goal");
-
-    // ---------------------------------------------------------------------------------------------
-    // Create an empty collision object to be filled in by addCollisionObject
-    moveit_msgs::CollisionObject block_object;
-    addCollisionObject(block_pose, block_object);
 
 
     //ROS_INFO_STREAM_NAMED("grasp","Temp done");
@@ -576,7 +624,7 @@ public:
     // An action for picking up an object
 
     // The name of the object to pick up (as known in the planning scene)
-    goal.target_name = block_object.id;
+    goal.target_name = chosen_block_object_.id;
 
     // which group should be used to plan for pickup
     goal.group_name = PLANNING_GROUP_NAME;
@@ -653,9 +701,9 @@ public:
       geometry_msgs::Pose grasp_pose = grasp_it->grasp_pose.pose;
       publishSphere(grasp_pose);
       publishArrow(grasp_pose);
-      publishEEMarkers(grasp_pose);
+      //publishEEMarkers(grasp_pose);
       //publishBlock(block_pose, BLOCK_SIZE - 0.001);
-      rate.sleep();
+      //rate.sleep();
     }
   }
 
@@ -852,7 +900,7 @@ public:
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    //marker.lifetime = ros::Duration(30.0);
+    marker.lifetime = ros::Duration(30.0);
 
     // Make line color
     std_msgs::ColorRGBA color;
@@ -905,7 +953,7 @@ public:
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    //marker.lifetime = ros::Duration(30.0);
+    marker.lifetime = ros::Duration(30.0);
 
     rviz_marker_pub_.publish( marker );
     ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz

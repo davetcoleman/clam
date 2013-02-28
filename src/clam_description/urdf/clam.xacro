@@ -451,7 +451,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP -->
-  <joint name="gripper_fake_tip_joint" type="fixed">
+  <!--joint name="gripper_fake_tip_joint" type="fixed">
     <origin xyz="0.1785 0.0 0.0" rpy="0 0 0" />
     <parent link="gripper_roll_link"/>
     <child link="gripper_fake_tip_link" />
@@ -484,6 +484,6 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   <gazebo reference="gripper_fake_tip_link">
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
-  </gazebo>
+  </gazebo-->
 
 </robot>

@@ -5,10 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1
-        - /MotionPlanning1/Scene Geometry1
-        - /MotionPlanning1/Scene Robot1
-        - /MotionPlanning1/Planning Request1
-        - /MotionPlanning1/Planned Path1
         - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
     Tree Height: 538
@@ -142,7 +138,7 @@ Visualization Manager:
         Interactive Marker Size: 0.15
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
@@ -363,7 +359,9 @@ Visualization Manager:
       Marker Topic: /end_effector_marker
       Name: EE Grasp Poses
       Namespaces:
-        {}
+        Arrow: true
+        Sphere: true
+        gripper_group: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -380,17 +378,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.41612
+      Distance: 1.06529
       Focal Point:
         X: 0.25346
         Y: 0.0404885
         Z: -5.96044e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.264797
+      Pitch: 0.0947971
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.49177
+      Yaw: 4.97177
     Saved: ~
 Window Geometry:
   Displays:
@@ -406,5 +404,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3810
-  Y: -272
+  X: 3809
+  Y: -300

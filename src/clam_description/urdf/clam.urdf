@@ -404,33 +404,39 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     </collision>
   </link>
   <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP -->
-  <joint name="gripper_fake_tip_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.1785 0.0 0.0"/>
+  <!--joint name="gripper_fake_tip_joint" type="fixed">
+    <origin xyz="0.1785 0.0 0.0" rpy="0 0 0" />
     <parent link="gripper_roll_link"/>
-    <child link="gripper_fake_tip_link"/>
+    <child link="gripper_fake_tip_link" />
   </joint>
-  <link name="gripper_fake_tip_link">
+
+  <link name="gripper_fake_tip_link" >
+
     <inertial>
-      <origin xyz="0 0 0"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+      <origin xyz="0 0 0" />
+      <mass value="0.01" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
+
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <sphere radius=".001"/>
       </geometry>
     </visual>
+
     <collision>
-      <origin rpy="0 0 0" xyz="-0.1 0 0"/>
+      <origin xyz="-0.1 0 0" rpy="0 0 0" />
       <geometry>
         <sphere radius=".001"/>
       </geometry>
     </collision>
+
   </link>
+
   <gazebo reference="gripper_fake_tip_link">
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
-  </gazebo>
+  </gazebo-->
 </robot>
 
