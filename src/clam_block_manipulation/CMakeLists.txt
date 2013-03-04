@@ -14,7 +14,6 @@ find_package(catkin REQUIRED
   clam_msgs
   pcl_ros
   cv_bridge
-  opencv2
   eigen_conversions 
   moveit_ros_planning 
   moveit_ros_planning_interface
@@ -22,6 +21,8 @@ find_package(catkin REQUIRED
   tf
   tf_conversions
 )
+
+find_package(OpenCV REQUIRED)
 
 generate_messages(DEPENDENCIES
   std_msgs
@@ -38,7 +39,6 @@ catkin_package(DEPENDS
   clam_msgs
   pcl_ros
   cv_bridge
-  opencv2
   eigen_conversions 
   moveit_ros_planning 
   moveit_ros_planning_interface

@@ -10,8 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   pcl
   image_transport
   cv_bridge
-  vision_opencv
-  opencv2
   image_geometry
   tf
   visualization_msgs
@@ -25,6 +23,10 @@ link_directories(${catkin_LIBRARY_DIRS})
 # Eigen
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
+
+# OpenCV
+find_package(OpenCV REQUIRED)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and scripts declared therein get installed
@@ -46,8 +48,6 @@ catkin_package(
   image_transport
   cv_bridge
   image_geometry
-  vision_opencv
-  opencv2
   eigen
   tf
   visualization_msgs
@@ -71,8 +71,8 @@ add_executable(calibrate_kinect_checkerboard
   src/detect_calibration_pattern.cpp
   src/calibrate_kinect_checkerboard.cpp
   )
-target_link_libraries(calibrate_kinect_checkerboard ${catkin_LIBRARIES})
+target_link_libraries(calibrate_kinect_checkerboard ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(manual_square_calibrate src/manual_square_calibrate.cpp)
-target_link_libraries(manual_square_calibrate ${catkin_LIBRARIES})
+target_link_libraries(manual_square_calibrate ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
