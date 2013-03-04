@@ -25,6 +25,7 @@
   <build_depend>tf</build_depend>
   <build_depend>clam_block_manipulation</build_depend>
   <build_depend>visualization_msgs</build_depend>
+
   <run_depend>actionlib</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <run_depend>moveit_ros_planning</run_depend>

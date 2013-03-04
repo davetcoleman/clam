@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl
   image_transport
   cv_bridge
+  vision_opencv
   opencv2
   image_geometry
   tf
@@ -44,9 +45,9 @@ catkin_package(
   pcl_ros
   image_transport
   cv_bridge
-  opencv2
   image_geometry
   vision_opencv
+  opencv2
   eigen
   tf
   visualization_msgs

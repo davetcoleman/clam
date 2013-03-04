@@ -1,7 +1,7 @@
 <package>
   <name>clam_block_manipulation</name>
   <version>2.0.0</version>
-  <description>clam_block_manipulation contains a demo allowing the ClamArm to manipulate small blocks on a level surface using interactive markers.</description>
+  <description>clam_block_manipulation contains a demo allowing the ClamArm to manipulate blocks on a surface.</description>
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
 
   <license>BSD</license>
@@ -17,7 +17,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>visualization_msgs</build_depend>
-  <build_depend>interactive_markers</build_depend>
   <build_depend>clam_controller</build_depend>
   <build_depend>clam_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
@@ -34,7 +33,6 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>visualization_msgs</run_depend>
-  <run_depend>interactive_markers</run_depend>
   <run_depend>clam_controller</run_depend>
   <run_depend>clam_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>

@@ -10,7 +10,6 @@ find_package(catkin REQUIRED
   std_msgs
   actionlib 
   visualization_msgs 
-  interactive_markers 
   clam_controller 
   clam_msgs
   pcl_ros
@@ -35,7 +34,6 @@ catkin_package(DEPENDS
   std_msgs
   actionlib 
   visualization_msgs 
-  interactive_markers 
   clam_controller 
   clam_msgs
   pcl_ros

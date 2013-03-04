@@ -1,5 +1,7 @@
+# Convert XACRO to URDF
+#rosrun xacro xacro.py clam.xacro > clam.urdf;
+
 # Convert URDF to collada format
-#rosrun collada_urdf urdf_to_collada ../urdf/clam.urdf clam.dae
 rosrun collada_urdf urdf_to_collada clam.urdf clam.dae
 
 # Install openrave here: http://openrave.org/docs/latest_stable/install/#install
