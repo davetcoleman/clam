@@ -50,7 +50,7 @@ catkin_package(DEPENDS
 )
 
 # Enable gdb to show line numbers
-#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
 set(CMAKE_BUILD_TYPE Debug)
 
 ## Build 

@@ -1,9 +1,0 @@
-<launch>
-  <!-- debug capability -->
-  <arg name="debug" default="true" />
-  <arg unless="$(arg debug)" name="launch_prefix" value="" />
-  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
-
-  <node name="urdf_to_collada" pkg="collada_urdf" type="urdf_to_collada"
-        launch-prefix="$(arg launch_prefix)" output="screen" args="clam.urdf clam_new.dae" />
-</launch>

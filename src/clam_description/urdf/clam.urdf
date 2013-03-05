@@ -439,4 +439,3 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <turnGravityOff>false</turnGravityOff>
   </gazebo-->
 </robot>
-

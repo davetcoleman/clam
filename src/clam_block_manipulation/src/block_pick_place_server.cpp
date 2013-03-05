@@ -126,7 +126,7 @@ public:
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
 
 
-    generateGrasps();
+    //    generateGrasps();
 
 
     // ---------------------------------------------------------------------------------------------
