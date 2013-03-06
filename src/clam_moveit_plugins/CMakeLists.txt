@@ -43,12 +43,15 @@ catkin_package(
   )
 
 include_directories(clam_moveit_controller_manager/include)
+include_directories(clam_moveit_ikfast/include)
 
 add_subdirectory(clam_moveit_controller_manager)
+add_subdirectory(clam_moveit_ikfast)
 
 install(
   FILES
   clam_moveit_controller_manager_plugin_description.xml
+  clam_moveit_ikfast_plugin_description.xml
   DESTINATION
   ${CATKIN_PACKAGE_SHARE_DESTINATION}
   )
