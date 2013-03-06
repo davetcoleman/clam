@@ -156,7 +156,7 @@ public:
                         std::vector<double> &solution,
                         const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
                                                    moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-                        moveit_msgs::MoveItErrorCodes &error_code) const;
+    moveit_msgs::MoveItErrorCodes &error_code) const;
 
   /**
    * @brief Given a desired pose of the end-effector, search for the joint angles required to reach it.
@@ -175,7 +175,7 @@ public:
                         std::vector<double> &solution,
                         const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
                                                    moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-    moveit_msgs::MoveItErrorCodes &error_code) const;
+                        moveit_msgs::MoveItErrorCodes &error_code) const;
 
 private:
 
@@ -211,7 +211,7 @@ bool IKFastKinematicsPlugin::initialize(const std::string &robot_description,
                                         const std::string& tip_name,
                                         double search_discretization)
 {
-  ROS_DEBUG("Initializing IKFast solver");  
+  ROS_DEBUG("Initializing IKFast solver");
   /*
     bool IKFastKinematicsPlugin::initialize(const std::string& group_name,
     const std::string& base_name,
@@ -764,7 +764,7 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               std::vector<double> &solution,
                                               const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
                                                                          moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-                                              moveit_msgs::MoveItErrorCodes &error_code) const
+  moveit_msgs::MoveItErrorCodes &error_code) const
 {
   // If manipulator has no free links
   if(free_params_.size()==0){
