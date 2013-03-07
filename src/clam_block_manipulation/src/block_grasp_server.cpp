@@ -62,6 +62,7 @@
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/robot_interaction/robot_interaction.h>
 #include <moveit_msgs/PickupAction.h> // TODO: remove
+#include <moveit/kinematics_plugin_loader/kinematics_plugin_loader.h>
 
 // C++
 #include <boost/thread.hpp>
@@ -195,7 +196,9 @@ public:
     //boost::thread tf_frame_thread_(boost::bind(&BlockGraspServer::tfFrameThread, this));
 
     // ---------------------------------------------------------------------------------------------
-    // Test pose
+    // Test with randomly oriented block
+    //srand (ros::Time::now());
+    //double angle = rand() % M_PI;
     double angle = 0; //M_PI / 1.5;
 
     geometry_msgs::Pose block_pose;
@@ -254,7 +257,7 @@ public:
   }
 
   // Run pick and place
-  void pickAndPlace( geometry_msgs::Pose& block_pose )
+  bool pickAndPlace( geometry_msgs::Pose& block_pose )
   {
     // ---------------------------------------------------------------------------------------------
     // Create the transform from block_frame to base_frame
@@ -271,25 +274,31 @@ public:
     std::vector<manipulation_msgs::Grasp> possible_grasps;     // List of possible block grasps
     generateGrasps( block_pose, possible_grasps );
 
+    // Visualize results
+    visualizeGrasps(possible_grasps, block_pose);
+
     // Filter grasp poses
-    //filterGrasps( possible_grasps );
-    //ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
+    if( !filterGrasps( possible_grasps ) )
+      return false;
+
+    ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
     // Visualize results
     visualizeGrasps(possible_grasps, block_pose);
 
-    // Plan the results
-    executeGrasps(possible_grasps, block_pose);
 
-    return;
+    // Plan the results
+    //executeGrasps(possible_grasps, block_pose);
+
+    return true;
 
 
     /*
-    std::vector<manipulation_msgs::Grasp> single_grasp;
+      std::vector<manipulation_msgs::Grasp> single_grasp;
 
-    // Loop through and plan for each individual grasp
-    for( int i = 3; i < possible_grasps.size(); ++i)
-    {
+      // Loop through and plan for each individual grasp
+      for( int i = 3; i < possible_grasps.size(); ++i)
+      {
       ROS_INFO_STREAM_NAMED("grasp","Trying grasp " << i );
 
       // ---------------------------------------------------------------------------------------------
@@ -309,12 +318,14 @@ public:
       clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
       clam_arm_client_.sendGoal(clam_arm_goal_);
       while(!clam_arm_client_.getState().isDone() && ros::ok())
-        ros::Duration(0.1).sleep();
+      ros::Duration(0.1).sleep();
 
       // Remove the attached object
       //deleteCollisionObject(chosen_block_object_);
-    }
+      }
     */
+
+    return true;
   }
 
   // Create all possible grasp positions for a block
@@ -323,14 +334,14 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Calculate grasps in two axis
 
-    //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-    //generateAxisGrasps( possible_grasps, X_AXIS, UP );
-    //generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+    generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+    //    generateAxisGrasps( possible_grasps, X_AXIS, UP );
+    generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
+    //    generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   }
 
   // Create grasp positions in one axis
-  bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis, 
+  bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
                           grasp_direction_t direction )
   {
 
@@ -489,7 +500,7 @@ public:
     return true;
   }
 
-  void filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  void filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps)
   {
     // Only choose the 4th grasp
     std::vector<manipulation_msgs::Grasp> single_grasp;
@@ -499,13 +510,102 @@ public:
     ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
   }
 
+  // Choose the 1st grasp that is kinematically feasible
+  bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  {
+    // -----------------------------------------------------------------------------------------------
+    // Error check
+    if( possible_grasps.empty() )
+    {
+      ROS_ERROR_NAMED("grasp","Unable to filter grasps because vector is empty");
+      return false;
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // Get the IK solver
+    boost::shared_ptr<kinematics_plugin_loader::KinematicsPluginLoader> kinematics_plugin_loader;
+    kinematics_plugin_loader.reset(new kinematics_plugin_loader::KinematicsPluginLoader());
+    kinematics_plugin_loader::KinematicsLoaderFn
+      kinematics_allocator = kinematics_plugin_loader->getLoaderFunction();
+
+    const robot_model::JointModelGroup* planning_group
+      = planning_scene_monitor_->getPlanningScene()->getRobotModel()->getJointModelGroup(PLANNING_GROUP_NAME);
+
+    kinematics::KinematicsBasePtr kin_solver = kinematics_allocator(planning_group);
+
+    // -----------------------------------------------------------------------------------------------
+    // Loop through poses and find first one that has solution
+
+    std::vector<manipulation_msgs::Grasp> feasible_grasp;
+
+    int num_ik_solutions = 0;
+    for (std::vector<manipulation_msgs::Grasp>::iterator grasp_it = possible_grasps.begin();
+         grasp_it!=possible_grasps.end(); ++grasp_it)
+    {
+
+      // -----------------------------------------------------------------------------------------------
+      // Declare needed IK solver vars
+      geometry_msgs::Pose ik_pose = possible_grasps[0].grasp_pose.pose;
+      std::vector<double> ik_seed_state;
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      ik_seed_state.push_back(0);
+      std::vector<double> solution;
+      moveit_msgs::MoveItErrorCodes error_code;
+
+      // Test it with IK
+      kin_solver->getPositionIK(ik_pose, ik_seed_state, solution, error_code);
+
+      // Results
+      if( error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS )
+      {
+        ROS_INFO_STREAM_NAMED("grasp","Found IK Solution!!! \n");
+        for (std::vector<double>::iterator solution_it = solution.begin();
+             solution_it!=solution.end(); ++solution_it)
+        {
+          std::cout << *solution_it << std::endl;
+        }
+
+        feasible_grasp.push_back(*grasp_it);
+
+        //        return true;
+        num_ik_solutions ++;
+      }
+      else if( error_code.val == moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION )
+      {
+        ROS_WARN_STREAM_NAMED("grasp","Unable to find IK solution for pose.");
+      }
+      else if( error_code.val == moveit_msgs::MoveItErrorCodes::TIMED_OUT )
+      {
+        ROS_WARN_STREAM_NAMED("grasp","Unable to find IK solution for pose: Timed Out.");
+      }
+      else
+      {
+        ROS_WARN_STREAM_NAMED("grasp","IK solution error: MoveItErrorCodes.msg = " << error_code);
+      }
+    }
+
+    //    ROS_ERROR_STREAM_NAMED("grasp","Unable to find any IK solution.");
+
+    ROS_INFO_STREAM_NAMED("grasp", "Found " << num_ik_solutions << " ik solutions out of " <<
+                          possible_grasps.size() );
+
+    possible_grasps = feasible_grasp;
+
+    return true;
+  }
+
   void createCollisionObject(const geometry_msgs::Pose& block_pose, moveit_msgs::CollisionObject& block_object)
   {
     if( block_published_ )
     {
       return; // only publish the block once!
     }
-    
+
     ROS_INFO_STREAM_NAMED("grasp","Creating the collision object");
     // ---------------------------------------------------------------------------------------------
     // Create Solid Primitive

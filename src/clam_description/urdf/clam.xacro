@@ -105,13 +105,6 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <dynamics damping="50" friction="1"/>
   </joint>
 
-  <transmission name="shoulder_pan_controller" type="pr2_mechanism_model/SimpleTransmission">
-    <actuator name="shoulder_pan_actuator" />
-    <joint name="shoulder_pan_joint" />
-    <mechanicalReduction>1</mechanicalReduction>
-    <motorTorqueConstant>1</motorTorqueConstant>
-  </transmission>
-
   <!-- SHOULDER PAN LINK -->
   <link name="shoulder_pan_link" >
 
@@ -124,7 +117,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}" />
       <geometry>
-        <mesh filename="package://clam_description/stl/shoulder_pan_link_simple.STL" scale="${M_SCALE}" />
+        <mesh filename="package://clam_description/stl/shoulder_pan_link.STL" scale="${M_SCALE}" />
       </geometry>
       <material name="Orange" />
     </visual>
@@ -182,7 +175,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
 
-  <joint name="elbow_roll_joint" type="revolute">
+  <joint name="elbow_roll_joint" type="fixed">
     <parent link="shoulder_pitch_link"/>
     <child link="elbow_roll_link"/>
     <origin xyz="-0.002 0 0.1206" rpy="${M_PI} ${M_PI/2} 0" />

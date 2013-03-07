@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /MotionPlanning1
         - /MotionPlanning1/Planning Request1
         - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
@@ -134,7 +133,7 @@ Visualization Manager:
         Interactive Marker Size: 0.15
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
@@ -374,7 +373,7 @@ Visualization Manager:
         Z: -5.96044e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.254797
+      Pitch: 0.324797
       Target Frame: /base_link
       Value: XYOrbit (rviz)
       Yaw: 5.27677
@@ -393,5 +392,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3808
-  Y: -328
+  X: 3807
+  Y: -356

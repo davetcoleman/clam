@@ -457,7 +457,7 @@ if( j0valid[iij0] && IKabs(cj0array[ij0]-cj0array[iij0]) < IKFAST_SOLUTION_THRES
 }
 {
 IkReal j5array[0], cj5array[0], sj5array[0];
-bool j5valid[0]={false};
+bool j5valid[1]={false};
 _nj5 = 0;
 for(int ij5 = 0; ij5 < 0; ++ij5)
 {
