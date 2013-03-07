@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+  <node name="block_manipulation_logic" pkg="clam_block_manipulation" type="block_manipulation_logic" output="screen">
+    <rosparam>
+      base_link: /base_link
+      table_height: 0.0
+      block_size: 0.04
+      z_up: 0.12
+      once: true
+    </rosparam>
+  </node>
+</launch>

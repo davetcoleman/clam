@@ -25,6 +25,8 @@
   <build_depend>tf</build_depend>
   <build_depend>clam_block_manipulation</build_depend>
   <build_depend>visualization_msgs</build_depend>
+  <build_depend>clam_controller</build_depend>
+  <build_depend>clam_msgs</build_depend>
 
   <run_depend>actionlib</run_depend>
   <run_depend>eigen_conversions</run_depend>
@@ -35,5 +37,7 @@
   <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>clam_block_manipulation</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <run_depend>clam_controller</run_depend>
+  <run_depend>clam_msgs</run_depend>
 
 </package>

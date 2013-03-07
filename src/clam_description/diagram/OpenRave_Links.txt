@@ -1,0 +1,15 @@
+name                      index parents            
+---------------------------------------------------
+base_link                 0                        
+shoulder_pan_link         1     base_link          
+shoulder_pitch_link       2     shoulder_pan_link  
+elbow_roll_link           3     shoulder_pitch_link
+elbow_pitch_link          4     elbow_roll_link    
+wrist_roll_link           5     elbow_pitch_link   
+wrist_pitch_link          6     wrist_roll_link    
+gripper_roll_link         7     wrist_pitch_link   
+gripper_finger_link       8     gripper_roll_link  
+gripper_fixed_finger_link 9     gripper_roll_link  
+tabletop_link             10    base_link          
+---------------------------------------------------
+name                      index parents 

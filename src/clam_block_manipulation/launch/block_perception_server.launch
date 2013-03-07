@@ -1,8 +1,0 @@
-<launch>
-
-  <!-- Launch perception -->
-  <node name="block_perception_server" pkg="clam_block_manipulation" type="block_perception_server" output="screen">
-    <!--remap from="/camera/depth_registered/points" to="/camera/rgb/points" /-->
-  </node>
-
-</launch>

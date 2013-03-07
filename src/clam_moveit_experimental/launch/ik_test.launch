@@ -1,0 +1,12 @@
+<launch>
+
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- Launch pick and place -->
+  <node name="ik_test" pkg="clam_moveit_experimental" type="ik_test" output="screen" launch-prefix="$(arg launch_prefix)">
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/> <!-- this allows the computeCartesianPath() func to have an IK solver -->
+  </node>
+
+</launch>

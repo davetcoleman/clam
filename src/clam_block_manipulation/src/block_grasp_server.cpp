@@ -275,7 +275,7 @@ public:
     generateGrasps( block_pose, possible_grasps );
 
     // Visualize results
-    visualizeGrasps(possible_grasps, block_pose);
+    //visualizeGrasps(possible_grasps, block_pose);
 
     // Filter grasp poses
     if( !filterGrasps( possible_grasps ) )
@@ -553,7 +553,7 @@ public:
       ik_seed_state.push_back(0);
       ik_seed_state.push_back(0);
       ik_seed_state.push_back(0);
-      ik_seed_state.push_back(0);
+      //      ik_seed_state.push_back(0);
       std::vector<double> solution;
       moveit_msgs::MoveItErrorCodes error_code;
 

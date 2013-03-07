@@ -50,7 +50,7 @@ catkin_package(DEPENDS
 )
 
 # Enable gdb to show line numbers
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
 set(CMAKE_BUILD_TYPE Debug)
 
 ## Build 
@@ -65,9 +65,6 @@ target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
 add_executable(block_pick_place_server src/block_pick_place_server.cpp)
 target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
-
-add_executable(block_grasp_server src/block_grasp_server.cpp)
-target_link_libraries(block_grasp_server ${catkin_LIBRARIES})
 
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})

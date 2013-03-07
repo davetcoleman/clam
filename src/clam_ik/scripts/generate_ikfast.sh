@@ -1,32 +1,23 @@
 # Generate IKFast module
-roscd clam_ik/urdf_to_collada
+# Assume clam.dae file already exists in clam_description/urdf/clam.dae
 
-# Convert xacro to urdf
-rosrun xacro xacro.py clam.xacro > clam.urdf;
-
-# Create dae file
-rosrun collada_urdf urdf_to_collada clam.urdf clam.dae
+roscd clam_ik/src
+cp ~/ros/clam/src/clam_description/urdf/clam.dae .
 
 read -p "Press any key to see link info";
 
 # View list of links in model:
 /usr/bin/openrave-robot.py clam.dae --info links
 
-# Launch openrave
-read -p "Press any key to launch openrave";
-openrave clam.dae
 read -p "Press any key to continue";
 
-# Run this script from within clam_ik/scripts
-roscd clam_ik/src
-
 # Now create IK. Make sure urdf/dae file location path is correct
-python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/src/clam_ik/urdf_to_collada/clam.dae --iktype=transform6d --baselink=0 --eelink=6 --savefile=output_ikfast61.cpp #--freeindex=2
+python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/src/clam_ik/src/clam.dae --iktype=transform6d --baselink=0 --eelink=7 --savefile=output_ikfast61.cpp #--freeindex=2
 
 read -p "Press any key to compile test program";
 
 # Compile test program. I had to add the -I part myself, is system dependent probably
-g++ -lstdc++ -llapack -o test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/
+g++ -Wall -g -lstdc++ -llapack -o test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/
 
 # Do a bunch of tests
 test_ikfast iktiming 
@@ -56,6 +47,8 @@ test_ikfast ik 0.2222066 -0.0088 .197156 0.703466 0.00 0.710502 -0.01755 0.0
 
 # Wait for user
 read -p "Press any key to continue";
+
+cd -
 
 # Create plugin for arm_navigation
 #mkdir ~/ros/clam/clam_arm_navigation/src

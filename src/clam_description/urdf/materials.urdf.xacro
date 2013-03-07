@@ -33,8 +33,4 @@
         <color rgba="1.0 1.0 1.0 1.0"/>
     </material>
 
-    <material name="GunMetalBrushedAluminum">
-        <texture filename="package://clam_description/media/gun_metal_brushed_aluminum.jpg" />
-    </material>
-
 </robot>

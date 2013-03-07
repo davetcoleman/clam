@@ -43,7 +43,7 @@ catkin_package(
   )
 
 # Enable gdb to show line numbers
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
 set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(clam_moveit_controller_manager/include)
