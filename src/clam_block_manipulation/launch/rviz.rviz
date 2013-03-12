@@ -4,6 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /MotionPlanning1
+        - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
@@ -138,7 +140,7 @@ Visualization Manager:
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: /move_group/monitored_planning_scene
+      Planning Scene Topic: /ik_test/dave_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -349,7 +351,8 @@ Visualization Manager:
       Marker Topic: /end_effector_marker
       Name: EE Grasp Poses
       Namespaces:
-        {}
+        Arrow: true
+        Sphere: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -376,7 +379,7 @@ Visualization Manager:
       Pitch: 0.324797
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.27677
+      Yaw: 4.93677
     Saved: ~
 Window Geometry:
   Displays:
@@ -392,5 +395,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3807
-  Y: -356
+  X: 3806
+  Y: -384

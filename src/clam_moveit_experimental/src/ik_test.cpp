@@ -371,20 +371,20 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Generate a set of grasp that are slowly lower
-    while( grasp_pose.pose.position.z > 0.1 )
-    {
-      // Lower the pose
-      grasp_pose.pose.position.z -= 0.05;
+    //    while( grasp_pose.pose.position.z > 0.1 )
+    //    {
+    // Lower the pose
+    grasp_pose.pose.position.z -= 0.1;
 
-      // ---------------------------------------------------------------------------------------------
-      // Create a Grasp message
-      manipulation_msgs::Grasp new_grasp;
-      new_grasp.grasp_pose = grasp_pose;
+    // ---------------------------------------------------------------------------------------------
+    // Create a Grasp message
+    manipulation_msgs::Grasp new_grasp;
+    new_grasp.grasp_pose = grasp_pose;
 
-      // ---------------------------------------------------------------------------------------------
-      // Add to possible grasps
-      possible_grasps.push_back(new_grasp);
-    }
+    // ---------------------------------------------------------------------------------------------
+    // Add to possible grasps
+    possible_grasps.push_back(new_grasp);
+    //    }
 
   }
 
