@@ -24,29 +24,38 @@ find_package(catkin REQUIRED
 
 find_package(OpenCV REQUIRED)
 
-generate_messages(DEPENDENCIES
-  std_msgs
-  geometry_msgs  
-  actionlib_msgs
-)
+#generate_messages(DEPENDENCIES
+#  std_msgs
+#  geometry_msgs  
+#  actionlib_msgs
+#)
 
-catkin_package(DEPENDS
-  roscpp
-  std_msgs
-  actionlib 
-  visualization_msgs 
-  clam_controller 
-  clam_msgs
-  pcl_ros
-  cv_bridge
-  eigen_conversions 
-  moveit_ros_planning 
-  moveit_ros_planning_interface
-  moveit_core
-  tf
-  tf_conversions
+# Grasp Library
+add_library(${PROJECT_NAME}_grasp_generator
+  src/grasp_generator.cpp
+)
+target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+
+catkin_package(
+  LIBRARIES
+    ${PROJECT_NAME}_grasp_generator
+  CATKIN_DEPENDS
+    roscpp
+    std_msgs
+    actionlib 
+    visualization_msgs 
+    clam_controller 
+    clam_msgs
+    pcl_ros
+    cv_bridge
+    eigen_conversions 
+    moveit_ros_planning 
+    moveit_ros_planning_interface
+    moveit_core
+    tf
+    tf_conversions
 #  INCLUDE_DIRS include
-#  LIBRARIES ${PROJECT_NAME}
 )
 
 # Enable gdb to show line numbers
@@ -59,19 +68,14 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 link_directories(${catkin_LIBRARY_DIRS})
- 
+
+# Action Servers 
 add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
-add_executable(block_grasp_server src/block_grasp_server.cpp)
-target_link_libraries(block_grasp_server ${catkin_LIBRARIES})
-
 add_executable(block_pick_place_server src/block_pick_place_server.cpp)
-target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
+target_link_libraries(block_pick_place_server ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
 
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
-
-
-
 

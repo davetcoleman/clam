@@ -70,6 +70,9 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
+// Grasp generation
+#include "grasp_generator.h"
+
 namespace clam_block_manipulation
 {
 
@@ -98,7 +101,7 @@ private:
   clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
   clam_msgs::PickPlaceFeedback     feedback_;
   clam_msgs::PickPlaceResult       result_;
-  clam_msgs::PickPlaceGoalConstPtr goal_;
+  clam_msgs::PickPlaceGoalConstPtr pick_place_goal_;
 
   // MoveIt Components
   boost::shared_ptr<tf::TransformListener> tf_;
@@ -107,10 +110,7 @@ private:
   boost::shared_ptr<plan_execution::PlanExecution> plan_execution_;
 
   // Parameters from goal
-  std::string base_link;
-  double gripper_open;
-  double gripper_closed;
-  double z_up;
+  std::string base_link_;
 
 public:
 
@@ -124,10 +124,6 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Rviz Visualizations
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
-
-
-    //    generateGrasps();
-
 
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
@@ -192,7 +188,9 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place", "Server ready.");
     ROS_INFO_STREAM_NAMED("pick_place", "Waiting for pick command...");
 
-
+    // ---------------------------------------------------------------------------------------------
+    // Send fake command
+    fake_goalCB();
   }
 
   // Action server sends goals here
@@ -200,12 +198,52 @@ public:
   {
     ROS_INFO_STREAM_NAMED("pick_place","Received goal -----------------------------------------------");
 
-    goal_ = action_server_.acceptNewGoal();
-    base_link = goal_->frame;
-    gripper_open = goal_->gripper_open;
-    gripper_closed = goal_->gripper_closed;
-    z_up = goal_->z_up;
+    pick_place_goal_ = action_server_.acceptNewGoal();
+    base_link_ = pick_place_goal_->frame;
 
+    processGoal(pick_place_goal_->pickup_pose, pick_place_goal_->place_pose);
+  }
+
+  // Skip perception
+  void fake_goalCB()
+  {
+    ROS_INFO_STREAM_NAMED("pick_place","Received fake goal ----------------------------------------");
+
+    // Position
+    geometry_msgs::Pose start_block_pose;
+    geometry_msgs::Pose end_block_pose;
+
+    start_block_pose.position.x = 0.2;
+    start_block_pose.position.y = 0.0;
+    start_block_pose.position.z = 0.02;
+
+    end_block_pose.position.x = 0.25;
+    end_block_pose.position.y = 0.15;
+    end_block_pose.position.z = 0.02;
+
+    // Orientation
+    double angle = M_PI / 1.5;
+    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
+    start_block_pose.orientation.x = quat.x();
+    start_block_pose.orientation.y = quat.y();
+    start_block_pose.orientation.z = quat.z();
+    start_block_pose.orientation.w = quat.w();
+
+    angle = M_PI / 1.1;
+    quat = Eigen::Quaterniond(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
+    end_block_pose.orientation.x = quat.x();
+    end_block_pose.orientation.y = quat.y();
+    end_block_pose.orientation.z = quat.z();
+    end_block_pose.orientation.w = quat.w();
+
+    // Fill goal
+    base_link_ = "base_link";
+
+    processGoal(start_block_pose, end_block_pose);
+  }
+
+  void processGoal(const geometry_msgs::Pose& start_block_pose, const geometry_msgs::Pose& end_block_pose )
+  {
     // Change the goal constraints on the servos to be less strict, so that the controllers don't die. this is a hack
     nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/elbow_pitch_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/shoulder_pan_joint/goal", 2); // originally it was 0.45
@@ -213,35 +251,24 @@ public:
     nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/gripper_roll_joint/goal", 2); // originally it was 0.45
     nh_.setParam("/clam_trajectory_controller/joint_trajectory_action_node/constraints/wrist_pitch_joint/goal", 2); // originally it was 0.45
 
-
-    if( !pickAndPlace(goal_->pickup_pose, goal_->place_pose) )
+    if( !pickAndPlace(start_block_pose, end_block_pose) )
     {
       ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
+
+      // Report failure
       result_.success = false;
+      if(action_server_.isActive()) // Make sure we haven't sent a fake goal
+        action_server_.setSucceeded(result_);
+    }
+    else
+    {
+      // Report success
+      result_.success = true;
       action_server_.setSucceeded(result_);
     }
 
-    /*
-    // Skip perception
-    geometry_msgs::Pose start_pose;
-    geometry_msgs::Pose end_pose;
-
-    start_pose.position.x = 0.2;
-    start_pose.position.y = 0.0;
-    start_pose.position.z = 0.1;
-
-    end_pose.position.x = 0.25;
-    end_pose.position.y = 0.15;
-    end_pose.position.z = 0.1;
-
-    if( !pickAndPlace(start_pose, end_pose) )
-    {
-    ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
-    result_.success = false;
-    action_server_.setSucceeded(result_);
-    }
-    */
-
+    // TODO: remove
+    ros::shutdown();
   }
 
   // Cancel the action
@@ -251,9 +278,9 @@ public:
     action_server_.setPreempted();
   }
 
-
-  bool sendGraspPoseCommand(const geometry_msgs::Pose& pose)
-  {
+  /*
+    bool sendGraspPoseCommand(const geometry_msgs::Pose& pose)
+    {
     geometry_msgs::Pose goal_pose;
     goal_pose.position = pose.position;
     // Set a straight verticle orientation
@@ -265,7 +292,8 @@ public:
     // Compensates for gripper size
     double x_offset = 0.15;
     return sendPoseCommand( goal_pose, x_offset );
-  }
+    }
+  */
 
   // Moves the arm to a specified pose
   bool sendPoseCommand(const geometry_msgs::Pose& pose, double x_offset = 0.0)
@@ -276,15 +304,15 @@ public:
     goal_pose.pose = pose;
 
     // -----------------------------------------------------------------------------------------------
-    // Move arm
+    // Crate move_group goal
     moveit_msgs::MoveGroupGoal goal;
     goal.request.group_name = GROUP_NAME;
     goal.request.num_planning_attempts = 1;
-    goal.request.allowed_planning_time = 5.0; //ros::Duration(5.0);
+    goal.request.allowed_planning_time = 5.0;
 
     // -------------------------------------------------------------------------------------------
     // Create goal state
-    goal_pose.header.frame_id = base_link;
+    goal_pose.header.frame_id = base_link_;
     double tolerance_pose = 1e-4; // default: 1e-3... meters
     double tolerance_angle = 1e-2; // default 1e-2... radians
     moveit_msgs::Constraints goal_constraint0 =
@@ -297,6 +325,7 @@ public:
     goal_constraint0.position_constraints[0].target_point_offset.x = x_offset;
     goal_constraint0.position_constraints[0].target_point_offset.y = 0.0;
     goal_constraint0.position_constraints[0].target_point_offset.z = 0.0;
+
     // Add offset constraint
     goal.request.goal_constraints.resize(1);
     goal.request.goal_constraints[0] = goal_constraint0;
@@ -315,7 +344,8 @@ public:
     // -------------------------------------------------------------------------------------------
     // Plan
     feedback_.status = "Sending goal to move_group action server";
-    action_server_.publishFeedback(feedback_);
+    if(action_server_.isActive()) // Make sure we haven't sent a fake goal
+      action_server_.publishFeedback(feedback_);
 
     movegroup_action_.sendGoal(goal);
     ros::Duration(5.0).sleep();
@@ -331,7 +361,7 @@ public:
     }
     else
     {
-      ROS_ERROR_STREAM_NAMED("pick_place","FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      ROS_ERROR_STREAM_NAMED("pick_place","move_group failed: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
       return false;
     }
 
@@ -534,11 +564,34 @@ public:
   }
 
   // Actually run the action
-  bool pickAndPlace(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
+  bool pickAndPlace(const geometry_msgs::Pose& start_block_pose, const geometry_msgs::Pose& end_block_pose)
   {
-    geometry_msgs::Pose desired_pose = start_pose;
-
     ROS_INFO_STREAM_NAMED("pick_place","Pick and place started");
+
+    // ---------------------------------------------------------------------------------------------
+    // Generate graps
+    ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
+    clam_block_manipulation::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
+
+    // Pick grasp
+    std::vector<manipulation_msgs::Grasp> possible_grasps;
+    grasp_generator.generateGrasps( start_block_pose, possible_grasps );
+
+    manipulation_msgs::Grasp pick_grasp;
+    grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );
+    geometry_msgs::Pose pick_pose = pick_grasp.grasp_pose.pose;
+
+    // Place grasp
+    possible_grasps.clear();
+    grasp_generator.generateGrasps( end_block_pose, possible_grasps );
+
+    manipulation_msgs::Grasp place_grasp;
+    grasp_generator.chooseBestGrasp( possible_grasps, place_grasp );
+    geometry_msgs::Pose place_pose = place_grasp.grasp_pose.pose;
+
+
+    //ROS_INFO("temp kill");
+    //return false; // temp
 
     // ---------------------------------------------------------------------------------------------
     // Open gripper
@@ -551,8 +604,10 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Hover over block
     ROS_INFO_STREAM_NAMED("pick_place","Sending arm to pre-grasp position ----------------------------------");
-    desired_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
-    if(!sendGraspPoseCommand(desired_pose))
+    pick_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
+
+    double x_offset = 0.15;
+    if(!sendPoseCommand(pick_pose, x_offset))
     {
       ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to pre-grasp position");
       return false;
@@ -600,10 +655,9 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Move Arm to new location
     ROS_INFO_STREAM_NAMED("pick_place","Sending arm to new position ------------------------------------------");
-    desired_pose = end_pose;
-    desired_pose.position.z = PREGRASP_Z_HEIGHT;
-    //ROS_INFO_STREAM_NAMED("pick_place","Pose: \n" << desired_pose );
-    if(!sendGraspPoseCommand(desired_pose))
+    place_pose.position.z = PREGRASP_Z_HEIGHT;
+    //ROS_INFO_STREAM_NAMED("pick_place","Pose: \n" << place_pose );
+    if(!sendPoseCommand(place_pose, x_offset))
     {
       ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to goal position");
       return false;
@@ -640,9 +694,6 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place","Finished ------------------------------------------------");
     ROS_INFO_STREAM_NAMED("pick_place"," ");
 
-    result_.success = true;
-    action_server_.setSucceeded(result_);
-
     return true;
   }
 
@@ -653,7 +704,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link;
+    marker.header.frame_id = base_link_;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -712,7 +763,7 @@ public:
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link;
+    marker.header.frame_id = base_link_;
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -765,39 +816,6 @@ public:
 
     marker_pub_.publish( marker );
   }
-
-  void generateGrasps()
-  {
-    // Test pose
-    geometry_msgs::Pose start_pose;
-    start_pose.position.x = 0.2;
-    start_pose.position.y = 0.0;
-    start_pose.position.z = 0.1;
-    start_pose.orientation.x = 0.5;
-    start_pose.orientation.y = 0.0;
-    start_pose.orientation.z = 0.0;
-    start_pose.orientation.w = 1.0;
-
-    // TF
-    tf::TransformBroadcaster br;
-    tf::Transform transform;
-    // transform.setOrigin( tf::Vector3(0.0, 2.0, 0.0) );
-    // transform.setRotation( tf::Quaternion(0, 0, 0) );
-    tf::Vector3 origin = tf::Vector3( start_pose.position.x, start_pose.position.y, start_pose.position.z );
-    tf::Quaternion angle = tf::Quaternion( 1, 0, 0 );
-    transform.setOrigin( origin );
-    transform.setRotation( angle );
-
-    ros::Rate rate(10.0);
-    while (nh_.ok())
-    {
-      br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "pick_block"));
-      rate.sleep();
-    }
-
-
-  }
-
 
 }; // end of class
 
