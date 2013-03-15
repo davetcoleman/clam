@@ -14,19 +14,20 @@ read -p "Press any key to continue";
 # Now create IK. Make sure urdf/dae file location path is correct
 python /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/ikfast.py --robot=/home/dave/ros/clam/src/clam_ik/src/clam.dae --iktype=transform6d --baselink=0 --eelink=7 --savefile=output_ikfast61.cpp #--freeindex=2
 
-read -p "Press any key to compile test program";
+
+#read -p "Press any key to compile test program";
 
 # Compile test program. I had to add the -I part myself, is system dependent probably
-g++ -Wall -g -lstdc++ -llapack -o test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/
+#g++ -Wall -g -lstdc++ -llapack -o test_ikfast ikfastdemo.cpp -lrt -I /usr/lib/python2.7/dist-packages/openravepy/_openravepy_0_8/
 
 # Do a bunch of tests
-test_ikfast iktiming 
+#test_ikfast iktiming 
 # Results:
 # 12/3/12 joints 0-7, free index 2:   avg time: 3.039000 ms   over 1000000 tests
 
 
 # Run specific test (this does not seem to work)
-test_ikfast ik 0.2222066 -0.0088 .197156 0.703466 0.00 0.710502 -0.01755 0.0
+#test_ikfast ik 0.2222066 -0.0088 .197156 0.703466 0.00 0.710502 -0.01755 0.0
 #../bin/test_ikfast ik 0.108344 4.82434e-05 0.48123 0.999956 -0.00533228 0.00772023 4.88343e-05 0.0
 
 # t0 t1 t2  qw qi qj qk
@@ -46,7 +47,7 @@ test_ikfast ik 0.2222066 -0.0088 .197156 0.703466 0.00 0.710502 -0.01755 0.0
 
 
 # Wait for user
-read -p "Press any key to continue";
+echo "Finished"
 
 cd -
 

@@ -5,7 +5,7 @@ rosrun xacro xacro.py clam.xacro > clam.urdf
 rosrun collada_urdf urdf_to_collada clam.urdf clam.dae
 
 # Convert Collada to a rounded version
-python round_collada_numbers.py clam.dae clam.rounded.dae 3
+python round_collada_numbers.py clam.dae clam.rounded.dae 5
 
 # Copy rounded to regular and remove rounded
 cp clam.rounded.dae clam.dae

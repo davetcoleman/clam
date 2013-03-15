@@ -594,7 +594,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
         // One element of solution_vectorution is not within limits
         ROS_WARN_STREAM_NAMED("ikfast","FAILED. Joint " << i << ": value " << solution_vector[i] << ". Limits: (" << joint_min_vector_[i] << " to " << joint_max_vector_[i] << ")");
         obeys_limits = false;
-        //break; // TODO: enable
+        break;
       }
     }
 
