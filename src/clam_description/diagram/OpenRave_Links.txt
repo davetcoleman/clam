@@ -13,3 +13,20 @@ gripper_fixed_finger_link 9     gripper_roll_link
 tabletop_link             10    base_link          
 ---------------------------------------------------
 name                      index parents 
+
+
+
+OTHER NOTES
+
+From http://openrave.org/docs/latest_stable/ikfast/  you can return return
+the first solution found within limits using GetSolution(goal) . Also you
+can do a manual check in your side as well.
+
+Regarding limits: you can check for joints limits by using
+robot.GetJoints()[i].GetLimits() . You can also set the limits using
+SetLimits function for each joint.
+
+Hope this is what you are looking for
+
+Best Regards
+Praveen
