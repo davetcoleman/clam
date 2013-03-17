@@ -44,7 +44,8 @@ GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr 
   base_link_(base_link),
   nh_("~"),
   ee_marker_is_loaded_(false),
-  marker_lifetime_(ros::Duration(60.0))
+  marker_lifetime_(ros::Duration(60.0)),
+  ik_cache_(7) // TODO: dynamically set 7 (num of joints) based on robot
 {
   base_link_ = "base_link";
 
@@ -99,8 +100,8 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Visualize results
   //visualizeGrasps(possible_grasps, block_pose);
 
-  filterFromCache( possible_grasps );
-  return false;
+  //filterFromCache( possible_grasps );
+  //return false;
 
   // Filter grasp poses
   if( !filterGrasps( possible_grasps ) )
@@ -295,16 +296,6 @@ bool GraspGenerator::filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possi
   ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
   return true;
 }
-
-// Grasp cache lookup
-bool GraspGenerator::insertToCache(geometry_msgs::Pose* ik_pose,
-                                   const std::vector<double>& joint_values)
-{
-  ik_cache.convertPose(&possible_grasps[i].grasp_pose.pose, joint_values);
-
-  return true;
-}
-
 
 // Return grasps that are kinematically feasible
 bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)

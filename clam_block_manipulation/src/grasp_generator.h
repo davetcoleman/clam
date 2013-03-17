@@ -51,6 +51,7 @@
 
 // Clam
 #include <clam_msgs/ClamArmAction.h>
+#include "simple_cache.h"
 
 // Rviz
 #include <visualization_msgs/Marker.h>
@@ -153,7 +154,7 @@ private:
   boost::scoped_ptr<random_numbers::RandomNumberGenerator> rng_;
 
   // Cache for IK solutions
-  SimpleCache ik_cache_;
+  simple_cache::SimpleCache ik_cache_;
 
 public:
 
@@ -179,7 +180,7 @@ private:
   bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
 
   // Grasp cache lookup
-  bool filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps);
+  //bool filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
   // Choose the 1st grasp that is kinematically feasible
   bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
