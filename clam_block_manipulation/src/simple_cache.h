@@ -214,6 +214,9 @@ private:
       ROS_WARN_STREAM_NAMED("cache","Failed to convert value to array");
       return false;
     }
+    
+    // Clear previous joint_values
+    joint_values.clear();
 
     // Convert array to joints
     for (int i = 0; i < num_joints_; ++i)
@@ -300,7 +303,7 @@ private:
    * @param key input to be converted
    * @param n the number of doubles in the key to be pulled out
    * @param doubles output value
-   * @return false if ??? TODO
+   * @return false if a number is out of range
    */
   bool keyToArray(int64_t key, const int n, double doubles[])
   {
@@ -327,9 +330,8 @@ private:
       //ROS_DEBUG_STREAM_NAMED("cache","key is now " << key);
 
       // Convert that number to an int
-      if( !intToDouble(rounded_segment, converted) ) // TODO: why would this happen?
+      if( !intToDouble(rounded_segment, converted) ) 
       {
-        ROS_ERROR_STREAM_NAMED("","unable to convert double to int");
         return false;
       }
       else
@@ -380,7 +382,7 @@ private:
    * @brief convert int to double - reverse of doubleToInt function
    * @param x the input int
    * @param result the output double
-   * @return false if ?? TODO
+   * @return false if out of range - but not really implemented
    */
   bool intToDouble(int x, double& result)
   {
@@ -400,5 +402,8 @@ private:
   }
 
 }; // end of class
+
+typedef boost::shared_ptr<SimpleCache> SimpleCachePtr;
+typedef boost::shared_ptr<const SimpleCache> SimpleCacheConstPtr;
 
 } // namespace

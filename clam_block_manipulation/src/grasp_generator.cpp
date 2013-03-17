@@ -44,9 +44,10 @@ GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr 
   base_link_(base_link),
   nh_("~"),
   ee_marker_is_loaded_(false),
-  marker_lifetime_(ros::Duration(60.0)),
-  ik_cache_(7) // TODO: dynamically set 7 (num of joints) based on robot
+  marker_lifetime_(ros::Duration(60.0))
 {
+  ik_cache_.reset(new simple_cache::SimpleCache(7, false)); // TODO: dynamically set 7 (num of joints) based on robot
+
   base_link_ = "base_link";
 
   // -----------------------------------------------------------------------------------------------
@@ -100,8 +101,7 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Visualize results
   //visualizeGrasps(possible_grasps, block_pose);
 
-  //filterFromCache( possible_grasps );
-  //return false;
+  filterFromCache( possible_grasps );
 
   // Filter grasp poses
   if( !filterGrasps( possible_grasps ) )
@@ -297,6 +297,14 @@ bool GraspGenerator::filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possi
   return true;
 }
 
+// Grasp cache lookup
+bool GraspGenerator::filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+{
+  // TODO remove this
+
+  return false;
+}
+
 // Return grasps that are kinematically feasible
 bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
 {
@@ -357,7 +365,7 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
       //ROS_INFO_STREAM_NAMED("grasp","low " << grasps_id_start << " high " << grasps_id_end);
 
       IkThreadStruct tc(possible_grasps, filtered_grasps, grasps_id_start, grasps_id_end, joint_model_group,
-                        joint_state_group, kinematics_allocator, &lock, i);
+                        joint_state_group, kinematics_allocator, ik_cache_, &lock, i);
       bgroup.create_thread( boost::bind( &GraspGenerator::filterGraspThread, this, tc ) );
     }
 
@@ -365,6 +373,7 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
 
     ROS_INFO_STREAM_NAMED("grasp", "Found " << filtered_grasps.size() << " ik solutions out of " <<
                           possible_grasps.size() );
+    ROS_INFO_STREAM_NAMED("grasp","ik cache has " << ik_cache_->getSize() << " entries");
 
     possible_grasps = filtered_grasps;
 
@@ -407,6 +416,13 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
 
     // Pointer to current pose
     ik_pose = &ik_thread_struct.possible_grasps_[i].grasp_pose.pose;
+
+    // Get seed state from cache if one is available
+    simple_cache::results_t cache_result = ik_thread_struct.ik_cache_->get(*ik_pose, ik_seed_state);
+    if( cache_result == simple_cache::SUCCESS )
+    {
+      ROS_INFO_STREAM_NAMED("grasp","ik result found from cache!!");
+    }
 
     // Test it with IK
     kin_solver->getPositionIK(*ik_pose, ik_seed_state, solution, error_code);
@@ -457,12 +473,19 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
       ROS_INFO_STREAM_NAMED("grasp","Found IK Solution");
 
       // Copy solution to seed state so that next solution is faster
-      ik_seed_state = solution;
+      //ik_seed_state = solution;
 
       // Lock the result vector so we can add to it for a second
       {
         boost::mutex::scoped_lock slock(*ik_thread_struct.lock_);
         ik_thread_struct.filtered_grasps_.push_back( ik_thread_struct.possible_grasps_[i] );
+
+        // if the cache did not have an entry, add it
+        if( cache_result != simple_cache::SUCCESS )
+        {
+          ROS_INFO_STREAM_NAMED("grasp","inserting into ik cache");
+          ik_thread_struct.ik_cache_->insert(*ik_pose, solution);
+        }
       }
 
       // TODO: is this thread safe? (prob not)

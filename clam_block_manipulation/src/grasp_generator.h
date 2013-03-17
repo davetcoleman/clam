@@ -87,8 +87,9 @@ struct IkThreadStruct
                  int grasps_id_start,
                  int grasps_id_end,
                  const robot_model::JointModelGroup* joint_model_group,
-                 const robot_state::JointStateGroup* joint_state_group,
+                 const robot_state::JointStateGroup* joint_state_group, // TODO: remove this
                  kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
+                 simple_cache::SimpleCachePtr ik_cache,
                  boost::mutex *lock,
                  int thread_id)
     : possible_grasps_(possible_grasps),
@@ -98,6 +99,7 @@ struct IkThreadStruct
       joint_model_group_(joint_model_group),
       joint_state_group_(joint_state_group),
       kinematics_allocator_(kinematics_allocator),
+      ik_cache_(ik_cache),
       lock_(lock),
       thread_id_(thread_id)
   {
@@ -109,6 +111,7 @@ struct IkThreadStruct
   const robot_model::JointModelGroup* joint_model_group_;
   const robot_state::JointStateGroup* joint_state_group_;
   kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
+  simple_cache::SimpleCachePtr ik_cache_;
   boost::mutex *lock_;
   int thread_id_;
 };
@@ -154,20 +157,20 @@ private:
   boost::scoped_ptr<random_numbers::RandomNumberGenerator> rng_;
 
   // Cache for IK solutions
-  simple_cache::SimpleCache ik_cache_;
+  simple_cache::SimpleCachePtr ik_cache_;
 
 public:
 
   // Constructor
-  GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor, 
+  GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
                   std::string base_link );
-                    
+
   // Create all possible grasp positions for a block
-  bool generateGrasps(const geometry_msgs::Pose& block_pose, 
+  bool generateGrasps(const geometry_msgs::Pose& block_pose,
                       std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
   // Of an array of grasps, choose just one for use
-  bool chooseBestGrasp( const std::vector<manipulation_msgs::Grasp>& possible_grasps, 
+  bool chooseBestGrasp( const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                         manipulation_msgs::Grasp& chosen );
 
 private:
@@ -180,7 +183,7 @@ private:
   bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
 
   // Grasp cache lookup
-  //bool filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps);
+  bool filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
   // Choose the 1st grasp that is kinematically feasible
   bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);

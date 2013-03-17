@@ -31,10 +31,10 @@ find_package(OpenCV REQUIRED)
 #)
 
 # Grasp Library
-#add_library(${PROJECT_NAME}_grasp_generator
-#  src/grasp_generator.cpp
-#)
-#target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_library(${PROJECT_NAME}_grasp_generator
+  src/grasp_generator.cpp
+)
+target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 catkin_package(
@@ -73,13 +73,13 @@ link_directories(${catkin_LIBRARY_DIRS})
 add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
-#add_executable(block_pick_place_server src/block_pick_place_server.cpp)
-#target_link_libraries(block_pick_place_server ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
+add_executable(block_pick_place_server src/block_pick_place_server.cpp)
+target_link_libraries(block_pick_place_server ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
 
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
 
-# Test script
+# Test script for simple_cache
 add_executable(simple_cache_test src/simple_cache_test.cpp)
 target_link_libraries(simple_cache_test ${catkin_LIBRARIES})
 
