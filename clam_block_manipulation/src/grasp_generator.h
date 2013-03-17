@@ -85,7 +85,8 @@ struct IkThreadStruct
                  std::vector<manipulation_msgs::Grasp> &filtered_grasps, // the result
                  int grasps_id_start,
                  int grasps_id_end,
-                 const robot_model::JointModelGroup* planning_group,
+                 const robot_model::JointModelGroup* joint_model_group,
+                 const robot_state::JointStateGroup* joint_state_group,
                  kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
                  boost::mutex *lock,
                  int thread_id)
@@ -93,7 +94,8 @@ struct IkThreadStruct
       filtered_grasps_(filtered_grasps),
       grasps_id_start_(grasps_id_start),
       grasps_id_end_(grasps_id_end),
-      planning_group_(planning_group),
+      joint_model_group_(joint_model_group),
+      joint_state_group_(joint_state_group),
       kinematics_allocator_(kinematics_allocator),
       lock_(lock),
       thread_id_(thread_id)
@@ -103,7 +105,8 @@ struct IkThreadStruct
   std::vector<manipulation_msgs::Grasp> &filtered_grasps_;
   int grasps_id_start_;
   int grasps_id_end_;
-  const robot_model::JointModelGroup* planning_group_;
+  const robot_model::JointModelGroup* joint_model_group_;
+  const robot_state::JointStateGroup* joint_state_group_;
   kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
   boost::mutex *lock_;
   int thread_id_;
@@ -143,6 +146,15 @@ private:
   geometry_msgs::Pose grasp_pose_to_eef_pose_;
   std::vector<geometry_msgs::Pose> marker_poses_;
 
+  /** \brief For certain operations a group needs a random number generator. However, it may be slightly expensive
+      to allocate the random number generator if many state instances are generated. For this reason, the generator
+      is allocated on a need basis, by the getRandomNumberGenerator() function. Never use the rng_ member directly, but call
+      getRandomNumberGenerator() instead. */
+  boost::scoped_ptr<random_numbers::RandomNumberGenerator> rng_;
+
+  // Cache for IK solutions
+  SimpleCache ik_cache_;
+
 public:
 
   // Constructor
@@ -165,6 +177,9 @@ private:
 
   // Take the nth grasp from the array
   bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
+
+  // Grasp cache lookup
+  bool filterFromCache(std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
   // Choose the 1st grasp that is kinematically feasible
   bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
@@ -194,6 +209,9 @@ private:
 
   // Show Block Markers in Rviz
   void publishBlock(const geometry_msgs::Pose &pose, const double& block_size);
+
+  /** \brief Return the instance of a random number generator */
+  random_numbers::RandomNumberGenerator& getRandomNumberGenerator();
 
 }; // end of class
 

@@ -295,6 +295,151 @@ public:
     }
   */
 
+  // Execute series of tasks for pick/place
+  bool pickAndPlace(const geometry_msgs::Pose& start_block_pose, const geometry_msgs::Pose& end_block_pose)
+  {
+    ROS_INFO_STREAM_NAMED("pick_place","Pick and place started");
+
+    // ---------------------------------------------------------------------------------------------
+    // Generate graps
+    ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
+    clam_block_manipulation::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
+
+    // Pick grasp
+    std::vector<manipulation_msgs::Grasp> possible_grasps;
+    grasp_generator.generateGrasps( start_block_pose, possible_grasps );
+
+    manipulation_msgs::Grasp pick_grasp;
+    grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );
+    geometry_msgs::Pose pick_pose = pick_grasp.grasp_pose.pose;
+
+
+
+
+
+
+    return false; // TODO: temp
+
+
+
+
+
+    // Place grasp
+    possible_grasps.clear();
+    grasp_generator.generateGrasps( end_block_pose, possible_grasps );
+
+    manipulation_msgs::Grasp place_grasp;
+    grasp_generator.chooseBestGrasp( possible_grasps, place_grasp );
+    geometry_msgs::Pose place_pose = place_grasp.grasp_pose.pose;
+
+
+    //ROS_INFO("temp kill");
+    //return false; // temp
+
+    // ---------------------------------------------------------------------------------------------
+    // Open gripper
+    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Hover over block
+    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to pre-grasp position ----------------------------------");
+    pick_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
+
+    double x_offset = 0.15;
+    if(!sendPoseCommand(pick_pose, x_offset))
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to pre-grasp position");
+      return false;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Lower over block
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO_STREAM_NAMED("pick_place","Lowering over block -------------------------------------------");
+    Eigen::Vector3d approach_direction; // Approach direction (negative z axis)
+    approach_direction << 0, 0, -1;
+    double desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Close gripper
+    ROS_INFO_STREAM_NAMED("pick_place","Closing gripper");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Lifting block
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
+
+    approach_direction << 0, 0, 1; // Approach direction (positive z axis)
+    desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
+
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
+
+
+    // ---------------------------------------------------------------------------------------------
+    // Move Arm to new location
+    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to new position ------------------------------------------");
+    place_pose.position.z = PREGRASP_Z_HEIGHT;
+    //ROS_INFO_STREAM_NAMED("pick_place","Pose: \n" << place_pose );
+    if(!sendPoseCommand(place_pose, x_offset))
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to goal position");
+      return false;
+    }
+    ros::Duration(1.0).sleep();
+
+
+    // ---------------------------------------------------------------------------------------------
+    // Lower block
+    // try to compute a straight line path that arrives at the goal using the specified approach direction
+    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
+
+    approach_direction << 0, 0, -1; // Approach direction (negative z axis)
+    desired_approach_distance = .040; // The distance the origin of a robot link needs to travel
+
+    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
+    {
+      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
+      return false;
+    }
+    ros::Duration(0.5).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Open gripper
+    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+    ros::Duration(2.0).sleep();
+
+    // ---------------------------------------------------------------------------------------------
+    // Demo will automatically reset arm
+    ROS_INFO_STREAM_NAMED("pick_place","Finished ------------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place"," ");
+
+    return true;
+  }
+
   // Moves the arm to a specified pose
   bool sendPoseCommand(const geometry_msgs::Pose& pose, double x_offset = 0.0)
   {
@@ -563,142 +708,8 @@ public:
     return true;
   }
 
-  // Actually run the action
-  bool pickAndPlace(const geometry_msgs::Pose& start_block_pose, const geometry_msgs::Pose& end_block_pose)
-  {
-    ROS_INFO_STREAM_NAMED("pick_place","Pick and place started");
-
-    // ---------------------------------------------------------------------------------------------
-    // Generate graps
-    ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
-    clam_block_manipulation::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
-
-    // Pick grasp
-    std::vector<manipulation_msgs::Grasp> possible_grasps;
-    grasp_generator.generateGrasps( start_block_pose, possible_grasps );
-
-    manipulation_msgs::Grasp pick_grasp;
-    grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );
-    geometry_msgs::Pose pick_pose = pick_grasp.grasp_pose.pose;
-
-    // Place grasp
-    possible_grasps.clear();
-    grasp_generator.generateGrasps( end_block_pose, possible_grasps );
-
-    manipulation_msgs::Grasp place_grasp;
-    grasp_generator.chooseBestGrasp( possible_grasps, place_grasp );
-    geometry_msgs::Pose place_pose = place_grasp.grasp_pose.pose;
-
-
-    //ROS_INFO("temp kill");
-    //return false; // temp
-
-    // ---------------------------------------------------------------------------------------------
-    // Open gripper
-    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Hover over block
-    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to pre-grasp position ----------------------------------");
-    pick_pose.position.z = PREGRASP_Z_HEIGHT; // a good number for hovering
-
-    double x_offset = 0.15;
-    if(!sendPoseCommand(pick_pose, x_offset))
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to pre-grasp position");
-      return false;
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // Lower over block
-    // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO_STREAM_NAMED("pick_place","Lowering over block -------------------------------------------");
-    Eigen::Vector3d approach_direction; // Approach direction (negative z axis)
-    approach_direction << 0, 0, -1;
-    double desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
-
-    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
-      return false;
-    }
-    ros::Duration(0.5).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Close gripper
-    ROS_INFO_STREAM_NAMED("pick_place","Closing gripper");
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_CLOSE;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Lifting block
-    // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
-
-    approach_direction << 0, 0, 1; // Approach direction (positive z axis)
-    desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
-
-    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
-      return false;
-    }
-    ros::Duration(0.5).sleep();
-
-
-    // ---------------------------------------------------------------------------------------------
-    // Move Arm to new location
-    ROS_INFO_STREAM_NAMED("pick_place","Sending arm to new position ------------------------------------------");
-    place_pose.position.z = PREGRASP_Z_HEIGHT;
-    //ROS_INFO_STREAM_NAMED("pick_place","Pose: \n" << place_pose );
-    if(!sendPoseCommand(place_pose, x_offset))
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Failed to go to goal position");
-      return false;
-    }
-    ros::Duration(1.0).sleep();
-
-
-    // ---------------------------------------------------------------------------------------------
-    // Lower block
-    // try to compute a straight line path that arrives at the goal using the specified approach direction
-    ROS_INFO_STREAM_NAMED("pick_place","Lifting block -------------------------------------------");
-
-    approach_direction << 0, 0, -1; // Approach direction (negative z axis)
-    desired_approach_distance = .040; // The distance the origin of a robot link needs to travel
-
-    if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
-    {
-      ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
-      return false;
-    }
-    ros::Duration(0.5).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Open gripper
-    ROS_INFO_STREAM_NAMED("pick_place","Opening gripper");
-    clam_arm_goal_.command = clam_msgs::ClamArmGoal::END_EFFECTOR_OPEN;
-    clam_arm_client_.sendGoal(clam_arm_goal_);
-    while(!clam_arm_client_.getState().isDone() && ros::ok())
-      ros::Duration(0.1).sleep();
-    ros::Duration(2.0).sleep();
-
-    // ---------------------------------------------------------------------------------------------
-    // Demo will automatically reset arm
-    ROS_INFO_STREAM_NAMED("pick_place","Finished ------------------------------------------------");
-    ROS_INFO_STREAM_NAMED("pick_place"," ");
-
-    return true;
-  }
-
   // *********************************************************************************************************
-  // Helper Function
+  // Helper Functions
   // *********************************************************************************************************
   void publishMesh(double x, double y, double z, double qx, double qy, double qz, double qw )
   {

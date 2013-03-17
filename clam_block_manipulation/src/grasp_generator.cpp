@@ -71,6 +71,7 @@ GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr 
     ROS_ERROR_STREAM_NAMED("grasp","Planning scene not configured");
   }
 
+
 }
 
 // Create all possible grasp positions for a block
@@ -97,6 +98,9 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
 
   // Visualize results
   //visualizeGrasps(possible_grasps, block_pose);
+
+  filterFromCache( possible_grasps );
+  return false;
 
   // Filter grasp poses
   if( !filterGrasps( possible_grasps ) )
@@ -292,7 +296,17 @@ bool GraspGenerator::filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possi
   return true;
 }
 
-// Choose the 1st grasp that is kinematically feasible
+// Grasp cache lookup
+bool GraspGenerator::insertToCache(geometry_msgs::Pose* ik_pose,
+                                   const std::vector<double>& joint_values)
+{
+  ik_cache.convertPose(&possible_grasps[i].grasp_pose.pose, joint_values);
+
+  return true;
+}
+
+
+// Return grasps that are kinematically feasible
 bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
 {
   // -----------------------------------------------------------------------------------------------
@@ -310,55 +324,66 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
   kinematics_plugin_loader::KinematicsLoaderFn
     kinematics_allocator = kinematics_plugin_loader->getLoaderFunction();
 
-  const robot_model::JointModelGroup* planning_group
+  const robot_model::JointModelGroup* joint_model_group
     = planning_scene_monitor_->getPlanningScene()->getRobotModel()->getJointModelGroup(PLANNING_GROUP_NAME);
 
-  //    kinematics::KinematicsBasePtr kin_solver = kinematics_allocator(planning_group);
+  const robot_state::JointStateGroup* joint_state_group
+    = planning_scene_monitor_->getPlanningScene()->getCurrentState().getJointStateGroup(PLANNING_GROUP_NAME);
 
-  // -----------------------------------------------------------------------------------------------
-  // Loop through poses and find first one that has solution
-
-
-  std::vector<manipulation_msgs::Grasp> filtered_grasps;
-
-  boost::thread_group bgroup; // create a group of threads
-  boost::mutex lock; // used for sharing the same data structures
-
-  // how many cores does this computer have and how many do we need?
-  int num_threads = boost::thread::hardware_concurrency();
-  if( num_threads > possible_grasps.size() )
-    num_threads = possible_grasps.size();
-
-  ROS_INFO_STREAM_NAMED("grasp", "IK checking on " << num_threads << " threads...");
-
-  // split up the work between threads
-  double num_grasps_per_thread = double(possible_grasps.size()) / num_threads;
-  //ROS_INFO_STREAM("total grasps " << possible_grasps.size() << " per thead: " << num_grasps_per_thread);
-
-  int grasps_id_start;
-  int grasps_id_end = 0;
-
-  for(int i = 0; i < num_threads; ++i)
+  // Benchmark time
+  ros::Time start_time;
+  start_time = ros::Time::now();
   {
-    grasps_id_start = grasps_id_end;
-    grasps_id_end = ceil(num_grasps_per_thread*(i+1));
-    if( grasps_id_end >= possible_grasps.size() )
-      grasps_id_end = possible_grasps.size();
-    //ROS_INFO_STREAM_NAMED("grasp","low " << grasps_id_start << " high " << grasps_id_end);
 
-    IkThreadStruct tc(possible_grasps, filtered_grasps, grasps_id_start, grasps_id_end, planning_group,
-                      kinematics_allocator, &lock, i);
-    bgroup.create_thread( boost::bind( &GraspGenerator::filterGraspThread, this, tc ) );
+    // -----------------------------------------------------------------------------------------------
+    // Loop through poses and find those that are kinematically feasible
+    std::vector<manipulation_msgs::Grasp> filtered_grasps;
+
+    boost::thread_group bgroup; // create a group of threads
+    boost::mutex lock; // used for sharing the same data structures
+
+    // how many cores does this computer have and how many do we need?
+    int num_threads = boost::thread::hardware_concurrency();
+    if( num_threads > possible_grasps.size() )
+      num_threads = possible_grasps.size();
+    //num_threads = 1;
+
+    ROS_INFO_STREAM_NAMED("grasp", "IK checking on " << num_threads << " threads...");
+
+    // split up the work between threads
+    double num_grasps_per_thread = double(possible_grasps.size()) / num_threads;
+    //ROS_INFO_STREAM("total grasps " << possible_grasps.size() << " per thead: " << num_grasps_per_thread);
+
+    int grasps_id_start;
+    int grasps_id_end = 0;
+
+    for(int i = 0; i < num_threads; ++i)
+    {
+      grasps_id_start = grasps_id_end;
+      grasps_id_end = ceil(num_grasps_per_thread*(i+1));
+      if( grasps_id_end >= possible_grasps.size() )
+        grasps_id_end = possible_grasps.size();
+      //ROS_INFO_STREAM_NAMED("grasp","low " << grasps_id_start << " high " << grasps_id_end);
+
+      IkThreadStruct tc(possible_grasps, filtered_grasps, grasps_id_start, grasps_id_end, joint_model_group,
+                        joint_state_group, kinematics_allocator, &lock, i);
+      bgroup.create_thread( boost::bind( &GraspGenerator::filterGraspThread, this, tc ) );
+    }
+
+    bgroup.join_all(); // wait for all threads to finish
+
+    ROS_INFO_STREAM_NAMED("grasp", "Found " << filtered_grasps.size() << " ik solutions out of " <<
+                          possible_grasps.size() );
+
+    possible_grasps = filtered_grasps;
+
   }
+  // End Benchmark time
+  double duration = (ros::Time::now() - start_time).toNSec() * 1e-6;
+  ROS_INFO_STREAM_NAMED("grasp","RESULTS:");
+  std::cout << duration << "\t" << possible_grasps.size() << "\n";
 
-  bgroup.join_all(); // wait for all threads to finish
-
-  ROS_INFO_STREAM_NAMED("grasp", "Found " << filtered_grasps.size() << " ik solutions out of " <<
-                        possible_grasps.size() );
-
-  possible_grasps = filtered_grasps;
-
-  return true;
+  return false;
 }
 
 // Thread for checking part of the possible grasps list
@@ -366,43 +391,82 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
 {
   // Create this thread's own ik solver instance
   kinematics::KinematicsBasePtr kin_solver =
-    ik_thread_struct.kinematics_allocator_(ik_thread_struct.planning_group_);
+    ik_thread_struct.kinematics_allocator_(ik_thread_struct.joint_model_group_);
+
+  // Seed state - start at zero - TODO: not zero
+  std::vector<double> ik_seed_state(7); // fill with zeros
+  /*
+    std::vector<double> ik_seed_state;
+    ik_seed_state.push_back(-3.46603e-06);
+    ik_seed_state.push_back(-0.312857);
+    ik_seed_state.push_back(1.75185);
+    ik_seed_state.push_back(-2.0385e-06);
+    ik_seed_state.push_back(1.6476);
+    ik_seed_state.push_back(-0.523598);
+  */
+
+  std::vector<double> solution;
+  moveit_msgs::MoveItErrorCodes error_code;
+  geometry_msgs::Pose* ik_pose;
 
   // Process the assigned grasps
   for( int i = ik_thread_struct.grasps_id_start_; i < ik_thread_struct.grasps_id_end_; ++i )
   {
     ROS_DEBUG_STREAM_NAMED("grasp", "Checking grasp #" << i);
 
-    // -----------------------------------------------------------------------------------------------
-    // Declare needed IK solver vars
-    geometry_msgs::Pose ik_pose = ik_thread_struct.possible_grasps_[i].grasp_pose.pose;
-
-    std::vector<double> ik_seed_state;
-    ik_seed_state.push_back(0);
-    ik_seed_state.push_back(0);
-    ik_seed_state.push_back(0);
-    ik_seed_state.push_back(0);
-    ik_seed_state.push_back(0);
-    ik_seed_state.push_back(0);
-    //      ik_seed_state.push_back(0);
-
-    std::vector<double> solution;
-    moveit_msgs::MoveItErrorCodes error_code;
+    // Pointer to current pose
+    ik_pose = &ik_thread_struct.possible_grasps_[i].grasp_pose.pose;
 
     // Test it with IK
-    kin_solver->getPositionIK(ik_pose, ik_seed_state, solution, error_code);
+    kin_solver->getPositionIK(*ik_pose, ik_seed_state, solution, error_code);
+
+    /*
+    // Do attempts # of ik calls
+    unsigned int attempts = 5;
+    double timeout = 5.0; //ik_thread_struct.joint_state_group_->getDefaultIKTimeout();
+
+    bool first_seed = true;
+    for (unsigned int attempt = 0 ; attempt < attempts ; ++attempt)
+    {
+    // the first seed is the initial state
+    if (first_seed)
+    {
+    // use original ik_seed_state
+    first_seed = false;
+    }
+    else
+    {
+    // sample a random seed
+    random_numbers::RandomNumberGenerator &rng = getRandomNumberGenerator();
+    std::vector<double> random_values;
+    ik_thread_struct.joint_model_group_->getVariableRandomValues(rng, random_values);
+    //ik_seed_state = random_values;
+    }
+
+    //ROS_DEBUG_STREAM("seed state:");
+    //std::copy(ik_seed_state.begin(),ik_seed_state.end(), std::ostream_iterator<double>(std::cout, "\n"));
+
+    // compute the IK solution
+    if (kin_solver->searchPositionIK(*ik_pose, ik_seed_state, timeout, solution, error_code) )
+    {
+    // we found a solution, so we can actually quit!
+    ROS_INFO_STREAM("Found solution on " << attempt << " attempt");
+    break;
+    }
+    else
+    {
+    ROS_INFO_STREAM("No solution found solution on " << attempt << " attempt");
+    }
+    }
+    */
 
     // Results
     if( error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS )
     {
       ROS_INFO_STREAM_NAMED("grasp","Found IK Solution");
 
-      // Verbose output
-      /*
-        for (std::vector<double>::iterator solution_it = solution.begin();
-        solution_it!=solution.end(); ++solution_it)
-        std::cout << *solution_it << std::endl;
-      */
+      // Copy solution to seed state so that next solution is faster
+      ik_seed_state = solution;
 
       // Lock the result vector so we can add to it for a second
       {
@@ -411,21 +475,15 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
       }
 
       // TODO: is this thread safe? (prob not)
-      publishSphere(ik_pose);
-      publishArrow(ik_pose);
+      publishSphere(*ik_pose);
+      publishArrow(*ik_pose);
     }
     else if( error_code.val == moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION )
-    {
       ROS_INFO_STREAM_NAMED("grasp","Unable to find IK solution for pose.");
-    }
     else if( error_code.val == moveit_msgs::MoveItErrorCodes::TIMED_OUT )
-    {
       ROS_INFO_STREAM_NAMED("grasp","Unable to find IK solution for pose: Timed Out.");
-    }
     else
-    {
       ROS_INFO_STREAM_NAMED("grasp","IK solution error: MoveItErrorCodes.msg = " << error_code);
-    }
   }
 }
 
@@ -741,6 +799,13 @@ void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double&
 
   rviz_marker_pub_.publish( marker );
   ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
+}
+
+random_numbers::RandomNumberGenerator& GraspGenerator::getRandomNumberGenerator()
+{
+  if (!rng_)
+    rng_.reset(new random_numbers::RandomNumberGenerator());
+  return *rng_;
 }
 
 } // namespace
