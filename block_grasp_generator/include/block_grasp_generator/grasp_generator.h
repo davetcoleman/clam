@@ -39,7 +39,6 @@
 // ROS
 #include <ros/ros.h>
 #include <tf/tf.h>
-//#include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -62,7 +61,7 @@
 #include <math.h>
 #define _USE_MATH_DEFINES
 
-namespace clam_block_manipulation
+namespace block_grasp_generator
 {
 
 static const std::string EE_GROUP = "gripper_group";

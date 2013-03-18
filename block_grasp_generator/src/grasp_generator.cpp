@@ -32,9 +32,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "grasp_generator.h"
+#include <block_grasp_generator/grasp_generator.h>
 
-namespace clam_block_manipulation
+namespace block_grasp_generator
 {
 
 // Constructor

@@ -314,10 +314,6 @@ public:
     geometry_msgs::Pose pick_pose = pick_grasp.grasp_pose.pose;
 
 
-
-
-
-
     return false; // TODO: temp
 
 
