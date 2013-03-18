@@ -27,6 +27,7 @@
   <build_depend>cv_bridge</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
+  <build_depend>block_grasp_generator</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>eigen_conversions</run_depend>
@@ -43,6 +44,7 @@
   <run_depend>cv_bridge</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
+  <run_depend>block_grasp_generator</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
 

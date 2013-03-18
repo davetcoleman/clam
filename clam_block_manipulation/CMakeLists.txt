@@ -20,26 +20,19 @@ find_package(catkin REQUIRED
   moveit_core
   tf
   tf_conversions
+  block_grasp_generator
 )
 
 find_package(OpenCV REQUIRED)
 
-#generate_messages(DEPENDENCIES
-#  std_msgs
-#  geometry_msgs  
-#  actionlib_msgs
-#)
-
 # Grasp Library
-add_library(${PROJECT_NAME}_grasp_generator
-  src/grasp_generator.cpp
-)
-target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#add_library(${PROJECT_NAME}_grasp_generator
+#  src/grasp_generator.cpp
+#)
+#target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 catkin_package(
-  LIBRARIES
-    ${PROJECT_NAME}_grasp_generator
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -55,6 +48,7 @@ catkin_package(
     moveit_core
     tf
     tf_conversions
+    block_grasp_generator
 #  INCLUDE_DIRS include
 )
 
@@ -74,7 +68,7 @@ add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
 add_executable(block_pick_place_server src/block_pick_place_server.cpp)
-target_link_libraries(block_pick_place_server ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
+target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
 
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})

@@ -7,6 +7,7 @@ Panels:
         - /MotionPlanning1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
+        - /EE Grasp Poses1
         - /EE Grasp Poses1/Namespaces1
       Splitter Ratio: 0.392982
     Tree Height: 538
@@ -140,7 +141,7 @@ Visualization Manager:
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: /ik_test/dave_scene
+      Planning Scene Topic: /grasp_generator_test/dave_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -352,7 +353,9 @@ Visualization Manager:
       Name: EE Grasp Poses
       Namespaces:
         Arrow: true
+        Block: true
         Sphere: true
+        gripper_group: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -369,17 +372,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.3363
+      Distance: 1.49978
       Focal Point:
-        X: 0.0561654
-        Y: 0.201453
-        Z: -5.96044e-08
+        X: 0.163806
+        Y: 0.045822
+        Z: 2.41585e-13
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.324797
+      Pitch: 0.479796
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 4.93677
+      Yaw: 5.6918
     Saved: ~
 Window Geometry:
   Displays:
@@ -395,5 +398,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1600
-  X: 3806
-  Y: -384
+  X: 3805
+  Y: -412

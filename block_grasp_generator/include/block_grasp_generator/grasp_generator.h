@@ -68,7 +68,6 @@ static const std::string EE_GROUP = "gripper_group";
 static const std::string EE_NAME = "end_effector";
 static const std::string PLANNING_GROUP_NAME = "arm";
 static const std::string MARKER_TOPIC = "/end_effector_marker";
-static const std::string COLLISION_TOPIC = "/collision_object";
 static const double RAD2DEG = 57.2957795;
 static const double BLOCK_SIZE = 0.04;
 
@@ -79,18 +78,22 @@ struct IkThreadStruct
                  std::vector<manipulation_msgs::Grasp> &filtered_grasps, // the result
                  int grasps_id_start,
                  int grasps_id_end,
-                 const robot_model::JointModelGroup* joint_model_group,
-                 const robot_state::JointStateGroup* joint_state_group, // TODO: remove this
-                 kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
+                 //const robot_model::JointModelGroup* joint_model_group,
+                 //const robot_state::JointStateGroup* joint_state_group, // TODO: remove this
+                 //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
+                 kinematics::KinematicsBasePtr kin_solver,
+                 double timeout,
                  boost::mutex *lock,
                  int thread_id)
     : possible_grasps_(possible_grasps),
       filtered_grasps_(filtered_grasps),
       grasps_id_start_(grasps_id_start),
       grasps_id_end_(grasps_id_end),
-      joint_model_group_(joint_model_group),
-      joint_state_group_(joint_state_group),
-      kinematics_allocator_(kinematics_allocator),
+      kin_solver_(kin_solver),
+      timeout_(timeout),
+      //joint_model_group_(joint_model_group),
+      //joint_state_group_(joint_state_group),
+      //kinematics_allocator_(kinematics_allocator),
       lock_(lock),
       thread_id_(thread_id)
   {
@@ -99,9 +102,11 @@ struct IkThreadStruct
   std::vector<manipulation_msgs::Grasp> &filtered_grasps_;
   int grasps_id_start_;
   int grasps_id_end_;
-  const robot_model::JointModelGroup* joint_model_group_;
-  const robot_state::JointStateGroup* joint_state_group_;
-  kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
+  //const robot_model::JointModelGroup* joint_model_group_;
+  //const robot_state::JointStateGroup* joint_state_group_;
+  //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
+  kinematics::KinematicsBasePtr kin_solver_;
+  double timeout_;
   boost::mutex *lock_;
   int thread_id_;
 };
@@ -140,11 +145,14 @@ private:
   geometry_msgs::Pose grasp_pose_to_eef_pose_;
   std::vector<geometry_msgs::Pose> marker_poses_;
 
+  // threaded kinematic solvers
+  std::vector<kinematics::KinematicsBasePtr> kin_solvers_;
+
   /** \brief For certain operations a group needs a random number generator. However, it may be slightly expensive
       to allocate the random number generator if many state instances are generated. For this reason, the generator
       is allocated on a need basis, by the getRandomNumberGenerator() function. Never use the rng_ member directly, but call
       getRandomNumberGenerator() instead. */
-  boost::scoped_ptr<random_numbers::RandomNumberGenerator> rng_;
+  //boost::scoped_ptr<random_numbers::RandomNumberGenerator> rng_;
 
 public:
 
@@ -186,6 +194,9 @@ private:
   // Helper Function
   // *********************************************************************************************************
 
+  // Move the robot arm to the ik solution in rviz
+  bool publishPlanningScene(std::vector<double> joint_values);
+
   // Call this once at begining to load the robot marker
   bool loadEEMarker();
 
@@ -202,8 +213,13 @@ private:
   void publishBlock(const geometry_msgs::Pose &pose, const double& block_size);
 
   /** \brief Return the instance of a random number generator */
-  random_numbers::RandomNumberGenerator& getRandomNumberGenerator();
+  //  random_numbers::RandomNumberGenerator& getRandomNumberGenerator();
 
 }; // end of class
 
+typedef boost::shared_ptr<GraspGenerator> GraspGeneratorPtr;
+typedef boost::shared_ptr<const GraspGenerator> GraspGeneratorConstPtr;
+
 } // namespace
+
+

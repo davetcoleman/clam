@@ -71,7 +71,7 @@
 #include <visualization_msgs/MarkerArray.h>
 
 // Grasp generation
-#include "grasp_generator.h"
+#include <block_grasp_generator/grasp_generator.h>
 
 namespace clam_block_manipulation
 {
@@ -303,7 +303,7 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Generate graps
     ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
-    clam_block_manipulation::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
+    block_grasp_generator::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
 
     // Pick grasp
     std::vector<manipulation_msgs::Grasp> possible_grasps;
