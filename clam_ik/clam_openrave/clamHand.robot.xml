@@ -1,0 +1,379 @@
+<!-- include pumaarm.robot.xml -->
+
+<KinBody>
+  <adjacent>hand1 UpperLeft</adjacent>
+  <adjacent>hand1 UpperRight</adjacent>
+  <adjacent>hand1 LowerLeft</adjacent>
+  <adjacent>hand1 LowerRight</adjacent>
+  <adjacent>hand1 LeftClaw</adjacent>
+  <adjacent>hand1 RightClaw</adjacent>
+  <adjacent>UpperLeft UpperRight</adjacent>
+  <adjacent>UpperLeft LowerLeft</adjacent>
+  <adjacent>UpperLeft LowerRight</adjacent>
+  <adjacent>UpperLeft LeftClaw</adjacent>
+  <adjacent>UpperLeft RightClaw</adjacent>
+  <adjacent>UpperRight LowerLeft</adjacent>
+  <adjacent>UpperRight LowerRight</adjacent>
+  <adjacent>UpperRight LeftClaw</adjacent>
+  <adjacent>UpperRight RightClaw</adjacent>
+  <adjacent>LowerLeft LowerRight</adjacent>
+  <adjacent>LowerLeft LeftClaw</adjacent>
+  <adjacent>LowerLeft RightClaw</adjacent>
+  <adjacent>LowerRight LeftClaw</adjacent>
+  <adjacent>LowerRight RightClaw</adjacent>
+  <adjacent>LeftClaw RightClaw</adjacent>
+
+  <Body name="hand0" type="dynamic">
+    <!--
+	<Translation>0.0 0.0 .1725</Translation>
+    -->
+    <RotationAxis>1 0 0 -90</RotationAxis>
+    <RotationAxis>0 1 0 90</RotationAxis>
+
+    <Geom type="box">
+      <Extents>0.025 0.016 0.0185 </Extents>
+      <Translation>0.014 0.0 0.0</Translation>
+      <diffuseColor>0.25 1.0 0.25</diffuseColor>
+      <ambientColor>0.25 1.0 0.25</ambientColor>
+    </Geom>
+
+    <!--
+	<Geom type="sphere">
+	<radius>0.019</radius>
+	<Translation>0.0 0.0 0.0 </Translation>
+	<diffuseColor>0.8 0.0 0.0</diffuseColor>
+	<ambientColor>0.8 0.0 0.0</ambientColor>
+	</Geom>
+    -->
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="hand1" type="dynamic">
+    <offsetfrom>hand0</offsetfrom>
+    <Translation>0.0 0.0 0.1595</Translation>
+    <RotationAxis>0 0 1 180</RotationAxis>
+
+    <Geom type="box">
+      <Extents>0.0175 0.0185 0.0005</Extents>
+      <Translation>0.0055 0.0 -0.1355</Translation><!--<Translation>0.0245 0.0 -0.1355</Translation>-->
+      <diffuseColor>0.25 0.25 1.0</diffuseColor>
+      <ambientColor>0.25 0.25 1.0</ambientColor>
+    </Geom>
+
+    <Geom type="box" name="camera">
+      <Extents>.0005 0.04 0.0275 </Extents>
+      <Translation>-0.0125 0.02 -0.1085</Translation>
+      <diffuseColor>0.25 0.25 1.0</diffuseColor>
+      <ambientColor>0.25 0.25 1.0</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.0185 0.025 0.016</Extents>
+      <Translation>-0.0305 0.028 -0.11 </Translation>
+      <diffuseColor>0.25 0.25 1.0</diffuseColor>
+      <ambientColor>0.25 0.25 1.0</ambientColor>
+    </Geom>
+
+    <!--
+	<Geom type="sphere">
+	<radius>0.01</radius>
+	<Translation>0.0 0.0 0.0 </Translation>
+	<diffuseColor>0.8 0.8 0.0</diffuseColor>
+	<ambientColor>0.8 0.8 0.0</ambientColor>
+	</Geom>
+    -->
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <!-- Claw -->
+  <Body name="UpperLeft" type="dynamic">
+    <offsetfrom>hand1</offsetfrom>
+    <RotationAxis>1 0 0 90</RotationAxis>
+    <Translation>0.0 0.0 -0.087</Translation>
+
+    <Geom type="cylinder">
+      <RotationAxis>0 0 1 90</RotationAxis>
+      <radius>0.003175</radius>
+      <height>0.003175</height>
+      <Translation>-0.00635 0.0 0.005</Translation>
+      <diffuseColor>0.35 0.35 0.5</diffuseColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.006 0.0045 .0275</Extents>
+      <Translation>0.0 0.0 0.0285</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="UpperRight" type="dynamic">
+    <offsetfrom>UpperLeft</offsetfrom>
+    <Translation>0.0 0.0 0.0</Translation>
+
+    <Geom type="cylinder">
+      <RotationAxis>0 0 1 90</RotationAxis>
+      <radius>0.003175</radius>
+      <height>0.003175</height>
+      <Translation>-0.00635 0.0 -0.005</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.006 0.0045 .0275</Extents>
+      <Translation>0.0 0.0 -0.0285</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="LowerLeft" type="dynamic">
+    <offsetfrom>UpperLeft</offsetfrom>
+    <Translation>0.0 -0.024 0.0</Translation>
+
+    <Geom type="cylinder">
+      <RotationAxis>0 0 1 90</RotationAxis>
+      <radius>0.0127</radius>
+      <height>0.01</height>
+      <Translation>0.0 0.0 0.0127</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.006 0.0045 0.0335</Extents>
+      <Translation>0.0075 0.0 0.0365</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="LowerRight" type="dynamic">
+    <offsetfrom>LowerLeft</offsetfrom>
+    <Translation>0.0 0.0 0.0</Translation>
+
+    <Geom type="cylinder">
+      <RotationAxis>0 0 1 90</RotationAxis>
+      <radius>0.0127</radius>
+      <height>0.01</height>
+      <Translation>0.0 0.0 -0.0127</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.006 0.0045 0.0335</Extents>
+      <Translation>0.0075 0.0 -0.0365</Translation>
+      <diffuseColor>0.35 0.35 0.35</diffuseColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="LeftClaw" type="dynamic">
+    <offsetfrom>LowerLeft</offsetfrom>
+    <Translation>0.0 0.0 .065</Translation>
+
+    <Geom type="box">
+      <Extents>0.0015 0.026 0.0045</Extents>
+      <Translation>0.0 .021 -.012</Translation>
+      <RotationAxis>-1 0 0 31.4</RotationAxis>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.0015 0.028 0.0045</Extents>
+      <Translation>0.0 0.069 -0.025</Translation>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.014 0.034 0.00075</Extents>
+      <Translation>0.0 0.075 -0.03025</Translation>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.014 0.034 0.00075</Extents>
+      <Translation>0.0 0.075 -0.03175</Translation>
+      <diffuseColor>0.05 0.05 0.05</diffuseColor>
+      <ambientColor>0.05 0.05 0.05</ambientColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Body name="RightClaw" type="dynamic">
+    <offsetfrom>LowerRight</offsetfrom>
+    <Translation>0.0 0.0 -0.065</Translation>
+
+    <Geom type="box">
+      <Extents>0.0015 0.026 0.0045</Extents>
+      <Translation>0.0 .021 .012</Translation>
+      <RotationAxis>1 0 0 31.4</RotationAxis>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.0015 0.028 0.0045</Extents>
+      <Translation>0.0 0.069 0.025</Translation>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.014 0.034 0.00075</Extents>
+      <Translation>0.0 0.075 0.03025</Translation>
+      <diffuseColor>0.5 0.5 0.5</diffuseColor>
+      <ambientColor>0.5 0.5 0.5</ambientColor>
+    </Geom>
+
+    <Geom type="box">
+      <Extents>0.014 0.034 0.00075</Extents>
+      <Translation>0.0 0.075 0.03175</Translation>
+      <diffuseColor>0.05 0.05 0.05</diffuseColor>
+      <ambientColor>0.05 0.05 0.05</ambientColor>
+    </Geom>
+
+    <mass type="sphere">
+      <total>25.0</total>
+      <radius>1</radius>
+    </mass>
+  </Body>
+
+  <Joint name="Jwrist" type="hinge">
+    <Body>hand0</Body>
+    <Body>hand1</Body>
+    <offsetfrom>hand1</offsetfrom>
+    <limitsdeg>-150 150</limitsdeg>
+    <anchor>0 0 -.136</anchor>
+    <axis>0 0 1</axis>
+    <maxvel>1</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JLR" type="hinge">
+    <Body>hand1</Body>
+    <Body>LowerRight</Body>
+    <offsetfrom>LowerRight</offsetfrom>
+    <anchor>0 0 -0.0127</anchor>
+    <weight>2</weight>
+    <limitsdeg>-15 65</limitsdeg>
+    <axis>1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JUR" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>hand1</Body>
+    <Body>UpperRight</Body>
+    <offsetfrom>UpperRight</offsetfrom>
+    <anchor>0 0 -0.005</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JLL" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>hand1</Body>
+    <Body>LowerLeft</Body>
+    <offsetfrom>LowerLeft</offsetfrom>
+    <anchor>0 0 0.0127</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>-1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JUL" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>hand1</Body>
+    <Body>UpperLeft</Body>
+    <offsetfrom>UpperLeft</offsetfrom>
+    <anchor>0 0 0.005</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>-1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+
+  <Joint name="JLLC" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>LowerLeft</Body>
+    <Body>LeftClaw</Body>
+    <offsetfrom>LowerLeft</offsetfrom>
+    <anchor>0 0.0 0.065</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JULC" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>UpperLeft</Body>
+    <Body>LeftClaw</Body>
+    <offsetfrom>UpperLeft</offsetfrom>
+    <anchor>0.0 0.0 0.052</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JLRC" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>LowerRight</Body>
+    <Body>RightClaw</Body>
+    <offsetfrom>LowerRight</offsetfrom>
+    <anchor>0.0 0.0 -0.065</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>-1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+
+  <Joint name="JURC" type="hinge" enable="false" mimic_pos="JLR*1+0" mimic_vel="|JLR 0.3333">
+    <Body>UpperRight</Body>
+    <Body>RightClaw</Body>
+    <offsetfrom>UpperRight</offsetfrom>
+    <anchor>0.0 0.0 -0.052</anchor>
+    <weight>2</weight>
+    <limitsdeg>-90 90</limitsdeg>
+    <axis>-1 0 0</axis>
+    <maxvel>2</maxvel>
+    <resolution>1</resolution>
+  </Joint>
+</KinBody>

@@ -160,12 +160,46 @@ public:
     {
       ROS_INFO_STREAM_NAMED("test","Adding random block " << i+1 << " of " << num_tests);
 
-      generateRandomBlock(block_pose);
+      //generateRandomBlock(block_pose);
+      getTestBlock(block_pose);
       possible_grasps.clear();
       grasp_generator.generateGrasps( block_pose, possible_grasps );      
     }
 
 
+  }
+
+  void getTestBlock(geometry_msgs::Pose& block_pose)
+  {    
+    // Position
+    geometry_msgs::Pose start_block_pose;
+    geometry_msgs::Pose end_block_pose;
+
+    start_block_pose.position.x = 0.2;
+    start_block_pose.position.y = 0.0;
+    start_block_pose.position.z = 0.02;
+
+    end_block_pose.position.x = 0.25;
+    end_block_pose.position.y = 0.15;
+    end_block_pose.position.z = 0.02;
+
+    // Orientation
+    double angle = M_PI / 1.5;
+    Eigen::Quaterniond quat(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
+    start_block_pose.orientation.x = quat.x();
+    start_block_pose.orientation.y = quat.y();
+    start_block_pose.orientation.z = quat.z();
+    start_block_pose.orientation.w = quat.w();
+
+    angle = M_PI / 1.1;
+    quat = Eigen::Quaterniond(Eigen::AngleAxis<double>(double(angle), Eigen::Vector3d::UnitZ()));
+    end_block_pose.orientation.x = quat.x();
+    end_block_pose.orientation.y = quat.y();
+    end_block_pose.orientation.z = quat.z();
+    end_block_pose.orientation.w = quat.w();
+
+    // Choose which block to test
+    block_pose = start_block_pose;
   }
 
   void generateRandomBlock(geometry_msgs::Pose& block_pose)
@@ -239,7 +273,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-  int num_tests = 100000;
+  int num_tests = 1;
 
   ros::init(argc, argv, "grasp_generator_test");
 
