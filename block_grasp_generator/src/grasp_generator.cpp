@@ -45,7 +45,7 @@ GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr p
   rviz_verbose_(rviz_verbose),
   nh_("~"),
   ee_marker_is_loaded_(false),
-  marker_lifetime_(ros::Duration(20.0))
+  marker_lifetime_(ros::Duration(0.0))
 {
 
   // -----------------------------------------------------------------------------------------------
@@ -53,6 +53,8 @@ GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr p
   if(rviz_verbose_)
   {
     rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
+    ros::spinOnce();
+    ros::Duration(0.05).sleep(); // necessary?
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -101,36 +103,26 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Show block
   if(rviz_verbose_)
   {
-    publishBlock(block_pose, BLOCK_SIZE);
-    ros::Duration(0.05).sleep(); // necessary?
-    ros::spinOnce();
+    //publishBlock(block_pose, BLOCK_SIZE, true);
   }
 
   // ---------------------------------------------------------------------------------------------
   // Generate grasps
 
   // Calculate grasps in two axis in both directions
-  //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+  generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
   generateAxisGrasps( possible_grasps, X_AXIS, UP );
   generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-  //generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+  generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
 
   // Just test with one for now
   //filterNthGrasp(possible_grasps, 5);
 
-  // TESTING
-  //possible_grasps[0].grasp_pose.pose.position.z -= 0.05;
-
   // Visualize initial results
   if(rviz_verbose_)
   {
-    /*
-    ROS_WARN_STREAM_NAMED("","visualizing testerrrrr");
-    ros::Duration(1).sleep();
-    visualizeGrasps(possible_grasps, block_pose);
-    ros::Duration(1).sleep();
-    */
+    //visualizeGrasps(possible_grasps, block_pose);
   }
 
 
@@ -203,8 +195,8 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
   double xb;
   double yb = 0.0; // stay in the y plane of the block
   double zb;
-  double angle_resolution = 8.0;
-  //double angle_resolution = 16.0;
+  //double angle_resolution = 8.0;
+  double angle_resolution = 16.0;
   double theta1 = 0.0; // Where the point is located around the block
   double theta2 = 0.0; // UP 'direction'
 
@@ -496,7 +488,13 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
 
   ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_TOPIC);
 
-  publishBlock(block_pose, BLOCK_SIZE);
+  // isRed = true if possible_blocks is empty
+  publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
+
+      // Show robot joint positions if available
+  if( !possible_grasps.empty() && !possible_grasps[0].grasp_posture.position.empty() )
+      publishPlanningScene(possible_grasps[0].grasp_posture.position);
+
 
   for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
       grasp_it < possible_grasps.end(); ++grasp_it)
@@ -511,10 +509,10 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     //publishEEMarkers(grasp_pose);
 
     // Show robot joint positions if available
-    if( !grasp_it->grasp_posture.position.empty() )
-      publishPlanningScene(grasp_it->grasp_posture.position);
+    //if( !grasp_it->grasp_posture.position.empty() )
+    //publishPlanningScene(grasp_it->grasp_posture.position);
 
-    ros::Duration(2.0).sleep();
+    ros::Duration(0.01).sleep();
   }
 }
 
@@ -798,7 +796,7 @@ void GraspGenerator::publishArrow(const geometry_msgs::Pose &pose)
   ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
 }
 
-void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double& block_size)
+void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double& block_size, bool isRed)
 {
   if(!rviz_verbose_)
     return; // this function will only work if we have loaded the publishers
@@ -829,9 +827,18 @@ void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double&
   marker.scale.z = block_size;
 
   // Set marker color
-  marker.color.r = 1.0;
-  marker.color.g = 0.0;
-  marker.color.b = 0.0;
+  if(isRed)
+  {
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+  }
+  else
+  {
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+  }
   marker.color.a = 0.5;
 
   marker.lifetime = marker_lifetime_;

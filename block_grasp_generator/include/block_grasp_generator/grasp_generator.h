@@ -213,7 +213,7 @@ private:
   void publishArrow(const geometry_msgs::Pose &pose);
 
   // Show Block Markers in Rviz
-  void publishBlock(const geometry_msgs::Pose &pose, const double& block_size);
+  void publishBlock(const geometry_msgs::Pose &pose, const double& block_size, bool isRed);
 
   /** \brief Return the instance of a random number generator */
   //  random_numbers::RandomNumberGenerator& getRandomNumberGenerator();

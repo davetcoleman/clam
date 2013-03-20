@@ -161,8 +161,8 @@ public:
     {
       ROS_INFO_STREAM_NAMED("test","Adding random block " << i+1 << " of " << num_tests);
 
-      //generateRandomBlock(block_pose);
-      getTestBlock(block_pose);
+      generateRandomBlock(block_pose);
+      //getTestBlock(block_pose);
       possible_grasps.clear();
       grasp_generator.generateGrasps( block_pose, possible_grasps );      
     }
@@ -206,7 +206,7 @@ public:
   void generateRandomBlock(geometry_msgs::Pose& block_pose)
   {
     // Position
-    block_pose.position.x = fRand(0.1,0.55);
+    block_pose.position.x = fRand(0.1,0.9); //0.55);
     block_pose.position.y = fRand(-0.28,0.28);
     block_pose.position.z = 0.02;
 
@@ -274,7 +274,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-  int num_tests = 1;
+  int num_tests = 100;
 
   ros::init(argc, argv, "grasp_generator_test");
 
