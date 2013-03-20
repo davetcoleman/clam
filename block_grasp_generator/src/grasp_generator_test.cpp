@@ -128,7 +128,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Wait for complete state to be recieved
-    ros::Duration(0.25).sleep();
+    //ros::Duration(0.25).sleep();
 
     /*
       std::vector<std::string> missing_joints;

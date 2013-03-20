@@ -1,0 +1,233 @@
+<Robot name="clam">
+  <KinBody>
+    <RotationAxis>0 1 0 180</RotationAxis>
+    <RotationAxis>1 0 0 90</RotationAxis>
+    <Body name="base" type="dynamic">
+      <Geom type="trimesh">
+	<data>base.wrl 1.000</data>
+	<Render>base.wrl 1.000</Render>
+	<Translation> 0.0 0.0125 0.0 </Translation>
+      </Geom>
+
+      <!--
+      <Geom type="trimesh">
+	<data>prairie_dog.wrl 0.001</data>
+	<Render>prairie_dog.wrl 0.001</Render>
+	<Translation> 0.0 0.0 0.0 </Translation>
+      </Geom>
+      -->
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm0" type="dynamic">
+      <offsetform>base</offsetform>
+      <Translation> 0.0 0.0125 0.0 </Translation>
+
+      <Geom type="trimesh">
+	<data>arm0.wrl 1.000</data>
+	<Render>arm0.wrl 1.000</Render>
+      </Geom>
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm1" type="dynamic">
+      <offsetfrom>arm0</offsetfrom>
+      <Translation> 0.0 0.078025 0.0 </Translation>
+
+      <Geom type="trimesh">
+	<data>arm1.wrl 1.000</data>
+	<Render>arm1.wrl 1.000</Render>
+      </Geom>
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm2" type="dynamic">
+      <offsetfrom>arm1</offsetfrom>
+      <Translation> 0.0 0.1197 0.0 </Translation>
+
+      <Geom type="trimesh">
+	<data>arm2.wrl 1.000</data>
+	<Render>arm2.wrl 1.000</Render>
+      </Geom>
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm3" type="dynamic">
+      <offsetfrom>arm2</offsetfrom>
+      <Translation> 0.0 0.036 0.0 </Translation>
+
+      <Geom type="trimesh">
+	<data>arm3.wrl 1.000</data>
+	<Render>arm3.wrl 1.000</Render>
+      </Geom>
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm4" type="dynamic">
+      <offsetfrom>arm3</offsetfrom>
+      <Translation> 0.0 0.2182 0.0081 </Translation>
+
+      <Geom type="trimesh">
+	<data>arm4.wrl 1.000</data>
+	<Render>arm4.wrl 1.000</Render>
+      </Geom>
+
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+    <Body name="arm5" type="dynamic">
+      <offsetfrom>arm4</offsetfrom>
+      <Translation> 0.0 0.0686 0.0 </Translation>
+      <RotationAxis>0 1 0 180</RotationAxis>
+
+      <Geom type="trimesh">
+	<data>arm5.wrl 1.000</data>
+	<Render>arm5.wrl 1.000</Render>
+	<Translation>0.0 -0.0386 0.0 </Translation>
+      </Geom>
+
+      <Geom type="sphere">
+	<radius>0.01</radius>
+	<diffuseColor>0.8 0.8 0.0</diffuseColor>
+      </Geom>
+      <mass type="sphere">
+	<total>25.0</total>
+	<radius>1</radius>
+      </mass>
+    </Body>
+
+
+    <Joint name="J0" type="hinge">
+      <Body>base</Body>
+      <Body>arm0</Body>
+      <offsetfrom>base</offsetfrom>
+      <limitsdeg>-150 150</limitsdeg>
+      <anchor> 0.0 0.04 0.0 </anchor>
+      <axis>0 1 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution>
+    </Joint>
+    <Joint name="J1" type="hinge">
+      <Body>arm0</Body>
+      <Body>arm1</Body>
+      <offsetfrom>arm1</offsetfrom>
+      <limitsdeg>-66.1 106.5</limitsdeg>
+      <anchor> 0.0 0.0 0.0 </anchor>
+      <axis>1 0 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution>
+    </Joint>
+    <Joint name="J2" type="hinge" enabled="false">
+      <Body>arm1</Body>
+      <Body>arm2</Body>
+      <!--offsetfrom>arm2</offsetfrom>
+      <limitsdeg>-150 150</limitsdeg>
+      <anchor> 0.0 0.0 0.0 </anchor>
+      <axis>0 1 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution-->
+      <limits>0 0</limits>
+    </Joint>
+    <Joint name="J3" type="hinge">
+      <Body>arm2</Body>
+      <Body>arm3</Body>
+      <offsetfrom>arm3</offsetfrom>
+      <limitsdeg>-95.75 112</limitsdeg>
+      <anchor> 0.0 0.0 0.0 </anchor>
+      <axis>1 0 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution>
+    </Joint>
+    <Joint name="J4" type="hinge">
+      <Body>arm3</Body>
+      <Body>arm4</Body>
+      <offsetfrom>arm4</offsetfrom>
+      <limitsdeg>-150 150</limitsdeg>
+      <anchor> 0.0 0.0 0.0 </anchor>
+      <axis>0 1 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution>
+    </Joint>
+    <Joint name="J5" type="hinge">
+      <Body>arm4</Body>
+      <Body>arm5</Body>
+      <offsetfrom>arm5</offsetfrom>
+      <limitsdeg>-114.8 112</limitsdeg>
+      <anchor> 0.0 -0.0386 0.0 </anchor>
+      <axis>-1 0 0</axis>
+      <maxvel>1</maxvel>
+      <resolution>1</resolution>
+    </Joint>
+
+    <KinBody file="clamHand.robot.xml">
+      <!--
+	  <RotationAxis>1 0 0 -90</RotationAxis>
+	  <RotationAxis>0 1 0 90</RotationAxis>
+      -->
+      <Translation> 0.0 0.554025 0.0081 </Translation>
+    </KinBody>
+
+    <!-- connect the two parts with dummy joints -->
+    <joint name="hand_dummy" type="hinge" enable="false">
+      <body>arm5</body>
+      <body>hand0</body>
+      <limits>0 0</limits>
+    </joint>
+
+  </KinBody>
+
+
+  <Manipulator name="hand">
+    <base>base</base>
+    <effector>hand1</effector>
+    <joints>JLR</joints>
+    <!-- joint values of the closed and opened positions -->
+    <!--
+	<opened>-10</opened>
+    	<closed>60.0</closed>
+    -->
+    <!-- joint values of the closed and opened positions -->
+    <closingdirection>1</closingdirection>
+    <!-- grasp goal with respect to the effector -->
+    <!--
+	<direction>0 0 1</direction>
+	<Translation>0 0 2</Translation>
+    -->
+  </Manipulator>
+
+  <AttachedSensor name="frontCamera">
+    <sensor name="rgbCamera" type="BaseCamera">
+      <KK>640 640 320 240</KK>
+      <width>800</width>
+      <height>800</height>
+      <framerate>5</framerate>
+      <color>0.5 0.5 1</color>
+    </sensor>
+    <link>hand1</link>
+    <Translation> -0.03 0.025 -0.09 </Translation>
+  </AttachedSensor>
+
+</Robot>

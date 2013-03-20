@@ -50,35 +50,41 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </material>
   <!-- Constants -->
   <!-- TABLETOP LINK -->
-  <joint name="tabletop_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+  <!--joint name="tabletop_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link"/>
     <child link="tabletop_link"/>
   </joint>
+
   <link name="tabletop_link">
+
     <inertial>
       <origin xyz=" 0 0 -0.017"/>
-      <mass value="100.0"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+      <mass value="100.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
+
     <visual>
-      <origin rpy="1.570795 0 1.570795" xyz=" 0 0 -0.017"/>
+      <origin xyz=" 0 0 -0.017"  rpy="${.5*M_PI} 0 ${.5*M_PI}"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/tabletop_link.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://clam_description/stl/tabletop_link.STL" scale="${M_SCALE}" />
       </geometry>
-      <material name="Brown"/>
+      <material name="Brown" />
     </visual>
+
     <collision>
-      <origin rpy="1.570795 0 1.570795" xyz=" 0 0 -0.017"/>
+      <origin xyz=" 0 0 -0.017"  rpy="${.5*M_PI} 0 ${.5*M_PI}"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/tabletop_link_simple.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://clam_description/stl/tabletop_link_simple.STL" scale="${M_SCALE}" />
       </geometry>
-    </collision>
+      </collision>>
+
   </link>
+
   <gazebo reference="tabletop_link">
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
-  </gazebo>
+  </gazebo-->
   <!-- BASE LINK -->
   <link name="base_link">
     <!--inertial>
@@ -172,7 +178,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
-  <joint name="elbow_roll_joint" type="revolute">
+  <joint name="elbow_roll_joint" type="fixed">
     <parent link="shoulder_pitch_link"/>
     <child link="elbow_roll_link"/>
     <origin rpy="3.14159 1.570795 0" xyz="-0.002 0 0.1206"/>

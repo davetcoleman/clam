@@ -8,7 +8,7 @@ controller_list:
       - gripper_roll_joint
       - l_gripper_aft_joint
       - shoulder_pitch_joint
-      - elbow_roll_joint
+#      - elbow_roll_joint
       - elbow_pitch_joint
       - wrist_roll_joint
       - wrist_pitch_joint

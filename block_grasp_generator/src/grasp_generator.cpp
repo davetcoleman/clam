@@ -45,7 +45,7 @@ GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr p
   rviz_verbose_(rviz_verbose),
   nh_("~"),
   ee_marker_is_loaded_(false),
-  marker_lifetime_(ros::Duration(60.0))
+  marker_lifetime_(ros::Duration(20.0))
 {
 
   // -----------------------------------------------------------------------------------------------
@@ -99,31 +99,48 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
 
   // ---------------------------------------------------------------------------------------------
   // Show block
-  //publishBlock(block_pose, BLOCK_SIZE);
-  //ros::Duration(0.05).sleep(); // necessary?
-  //ros::spinOnce();
+  if(rviz_verbose_)
+  {
+    publishBlock(block_pose, BLOCK_SIZE);
+    ros::Duration(0.05).sleep(); // necessary?
+    ros::spinOnce();
+  }
 
   // ---------------------------------------------------------------------------------------------
   // Generate grasps
 
   // Calculate grasps in two axis in both directions
   //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-  //generateAxisGrasps( possible_grasps, X_AXIS, UP );
+  generateAxisGrasps( possible_grasps, X_AXIS, UP );
   generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
   //generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
 
-  // Visualize results
+  // Just test with one for now
+  //filterNthGrasp(possible_grasps, 5);
+
+  // TESTING
+  //possible_grasps[0].grasp_pose.pose.position.z -= 0.05;
+
+  // Visualize initial results
   if(rviz_verbose_)
   {
-    //visualizeGrasps(possible_grasps, block_pose);
+    /*
+    ROS_WARN_STREAM_NAMED("","visualizing testerrrrr");
+    ros::Duration(1).sleep();
+    visualizeGrasps(possible_grasps, block_pose);
+    ros::Duration(1).sleep();
+    */
   }
+
+
+  ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
   // Filter grasp poses
   if( !filterGrasps( possible_grasps ) )
     return false;
 
-  //ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
+  ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
   // Visualize results
   if(rviz_verbose_)
@@ -492,7 +509,11 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     //publishSphere(grasp_pose);
     publishArrow(grasp_pose);
     //publishEEMarkers(grasp_pose);
-    publishPlanningScene(grasp_it->grasp_posture.position);
+
+    // Show robot joint positions if available
+    if( !grasp_it->grasp_posture.position.empty() )
+      publishPlanningScene(grasp_it->grasp_posture.position);
+
     ros::Duration(2.0).sleep();
   }
 }
@@ -636,7 +657,7 @@ void GraspGenerator::publishEEMarkers(const geometry_msgs::Pose &grasp_pose)
     marker_array_.markers[i].header.stamp = ros::Time::now();
 
     // Options
-    //    marker_array_.markers[i].lifetime = marker_lifetime_;
+    marker_array_.markers[i].lifetime = marker_lifetime_;
 
     // Options for meshes
     if( marker_array_.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE )
@@ -715,7 +736,7 @@ void GraspGenerator::publishSphere(const geometry_msgs::Pose &pose)
   marker.color.b = 1.0;
   marker.color.a = 1.0;
 
-  //  marker.lifetime = marker_lifetime_;
+  marker.lifetime = marker_lifetime_;
 
   // Make line color
   std_msgs::ColorRGBA color;
@@ -771,7 +792,7 @@ void GraspGenerator::publishArrow(const geometry_msgs::Pose &pose)
   marker.color.b = 1.0;
   marker.color.a = 1.0;
 
-  //  marker.lifetime = marker_lifetime_;
+  marker.lifetime = marker_lifetime_;
 
   rviz_marker_pub_.publish( marker );
   ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
@@ -813,7 +834,7 @@ void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double&
   marker.color.b = 0.0;
   marker.color.a = 0.5;
 
-  //  marker.lifetime = marker_lifetime_;
+  marker.lifetime = marker_lifetime_;
 
   //ROS_INFO_STREAM("Publishing block with pose \n" << marker );
   rviz_marker_pub_.publish( marker );

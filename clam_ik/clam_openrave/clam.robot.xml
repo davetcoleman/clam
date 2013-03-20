@@ -1,6 +1,8 @@
 <Robot name="clam">
   <KinBody>
-    <RotationAxis>0 1 0 180</RotationAxis>
+        <jointvalues>0.1 0.1 0.0 0.1 0.1 0.1 0.1 0.1 </jointvalues>
+
+    <RotationAxis>0 1 0 90</RotationAxis>
     <RotationAxis>1 0 0 90</RotationAxis>
     <Body name="base" type="dynamic">
       <Geom type="trimesh">
@@ -8,14 +10,6 @@
 	<Render>base.wrl 1.000</Render>
 	<Translation> 0.0 0.0125 0.0 </Translation>
       </Geom>
-
-      <!--
-      <Geom type="trimesh">
-	<data>prairie_dog.wrl 0.001</data>
-	<Render>prairie_dog.wrl 0.001</Render>
-	<Translation> 0.0 0.0 0.0 </Translation>
-      </Geom>
-      -->
 
       <mass type="sphere">
 	<total>25.0</total>
@@ -140,15 +134,16 @@
       <maxvel>1</maxvel>
       <resolution>1</resolution>
     </Joint>
-    <Joint name="J2" type="hinge">
+    <Joint name="J2" type="hinge" enabled="false">
       <Body>arm1</Body>
       <Body>arm2</Body>
-      <offsetfrom>arm2</offsetfrom>
-      <limitsdeg>-150 150</limitsdeg>
-      <anchor> 0.0 0.0 0.0 </anchor>
-      <axis>0 1 0</axis>
-      <maxvel>1</maxvel>
-      <resolution>1</resolution>
+      <!--offsetfrom>arm2</offsetfrom>
+	  <limitsdeg>-150 150</limitsdeg>
+	  <anchor> 0.0 0.0 0.0 </anchor>
+	  <axis>0 1 0</axis>
+	  <maxvel>1</maxvel>
+	  <resolution>1</resolution-->
+      <limits>0 0</limits>
     </Joint>
     <Joint name="J3" type="hinge">
       <Body>arm2</Body>
