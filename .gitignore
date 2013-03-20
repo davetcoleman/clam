@@ -33,5 +33,5 @@ devel/
 
 
 
-# Packages not part of clam_catkin
+# Packages not in clam_catkin
 moveit_ikfast_converter/

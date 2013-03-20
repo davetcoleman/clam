@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(clam_ikfast_test)
+project(clam_moveit_ikfast_plugin)
 
 find_package(Eigen REQUIRED)
 include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
