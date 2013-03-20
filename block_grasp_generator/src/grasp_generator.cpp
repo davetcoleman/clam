@@ -38,10 +38,11 @@ namespace block_grasp_generator
 {
 
 // Constructor
-GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                                std::string base_link ):
+GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
+                               std::string base_link, bool rviz_verbose):
   planning_scene_monitor_(planning_scene_monitor),
   base_link_(base_link),
+  rviz_verbose_(rviz_verbose),
   nh_("~"),
   ee_marker_is_loaded_(false),
   marker_lifetime_(ros::Duration(60.0))
@@ -49,7 +50,10 @@ GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr 
 
   // -----------------------------------------------------------------------------------------------
   // Rviz Visualizations
-  rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
+  if(rviz_verbose_)
+  {
+    rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
+  }
 
   // -----------------------------------------------------------------------------------------------
   // Adding collision objects
@@ -64,8 +68,11 @@ GraspGenerator::GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr 
       planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
       planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
     */
-    planning_scene_monitor_->startPublishingPlanningScene(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE,
-                                                          "dave_scene");
+
+    // Only publish planning scene if we are in verbose mode
+    if(rviz_verbose_)
+      planning_scene_monitor_->startPublishingPlanningScene(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE,
+                                                            "dave_scene");
   }
   else
   {
@@ -100,14 +107,17 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Generate grasps
 
   // Calculate grasps in two axis in both directions
-  generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-  generateAxisGrasps( possible_grasps, X_AXIS, UP );
+  //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+  //generateAxisGrasps( possible_grasps, X_AXIS, UP );
   generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-  generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+  //generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
 
   // Visualize results
-  //visualizeGrasps(possible_grasps, block_pose);
+  if(rviz_verbose_)
+  {
+    //visualizeGrasps(possible_grasps, block_pose);
+  }
 
   // Filter grasp poses
   if( !filterGrasps( possible_grasps ) )
@@ -116,7 +126,10 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   //ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
   // Visualize results
-  //visualizeGrasps(possible_grasps, block_pose);
+  if(rviz_verbose_)
+  {
+    visualizeGrasps(possible_grasps, block_pose);
+  }
 
   return true;
 }
@@ -319,7 +332,7 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
   int num_threads = boost::thread::hardware_concurrency();
   if( num_threads > possible_grasps.size() )
     num_threads = possible_grasps.size();
-  //num_threads = 1;
+  num_threads = 1;
 
   // -----------------------------------------------------------------------------------------------
   // Get the solver timeout from kinematics.yaml
@@ -440,7 +453,8 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
       }
 
       // TODO: is this thread safe? (prob not)
-      //publishArrow(*ik_pose);
+      if(rviz_verbose_)
+        publishArrow(*ik_pose);
     }
     else if( error_code.val == moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION )
       ROS_INFO_STREAM_NAMED("grasp","Unable to find IK solution for pose.");
@@ -452,7 +466,7 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
     else
       ROS_INFO_STREAM_NAMED("grasp","IK solution error: MoveItErrorCodes.msg = " << error_code);
   }
-  
+
   ROS_INFO_STREAM_NAMED("grasp","Thread " << ik_thread_struct.thread_id_ << " finished");
 }
 
@@ -460,6 +474,9 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
 void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                                      const geometry_msgs::Pose& block_pose)
 {
+  if(!rviz_verbose_)
+    return; // this function will only work if we have loaded the publishers
+
   ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_TOPIC);
 
   publishBlock(block_pose, BLOCK_SIZE);
@@ -476,7 +493,7 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     publishArrow(grasp_pose);
     //publishEEMarkers(grasp_pose);
     publishPlanningScene(grasp_it->grasp_posture.position);
-    ros::Duration(0.5).sleep();
+    ros::Duration(2.0).sleep();
   }
 }
 
@@ -487,6 +504,9 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
 // Move the robot arm to the ik solution in rviz
 bool GraspGenerator::publishPlanningScene(std::vector<double> joint_values)
 {
+  if(!rviz_verbose_)
+    return true; // this function will only work if we have loaded the publishers
+
   // Output debug
   //ROS_INFO_STREAM_NAMED("grasp","Joint values being sent to planning scene:");
   //std::copy(joint_values.begin(),joint_values.end(), std::ostream_iterator<double>(std::cout, "\n"));
@@ -497,6 +517,7 @@ bool GraspGenerator::publishPlanningScene(std::vector<double> joint_values)
   planning_scene_monitor_->updateFrameTransforms();
   planning_scene_monitor_->triggerSceneUpdateEvent(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE);
 
+  return true;
 }
 
 // Call this once at begining to load the robot marker
@@ -589,6 +610,9 @@ bool GraspGenerator::loadEEMarker()
 
 void GraspGenerator::publishEEMarkers(const geometry_msgs::Pose &grasp_pose)
 {
+  if(!rviz_verbose_)
+    return; // this function will only work if we have loaded the publishers
+
   //ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
 
   // -----------------------------------------------------------------------------------------------
@@ -651,6 +675,9 @@ void GraspGenerator::publishEEMarkers(const geometry_msgs::Pose &grasp_pose)
 
 void GraspGenerator::publishSphere(const geometry_msgs::Pose &pose)
 {
+  if(!rviz_verbose_)
+    return; // this function will only work if we have loaded the publishers
+
   //ROS_INFO_STREAM("Sphere (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
 
   visualization_msgs::Marker marker;
@@ -711,6 +738,9 @@ void GraspGenerator::publishSphere(const geometry_msgs::Pose &pose)
 
 void GraspGenerator::publishArrow(const geometry_msgs::Pose &pose)
 {
+  if(!rviz_verbose_)
+    return; // this function will only work if we have loaded the publishers
+
   //ROS_INFO_STREAM("Arrow (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
 
   visualization_msgs::Marker marker;
@@ -749,6 +779,9 @@ void GraspGenerator::publishArrow(const geometry_msgs::Pose &pose)
 
 void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double& block_size)
 {
+  if(!rviz_verbose_)
+    return; // this function will only work if we have loaded the publishers
+
   visualization_msgs::Marker marker;
   // Set the frame ID and timestamp.  See the TF tutorials for information on these.
   marker.header.frame_id = base_link_;
@@ -788,11 +821,11 @@ void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double&
 }
 
 /*random_numbers::RandomNumberGenerator& GraspGenerator::getRandomNumberGenerator()
-{
+  {
   if (!rng_)
-    rng_.reset(new random_numbers::RandomNumberGenerator());
+  rng_.reset(new random_numbers::RandomNumberGenerator());
   return *rng_;
-}
+  }
 */
 
 } // namespace

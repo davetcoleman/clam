@@ -148,6 +148,9 @@ private:
   // threaded kinematic solvers
   std::vector<kinematics::KinematicsBasePtr> kin_solvers_;
 
+  // whether to publish grasp info to rviz
+  bool rviz_verbose_;
+
   /** \brief For certain operations a group needs a random number generator. However, it may be slightly expensive
       to allocate the random number generator if many state instances are generated. For this reason, the generator
       is allocated on a need basis, by the getRandomNumberGenerator() function. Never use the rng_ member directly, but call
@@ -158,7 +161,7 @@ public:
 
   // Constructor
   GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                  std::string base_link );
+                  std::string base_link, bool rviz_verbose = false );
 
   // Destructor
   ~GraspGenerator();

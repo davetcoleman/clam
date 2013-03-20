@@ -29,3 +29,9 @@ devel/
 
 # CSV Files of Data
 *.csv
+
+
+
+
+# Packages not part of clam_catkin
+moveit_ikfast_converter/

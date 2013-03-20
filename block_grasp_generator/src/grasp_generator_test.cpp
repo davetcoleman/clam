@@ -146,7 +146,8 @@ public:
     */
 
     // Create grasp generator
-    block_grasp_generator::GraspGenerator grasp_generator(planning_scene_monitor_, base_link_);
+    bool rviz_verbose = true;
+    block_grasp_generator::GraspGenerator grasp_generator(planning_scene_monitor_, base_link_, rviz_verbose);
     //grasp_generator_.reset( new block_grasp_generator::GraspGenerator(planning_scene_monitor_, base_link_));
 
     // ---------------------------------------------------------------------------------------------

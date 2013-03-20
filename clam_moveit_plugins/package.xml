@@ -42,7 +42,7 @@
 
   <export>
     <moveit_core plugin="${prefix}/clam_moveit_controller_manager_plugin_description.xml"/> 
-    <moveit_core plugin="${prefix}/clam_moveit_ikfast_plugin_description.xml"/> 
+    <!--moveit_core plugin="${prefix}/clam_moveit_ikfast_plugin_description.xml"/--> 
   </export>
 
 </package>

@@ -145,7 +145,6 @@ public:
     ee_marker_is_loaded_(false),
     transform_is_set_(false),
     block_published_(false)
-    //    action_server_(name, false),
   {
     base_link_ = "base_link";
 
