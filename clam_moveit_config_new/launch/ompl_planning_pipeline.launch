@@ -7,7 +7,7 @@
   <param name="planning_plugin" value="$(arg planning_plugin)" />
   <param name="request_adapters" value="$(arg planning_adapters)" />
 
-  <rosparam command="load" file="$(find clam_moveit_config_sim)/config/kinematics.yaml"/>
-  <rosparam command="load" file="$(find clam_moveit_config_sim)/config/ompl_planning.yaml"/>
+  <rosparam command="load" file="$(find clam_moveit_config_new)/config/kinematics.yaml"/>
+  <rosparam command="load" file="$(find clam_moveit_config_new)/config/ompl_planning.yaml"/>
 
 </launch>

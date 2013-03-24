@@ -6,11 +6,11 @@
   <param if="$(arg load_robot_description)" name="robot_description" textfile="$(find clam_description)/urdf/clam.urdf" />
       
   <!-- The semantic description that corresponds to the URDF -->
-  <param name="robot_description_semantic" textfile="$(find clam_moveit_config_sim)/config/clam.srdf" />
+  <param name="robot_description_semantic" textfile="$(find clam_moveit_config_new)/config/clam.srdf" />
   
   <!-- Load to the parameter server yaml files -->
   <group ns="robot_description_planning">    
-    <rosparam command="load" file="$(find clam_moveit_config_sim)/config/joint_limits.yaml"/>
+    <rosparam command="load" file="$(find clam_moveit_config_new)/config/joint_limits.yaml"/>
   </group>
   
 </launch>

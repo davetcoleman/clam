@@ -175,7 +175,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Check planning scene monitor
-    if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
+    if (planning_scene_monitor_->getPlanningScene())
     {
       /*
         planning_scene_monitor_->startWorldGeometryMonitor();

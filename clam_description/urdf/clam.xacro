@@ -29,7 +29,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   <property name="M_PI" value="3.14159"/>
 
   <!-- TABLETOP LINK -->
-  <!--joint name="tabletop_joint" type="fixed">
+  <joint name="tabletop_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link"/>
     <child link="tabletop_link"/>
@@ -63,7 +63,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   <gazebo reference="tabletop_link">
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
-  </gazebo-->
+  </gazebo>
 
   <!-- BASE LINK -->
   <link name="base_link">

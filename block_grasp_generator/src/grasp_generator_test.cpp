@@ -108,25 +108,6 @@ public:
                                   (ROBOT_DESCRIPTION, tf_, "dave_world"));
 
     // ---------------------------------------------------------------------------------------------
-    // Check planning scene monitor
-    /*
-      if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
-      {
-      /*
-      planning_scene_monitor_->startWorldGeometryMonitor();
-      planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
-      planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
-
-      planning_scene_monitor_->startPublishingPlanningScene(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE,
-      "dave_scene");
-      }
-      else
-      {
-      ROS_ERROR_STREAM_NAMED("pick_place","Planning scene not configured");
-      }
-    */
-
-    // ---------------------------------------------------------------------------------------------
     // Wait for complete state to be recieved
     //ros::Duration(0.25).sleep();
 

@@ -63,7 +63,7 @@ GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr p
 
   // ---------------------------------------------------------------------------------------------
   // Check planning scene monitor
-  if (planning_scene_monitor_->getPlanningScene() && planning_scene_monitor_->getPlanningScene()->isConfigured())
+  if (planning_scene_monitor_->getPlanningScene())
   {
     /*
       planning_scene_monitor_->startWorldGeometryMonitor();
@@ -531,8 +531,10 @@ bool GraspGenerator::publishPlanningScene(std::vector<double> joint_values)
   //std::copy(joint_values.begin(),joint_values.end(), std::ostream_iterator<double>(std::cout, "\n"));
 
   // Update planning scene
-  planning_scene_monitor_->getPlanningScene()->getCurrentState().getJointStateGroup(PLANNING_GROUP_NAME)
-    ->setVariableValues(joint_values);
+  robot_state::JointStateGroup* joint_state_group = planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst()
+    .getJointStateGroup(PLANNING_GROUP_NAME);
+  joint_state_group->setVariableValues(joint_values);
+    
   planning_scene_monitor_->updateFrameTransforms();
   planning_scene_monitor_->triggerSceneUpdateEvent(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE);
 

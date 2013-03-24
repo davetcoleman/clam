@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(clam_moveit_config_sim)
+project(clam_moveit_config_new)
 
 find_package(catkin REQUIRED)
 

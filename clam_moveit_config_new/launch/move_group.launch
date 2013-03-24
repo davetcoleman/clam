@@ -1,28 +1,29 @@
 <launch>
 
-  <include file="$(find clam_moveit_config_sim)/launch/planning_context.launch" />
+  <include file="$(find clam_moveit_config_new)/launch/planning_context.launch" />
 
   <arg name="debug" default="false" />
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-  <arg unless="$(arg debug)" name="command_args" value="" />
-  <arg     if="$(arg debug)" name="command_args" value="--debug" />
+  <arg name="info" default="$(arg debug)" />  
+  <arg unless="$(arg info)" name="command_args" value="" />
+  <arg     if="$(arg info)" name="command_args" value="--debug" />
 
-  <arg name="allow_trajectory_execution" default="false"/>
+  <arg name="allow_trajectory_execution" default="true"/>
   <arg name="max_safe_path_cost" default="1"/>
   <arg name="publish_monitored_planning_scene" default="false"/>
 
-  <include ns="move_group" file="$(find clam_moveit_config_sim)/launch/planning_pipeline.launch">
+  <include ns="move_group" file="$(find clam_moveit_config_new)/launch/planning_pipeline.launch">
     <arg name="pipeline" value="ompl" />
   </include>
 
-  <include ns="move_group" file="$(find clam_moveit_config_sim)/launch/trajectory_execution.launch">
+  <include ns="move_group" file="$(find clam_moveit_config_new)/launch/trajectory_execution.launch">
     <arg name="moveit_controller_manager" value="clam" /> 
-    <arg name="moveit_manage_controllers" value="false" />
+    <arg name="moveit_manage_controllers" value="true" />
   </include>
 
-  <include ns="move_group" file="$(find clam_moveit_config_sim)/launch/sensor_manager.launch">
+  <include ns="move_group" file="$(find clam_moveit_config_new)/launch/sensor_manager.launch">
     <arg name="moveit_sensor_manager" value="clam" /> 
   </include>
 

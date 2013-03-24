@@ -4,3 +4,5 @@ moveit_setup_assistant_config:
     relative_path: urdf/clam.urdf
   SRDF:
     relative_path: config/clam.srdf
+  CONFIG:
+    generated_timestamp: 1364011397
