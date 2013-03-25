@@ -17,23 +17,3 @@ planner_configs:
     type: geometric::RRTstar
   BKPIECEkConfigDefault:
     type: geometric::BKPIECE
-arm:
-  planner_configs:
-    - SBLkConfigDefault
-    - LBKPIECEkConfigDefault
-    - RRTkConfigDefault
-    - RRTConnectkConfigDefault
-    - ESTkConfigDefault
-    - KPIECEkConfigDefault
-    - BKPIECEkConfigDefault
-    - RRTStarkConfigDefault
-gripper_group:
-  planner_configs:
-    - SBLkConfigDefault
-    - LBKPIECEkConfigDefault
-    - RRTkConfigDefault
-    - RRTConnectkConfigDefault
-    - ESTkConfigDefault
-    - KPIECEkConfigDefault
-    - BKPIECEkConfigDefault
-    - RRTStarkConfigDefault

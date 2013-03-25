@@ -39,23 +39,15 @@ namespace block_grasp_generator
 
 // Constructor
 GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                               std::string base_link, bool rviz_verbose):
+                               std::string base_link, bool rviz_verbose, RobotVizToolsPtr rviz_tools, 
+                               const std::string planning_group ):
   planning_scene_monitor_(planning_scene_monitor),
   base_link_(base_link),
   rviz_verbose_(rviz_verbose),
-  nh_("~"),
-  ee_marker_is_loaded_(false),
-  marker_lifetime_(ros::Duration(0.0))
+  rviz_tools_(rviz_tools),
+  planning_group_(planning_group),
+  nh_("~")
 {
-
-  // -----------------------------------------------------------------------------------------------
-  // Rviz Visualizations
-  if(rviz_verbose_)
-  {
-    rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
-    ros::spinOnce();
-    ros::Duration(0.05).sleep(); // necessary?
-  }
 
   // -----------------------------------------------------------------------------------------------
   // Adding collision objects
@@ -81,7 +73,7 @@ GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr p
     ROS_ERROR_STREAM_NAMED("grasp","Planning scene not configured");
   }
 
-  ROS_INFO_STREAM_NAMED("grasp","Done constructing GraspGenerator\n");
+  ROS_INFO_STREAM_NAMED("grasp","GraspGenerator ready.");
 }
 
 GraspGenerator::~GraspGenerator()
@@ -103,7 +95,7 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Show block
   if(rviz_verbose_)
   {
-    //publishBlock(block_pose, BLOCK_SIZE, true);
+    //rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, true);
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -125,14 +117,6 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
     //visualizeGrasps(possible_grasps, block_pose);
   }
 
-
-  ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
-
-  // Filter grasp poses
-  if( !filterGrasps( possible_grasps ) )
-    return false;
-
-  ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
 
   // Visualize results
   if(rviz_verbose_)
@@ -346,7 +330,7 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
   // -----------------------------------------------------------------------------------------------
   // Get the solver timeout from kinematics.yaml
   double timeout = planning_scene_monitor_->getPlanningScene()->getCurrentState().
-    getJointStateGroup(PLANNING_GROUP_NAME)->getDefaultIKTimeout();
+    getJointStateGroup(planning_group_)->getDefaultIKTimeout();
 
   // -----------------------------------------------------------------------------------------------
   // Load kinematic solvers if not already loaded
@@ -359,7 +343,7 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
     kinematics_plugin_loader::KinematicsLoaderFn kin_allocator = kin_plugin_loader->getLoaderFunction();
 
     const robot_model::JointModelGroup* joint_model_group
-      = planning_scene_monitor_->getPlanningScene()->getRobotModel()->getJointModelGroup(PLANNING_GROUP_NAME);
+      = planning_scene_monitor_->getPlanningScene()->getRobotModel()->getJointModelGroup(planning_group_);
 
     // Create an ik solver for every thread
     for (int i = 0; i < num_threads; ++i)
@@ -418,6 +402,8 @@ bool GraspGenerator::filterGrasps(std::vector<manipulation_msgs::Grasp>& possibl
   ROS_INFO_STREAM_NAMED("grasp","Grasp generator IK grasp filtering benchmark time:");
   std::cout << duration << "\t" << possible_grasps.size() << "\n";
 
+  ROS_INFO_STREAM_NAMED("grasp","Possible grasps filtered to " << possible_grasps.size() << " options.");
+
   return true;
 }
 
@@ -463,7 +449,7 @@ void GraspGenerator::filterGraspThread(IkThreadStruct ik_thread_struct)
 
       // TODO: is this thread safe? (prob not)
       if(rviz_verbose_)
-        publishArrow(*ik_pose);
+        rviz_tools_->publishArrow(*ik_pose);
     }
     else if( error_code.val == moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION )
       ROS_INFO_STREAM_NAMED("grasp","Unable to find IK solution for pose.");
@@ -486,14 +472,12 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
   if(!rviz_verbose_)
     return; // this function will only work if we have loaded the publishers
 
-  ROS_INFO_STREAM_NAMED("grasp","Visualizing all generating grasp poses on topic " << MARKER_TOPIC);
-
   // isRed = true if possible_blocks is empty
-  publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
+  rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
 
       // Show robot joint positions if available
   if( !possible_grasps.empty() && !possible_grasps[0].grasp_posture.position.empty() )
-      publishPlanningScene(possible_grasps[0].grasp_posture.position);
+    rviz_tools_->publishPlanningScene(possible_grasps[0].grasp_posture.position);
 
 
   for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
@@ -504,400 +488,16 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     //ROS_DEBUG_STREAM_NAMED("grasp","Visualizing grasp pose\n" << grasp_pose);
     //ROS_DEBUG_STREAM_NAMED("grasp","Visualizing grasp pose");
 
-    //publishSphere(grasp_pose);
-    publishArrow(grasp_pose);
-    //publishEEMarkers(grasp_pose);
+    //rviz_tools_->publishSphere(grasp_pose);
+    rviz_tools_->publishArrow(grasp_pose);
+    //rviz_tools_->publishEEMarkers(grasp_pose);
 
     // Show robot joint positions if available
     //if( !grasp_it->grasp_posture.position.empty() )
-    //publishPlanningScene(grasp_it->grasp_posture.position);
+    //rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
 
     ros::Duration(0.01).sleep();
   }
 }
 
-// *********************************************************************************************************
-// Helper Function
-// *********************************************************************************************************
-
-// Move the robot arm to the ik solution in rviz
-bool GraspGenerator::publishPlanningScene(std::vector<double> joint_values)
-{
-  if(!rviz_verbose_)
-    return true; // this function will only work if we have loaded the publishers
-
-  // Output debug
-  //ROS_INFO_STREAM_NAMED("grasp","Joint values being sent to planning scene:");
-  //std::copy(joint_values.begin(),joint_values.end(), std::ostream_iterator<double>(std::cout, "\n"));
-
-  // Update planning scene
-  robot_state::JointStateGroup* joint_state_group = planning_scene_monitor_->getPlanningScene()->getCurrentStateNonConst()
-    .getJointStateGroup(PLANNING_GROUP_NAME);
-  joint_state_group->setVariableValues(joint_values);
-    
-  planning_scene_monitor_->updateFrameTransforms();
-  planning_scene_monitor_->triggerSceneUpdateEvent(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE);
-
-  return true;
-}
-
-// Call this once at begining to load the robot marker
-bool GraspGenerator::loadEEMarker()
-{
-  // -----------------------------------------------------------------------------------------------
-  // Get end effector group
-
-  // Create color to use for EE markers
-  std_msgs::ColorRGBA marker_color;
-  marker_color.r = 1.0;
-  marker_color.g = 1.0;
-  marker_color.b = 1.0;
-  marker_color.a = 0.85;
-
-  // Get robot state
-  robot_state::RobotState robot_state = planning_scene_monitor_->getPlanningScene()->getCurrentState();
-
-  // Get joint state group
-  robot_state::JointStateGroup* joint_state_group = robot_state.getJointStateGroup(EE_GROUP);
-  if( joint_state_group == NULL ) // make sure EE_GROUP exists
-  {
-    ROS_ERROR_STREAM_NAMED("grasp","Unable to find joint state group " << EE_GROUP );
-    return false;
-  }
-
-
-  // Get link names that are in end effector
-  const std::vector<std::string>
-    &ee_link_names = joint_state_group->getJointModelGroup()->getLinkModelNames();
-  ROS_DEBUG_STREAM_NAMED("grasp","Number of links in group " << EE_GROUP << ": " << ee_link_names.size());
-
-  // Robot Interaction - finds the end effector associated with a planning group
-  robot_interaction::RobotInteraction robot_interaction( planning_scene_monitor_->getRobotModel() );
-
-  // Decide active end effectors
-  robot_interaction.decideActiveEndEffectors(PLANNING_GROUP_NAME);
-
-  // Get active EE
-  std::vector<robot_interaction::RobotInteraction::EndEffector>
-    active_eef = robot_interaction.getActiveEndEffectors();
-  ROS_DEBUG_STREAM_NAMED("grasp","Number of active end effectors: " << active_eef.size());
-  if( !active_eef.size() )
-  {
-    ROS_ERROR_STREAM_NAMED("grasp","No active end effectors found! Make sure kinematics.yaml is loaded in this node's namespace!");
-    return false;
-  }
-
-  // Just choose the first end effector TODO: better logic?
-  robot_interaction::RobotInteraction::EndEffector eef = active_eef[0];
-
-  // -----------------------------------------------------------------------------------------------
-  // Get EE link markers for Rviz
-  robot_state.getRobotMarkers(marker_array_, ee_link_names, marker_color, eef.eef_group, ros::Duration());
-  ROS_DEBUG_STREAM_NAMED("grasp","Number of rviz markers in end effector: " << marker_array_.markers.size());
-
-  // Change pose from Eigen to TF
-  try{
-    tf::poseEigenToTF(robot_state.getLinkState(eef.parent_link)->getGlobalLinkTransform(), tf_root_to_link_);
-  }
-  catch(...)
-  {
-    ROS_ERROR_STREAM_NAMED("grasp","Didn't find link state for " << eef.parent_link);
-  }
-
-  // Offset from gasp_pose to end effector
-  static const double X_OFFSET = 0.0; //0.15;
-
-  // Allow a transform from our pose to the end effector position
-  grasp_pose_to_eef_pose_.position.x = X_OFFSET;
-  grasp_pose_to_eef_pose_.position.y = 0;
-  grasp_pose_to_eef_pose_.position.z = 0;
-  grasp_pose_to_eef_pose_.orientation.x = 0;
-  grasp_pose_to_eef_pose_.orientation.y = 0;
-  grasp_pose_to_eef_pose_.orientation.z = 0;
-  grasp_pose_to_eef_pose_.orientation.w = 1;
-
-
-  // Copy original marker poses to a vector
-  for (std::size_t i = 0 ; i < marker_array_.markers.size() ; ++i)
-  {
-    marker_poses_.push_back( marker_array_.markers[i].pose );
-  }
-
-  // Record that we have loaded the gripper
-  ee_marker_is_loaded_ = true;
-
-  return true;
-}
-
-void GraspGenerator::publishEEMarkers(const geometry_msgs::Pose &grasp_pose)
-{
-  if(!rviz_verbose_)
-    return; // this function will only work if we have loaded the publishers
-
-  //ROS_INFO_STREAM("Mesh (" << grasp_pose.position.x << ","<< grasp_pose.position.y << ","<< grasp_pose.position.z << ")");
-
-  // -----------------------------------------------------------------------------------------------
-  // Make sure EE Marker is loaded
-  if( !ee_marker_is_loaded_ )
-  {
-    ROS_INFO_STREAM_NAMED("grasp","Loading end effector rviz markers");
-    if( !loadEEMarker() )
-    {
-      ROS_WARN_STREAM_NAMED("grasp","Unable to publish EE marker");
-      return;
-    }
-  }
-
-  // -----------------------------------------------------------------------------------------------
-  // Process each link of the end effector
-  for (std::size_t i = 0 ; i < marker_array_.markers.size() ; ++i)
-  {
-    // Header
-    marker_array_.markers[i].header.frame_id = base_link_;
-    marker_array_.markers[i].header.stamp = ros::Time::now();
-
-    // Options
-    marker_array_.markers[i].lifetime = marker_lifetime_;
-
-    // Options for meshes
-    if( marker_array_.markers[i].type == visualization_msgs::Marker::MESH_RESOURCE )
-    {
-      marker_array_.markers[i].mesh_use_embedded_materials = true;
-    }
-
-    // -----------------------------------------------------------------------------------------------
-    // Do some math for the offset
-    // grasp_pose             - our generated grasp
-    // markers[i].pose        - an ee link's pose relative to the whole end effector
-    // grasp_pose_to_eef_pose_ - the offset from the grasp pose to eef_pose - probably nothing
-    tf::Pose tf_root_to_marker;
-    tf::Pose tf_root_to_mesh;
-    tf::Pose tf_pose_to_eef;
-
-    // Simple conversion from geometry_msgs::Pose to tf::Pose
-    tf::poseMsgToTF(grasp_pose, tf_root_to_marker);
-    tf::poseMsgToTF(marker_poses_[i], tf_root_to_mesh);
-    tf::poseMsgToTF(grasp_pose_to_eef_pose_, tf_pose_to_eef);
-
-    // Conversions
-    tf::Pose tf_eef_to_mesh = tf_root_to_link_.inverse() * tf_root_to_mesh;
-    tf::Pose tf_marker_to_mesh = tf_pose_to_eef * tf_eef_to_mesh;
-    tf::Pose tf_root_to_mesh_new = tf_root_to_marker * tf_marker_to_mesh;
-    tf::poseTFToMsg(tf_root_to_mesh_new, marker_array_.markers[i].pose);
-    // -----------------------------------------------------------------------------------------------
-
-    //ROS_INFO_STREAM("Marker " << i << ":\n" << marker_array_.markers[i]);
-
-    rviz_marker_pub_.publish( marker_array_.markers[i] );
-    ros::Duration(0.05).sleep();  // Sleep to prevent markers from being 'skipped' in rviz
-  }
-
-}
-
-void GraspGenerator::publishSphere(const geometry_msgs::Pose &pose)
-{
-  if(!rviz_verbose_)
-    return; // this function will only work if we have loaded the publishers
-
-  //ROS_INFO_STREAM("Sphere (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
-
-  visualization_msgs::Marker marker;
-  // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-  marker.header.frame_id = base_link_;
-  marker.header.stamp = ros::Time::now();
-
-  // Set the namespace and id for this marker.  This serves to create a unique ID
-  marker.ns = "Sphere";
-
-  // Set the marker type.
-  marker.type = visualization_msgs::Marker::SPHERE_LIST;
-
-  // Set the marker action.  Options are ADD and DELETE
-  marker.action = visualization_msgs::Marker::ADD;
-
-  static int id = 0;
-  marker.id = ++id;
-
-  marker.pose.position.x = 0;
-  marker.pose.position.y = 0;
-  marker.pose.position.z = 0;
-
-  marker.pose.orientation.x = 0.0;
-  marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = 0.0;
-  marker.pose.orientation.w = 1.0;
-
-  marker.scale.x = 0.01;
-  marker.scale.y = 0.01;
-  marker.scale.z = 0.01;
-
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 1.0;
-  marker.color.a = 1.0;
-
-  marker.lifetime = marker_lifetime_;
-
-  // Make line color
-  std_msgs::ColorRGBA color;
-  color.r = 1.0;
-  color.g = 0.1;
-  color.b = 0.1;
-  color.a = 1.0;
-
-  // Point
-  geometry_msgs::Point point_a = pose.position;
-
-  // Add the point pair to the line message
-  marker.points.push_back( point_a );
-  marker.colors.push_back( color );
-
-
-  rviz_marker_pub_.publish( marker );
-  ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
-}
-
-void GraspGenerator::publishArrow(const geometry_msgs::Pose &pose)
-{
-  if(!rviz_verbose_)
-    return; // this function will only work if we have loaded the publishers
-
-  //ROS_INFO_STREAM("Arrow (" << pose.position.x << ","<< pose.position.y << ","<< pose.position.z << ")");
-
-  visualization_msgs::Marker marker;
-  // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-  marker.header.frame_id = base_link_;
-  marker.header.stamp = ros::Time::now();
-
-  // Set the namespace and id for this marker.  This serves to create a unique ID
-  marker.ns = "Arrow";
-
-  // Set the marker type.
-  marker.type = visualization_msgs::Marker::ARROW;
-
-  // Set the marker action.  Options are ADD and DELETE
-  marker.action = visualization_msgs::Marker::ADD;
-
-  static int id = 0;
-  marker.id = ++id;
-
-  marker.pose = pose;
-
-  marker.scale.x = 0.05; //0.025; // arrow width - but i would call this the length
-  marker.scale.y = 0.005; // arrow height
-  marker.scale.z = 0.005; // arrow length
-
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 1.0;
-  marker.color.a = 1.0;
-
-  marker.lifetime = marker_lifetime_;
-
-  rviz_marker_pub_.publish( marker );
-  ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
-}
-
-void GraspGenerator::publishBlock(const geometry_msgs::Pose &pose, const double& block_size, bool isRed)
-{
-  if(!rviz_verbose_)
-    return; // this function will only work if we have loaded the publishers
-
-  visualization_msgs::Marker marker;
-  // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-  marker.header.frame_id = base_link_;
-  marker.header.stamp = ros::Time::now();
-
-  // Set the namespace and id for this marker.  This serves to create a unique ID
-  marker.ns = "Block";
-
-  static int id = 0;
-  marker.id = ++id;
-
-  // Set the marker action.  Options are ADD and DELETE
-  marker.action = visualization_msgs::Marker::ADD;
-
-  // Set the pose
-  marker.pose = pose;
-
-  // Set the marker type.
-  marker.type = visualization_msgs::Marker::CUBE;
-
-  // Set marker size
-  marker.scale.x = block_size;
-  marker.scale.y = block_size;
-  marker.scale.z = block_size;
-
-  // Set marker color
-  if(isRed)
-  {
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-  }
-  else
-  {
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-  }
-  marker.color.a = 0.5;
-
-  marker.lifetime = marker_lifetime_;
-
-  //ROS_INFO_STREAM("Publishing block with pose \n" << marker );
-  rviz_marker_pub_.publish( marker );
-  ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
-}
-
-/*random_numbers::RandomNumberGenerator& GraspGenerator::getRandomNumberGenerator()
-  {
-  if (!rng_)
-  rng_.reset(new random_numbers::RandomNumberGenerator());
-  return *rng_;
-  }
-*/
-
 } // namespace
-
-
-/*
-// Do attempts # of ik calls
-unsigned int attempts = 5;
-double timeout = 5.0; //ik_thread_struct.joint_state_group_->getDefaultIKTimeout();
-
-bool first_seed = true;
-for (unsigned int attempt = 0 ; attempt < attempts ; ++attempt)
-{
-// the first seed is the initial state
-if (first_seed)
-{
-// use original ik_seed_state
-first_seed = false;
-}
-else
-{
-// sample a random seed
-random_numbers::RandomNumberGenerator &rng = getRandomNumberGenerator();
-std::vector<double> random_values;
-ik_thread_struct.joint_model_group_->getVariableRandomValues(rng, random_values);
-//ik_seed_state = random_values;
-}
-
-//ROS_DEBUG_STREAM("seed state:");
-//std::copy(ik_seed_state.begin(),ik_seed_state.end(), std::ostream_iterator<double>(std::cout, "\n"));
-
-// compute the IK solution
-if (kin_solver->searchPositionIK(*ik_pose, ik_seed_state, timeout, solution, error_code) )
-{
-// we found a solution, so we can actually quit!
-ROS_INFO_STREAM("Found solution on " << attempt << " attempt");
-break;
-}
-else
-{
-ROS_INFO_STREAM("No solution found solution on " << attempt << " attempt");
-}
-}
-*/
-

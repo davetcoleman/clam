@@ -1,8 +1,8 @@
 moveit_setup_assistant_config:
   URDF:
-    package: clam_description
-    relative_path: urdf/clam.urdf
+    package: ""
+    relative_path: /wg/stor1a/dcoleman/ros/clam/src/clam_description/urdf/clam.urdf
   SRDF:
     relative_path: config/clam.srdf
   CONFIG:
-    generated_timestamp: 1364011380
+    generated_timestamp: 1364159984

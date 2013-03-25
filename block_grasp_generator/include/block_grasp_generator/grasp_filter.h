@@ -33,7 +33,7 @@
  *********************************************************************/
 
 // Author: Dave Coleman
-//   Desc:   Generates grasps for a cube
+// Desc:   Filters grasps based on kinematic feasibility
 
 // ROS
 #include <ros/ros.h>
@@ -63,6 +63,10 @@
 namespace block_grasp_generator
 {
 
+static const std::string EE_GROUP = "gripper_group";
+static const std::string EE_NAME = "end_effector";
+static const std::string PLANNING_GROUP_NAME = "arm";
+static const std::string RVIZ_MARKER_TOPIC = "/end_effectors";
 static const double RAD2DEG = 57.2957795;
 static const double BLOCK_SIZE = 0.04;
 
@@ -73,6 +77,9 @@ struct IkThreadStruct
                  std::vector<manipulation_msgs::Grasp> &filtered_grasps, // the result
                  int grasps_id_start,
                  int grasps_id_end,
+                 //const robot_model::JointModelGroup* joint_model_group,
+                 //const robot_state::JointStateGroup* joint_state_group, // TODO: remove this
+                 //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
                  kinematics::KinematicsBasePtr kin_solver,
                  double timeout,
                  boost::mutex *lock,
@@ -83,6 +90,9 @@ struct IkThreadStruct
       grasps_id_end_(grasps_id_end),
       kin_solver_(kin_solver),
       timeout_(timeout),
+      //joint_model_group_(joint_model_group),
+      //joint_state_group_(joint_state_group),
+      //kinematics_allocator_(kinematics_allocator),
       lock_(lock),
       thread_id_(thread_id)
   {
@@ -91,6 +101,9 @@ struct IkThreadStruct
   std::vector<manipulation_msgs::Grasp> &filtered_grasps_;
   int grasps_id_start_;
   int grasps_id_end_;
+  //const robot_model::JointModelGroup* joint_model_group_;
+  //const robot_state::JointStateGroup* joint_state_group_;
+  //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
   kinematics::KinematicsBasePtr kin_solver_;
   double timeout_;
   boost::mutex *lock_;
@@ -130,15 +143,11 @@ private:
   // class for publishing stuff to rviz
   block_grasp_generator::RobotVizToolsPtr rviz_tools_;
 
-  // Planning group
-  std::string planning_group_;
-
 public:
 
   // Constructor
   GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                  std::string base_link, bool rviz_verbose, RobotVizToolsPtr rviz_tools, 
-                  const std::string planning_group );
+                  std::string base_link, bool rviz_verbose = false );
 
   // Destructor
   ~GraspGenerator();
@@ -151,9 +160,6 @@ public:
   bool chooseBestGrasp( const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                         manipulation_msgs::Grasp& chosen );
 
-  // Choose the 1st grasp that is kinematically feasible
-  bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
-
 private:
 
   // Create grasp positions in one axis
@@ -162,6 +168,9 @@ private:
 
   // Take the nth grasp from the array
   bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
+
+  // Choose the 1st grasp that is kinematically feasible
+  bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
   // Thread for checking part of the possible grasps list
   void filterGraspThread(IkThreadStruct ik_thread_struct);

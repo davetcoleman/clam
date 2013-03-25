@@ -63,13 +63,21 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
-# Action Servers 
+## Action Servers 
+
+# Percetion
 add_executable(block_perception_server src/block_perception_server.cpp)
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
-add_executable(block_pick_place_server src/block_pick_place_server.cpp)
-target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
+# Pick Place - Custom
+#add_executable(block_pick_place_server src/block_pick_place_server.cpp)
+#target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
 
+# Pick Place - MoveIt
+add_executable(block_pick_place_moveit_server src/block_pick_place_moveit_server.cpp)
+target_link_libraries(block_pick_place_moveit_server ${catkin_LIBRARIES})
+
+# Logic
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
 

@@ -66,21 +66,22 @@
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
-// Rviz
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-
 // Grasp generation
 #include <block_grasp_generator/grasp_generator.h>
+#include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
 
 namespace clam_block_manipulation
 {
 
 // Static const vars
-static const std::string GROUP_NAME = "arm";
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_LINK = "gripper_roll_link";
 static const double PREGRASP_Z_HEIGHT = 0.09;
+
+// Required for RobotVizTools:
+static const std::string PLANNING_GROUP_NAME = "arm";
+static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
+static const std::string EE_GROUP = "gripper_group";
 
 // Class
 class BlockPickPlaceServer
@@ -88,9 +89,6 @@ class BlockPickPlaceServer
 private:
   // A shared node handle
   ros::NodeHandle nh_;
-
-  // A ROS publisher
-  ros::Publisher marker_pub_;
 
   // Action Servers and Clients
   actionlib::SimpleActionServer<clam_msgs::PickPlaceAction> action_server_;
@@ -112,6 +110,9 @@ private:
   // Parameters from goal
   std::string base_link_;
 
+  // class for publishing stuff to rviz
+  block_grasp_generator::RobotVizToolsPtr rviz_tools_;
+
 public:
 
   // Constructor
@@ -120,10 +121,6 @@ public:
     clam_arm_client_("clam_arm", true),
     movegroup_action_("move_group", true)
   {
-
-    // -----------------------------------------------------------------------------------------------
-    // Rviz Visualizations
-    marker_pub_ = nh_.advertise<visualization_msgs::Marker>("end_effector_marker", 1);
 
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
@@ -177,6 +174,10 @@ public:
       for(int i = 0; i < missing_joints.size(); ++i)
         ROS_WARN_STREAM_NAMED("pick_place","Unpublished joints: " << missing_joints[i]);
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Load the Robot Viz Tools for publishing to Rviz
+    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -303,7 +304,9 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Generate graps
     ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
-    block_grasp_generator::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_ );
+    bool rviz_verbose = true;
+    block_grasp_generator::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_, rviz_verbose,
+                                                           PLANNING_GROUP_NAME);
 
     // Pick grasp
     std::vector<manipulation_msgs::Grasp> possible_grasps;
@@ -447,7 +450,7 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Crate move_group goal
     moveit_msgs::MoveGroupGoal goal;
-    goal.request.group_name = GROUP_NAME;
+    goal.request.group_name = PLANNING_GROUP_NAME;
     goal.request.num_planning_attempts = 1;
     goal.request.allowed_planning_time = 5.0;
 
@@ -475,12 +478,12 @@ public:
     // Visualize goals in rviz
     ROS_INFO_STREAM_NAMED("pick_place","Sending planning goal to MoveGroup for x:" << goal_pose.pose.position.x <<
                           " y:" << goal_pose.pose.position.y << " z:" << goal_pose.pose.position.z);
-    publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
-    publishMesh(goal_pose.pose.position.x,
-                goal_pose.pose.position.y,
-                goal_pose.pose.position.z + x_offset,
-                goal_pose.pose.orientation.x, goal_pose.pose.orientation.y,
-                goal_pose.pose.orientation.z, goal_pose.pose.orientation.w );
+    rviz_tools_->publishSphere(goal_pose.pose.position.x, goal_pose.pose.position.y, goal_pose.pose.position.z);
+    rviz_tools_->publishMesh(goal_pose.pose.position.x,
+                             goal_pose.pose.position.y,
+                             goal_pose.pose.position.z + x_offset,
+                             goal_pose.pose.orientation.x, goal_pose.pose.orientation.y,
+                             goal_pose.pose.orientation.z, goal_pose.pose.orientation.w );
 
     // -------------------------------------------------------------------------------------------
     // Plan
@@ -542,11 +545,11 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Check for kinematic solver
-    if( !approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
+    if( !approach_state.getJointStateGroup(PLANNING_GROUP_NAME)->getJointModelGroup()->canSetStateFromIK( ik_link ) )
     {
       // Set kinematic solver
       const std::pair<robot_model::SolverAllocatorFn, robot_model::SolverAllocatorMapFn> &allocators =
-        approach_state.getJointStateGroup(GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
+        approach_state.getJointStateGroup(PLANNING_GROUP_NAME)->getJointModelGroup()->getSolverAllocators();
       if( !allocators.first)
         ROS_ERROR_STREAM_NAMED("pick_place","No IK Solver loaded - make sure moveit_config/kinamatics.yaml is loaded in this namespace");
     }
@@ -584,15 +587,15 @@ public:
     //    std::vector<boost::shared_ptr<robot_state::RobotState> > approach_traj_result; // create resulting generated trajectory (result)
 
     double d_approach =
-      approach_state.getJointStateGroup(GROUP_NAME)->computeCartesianPath(approach_traj_result,
-                                                                          ik_link,                   // link name
-                                                                          approach_direction,
-                                                                          true,                      // direction is in global reference frame
-                                                                          desired_approach_distance,
-                                                                          max_step,
-                                                                          jump_threshold
-                                                                          // TODO approach_validCallback
-                                                                          );
+      approach_state.getJointStateGroup(PLANNING_GROUP_NAME)->computeCartesianPath(approach_traj_result,
+                                                                                   ik_link,                   // link name
+                                                                                   approach_direction,
+                                                                                   true,                      // direction is in global reference frame
+                                                                                   desired_approach_distance,
+                                                                                   max_step,
+                                                                                   jump_threshold
+                                                                                   // TODO approach_validCallback
+                                                                                   );
 
     //    double robot_state::JointStateGroup::computeCartesianPath(std::vector<boost::shared_ptr<robot_state::RobotState> >&, const string&, const Vector3d&, bool, double, double, double, const StateValidityCallbackFn&)
 
@@ -616,12 +619,12 @@ public:
 
     // Get the joint limits of planning group
     const robot_model::JointModelGroup *joint_model_group =
-      planning_scene->getRobotModel()->getJointModelGroup(GROUP_NAME);
+      planning_scene->getRobotModel()->getJointModelGroup(PLANNING_GROUP_NAME);
     const std::vector<moveit_msgs::JointLimits> &joint_limits = joint_model_group->getVariableLimits();
 
 
     // Copy the vector of RobotStates to a RobotTrajectory
-    robot_trajectory::RobotTrajectoryPtr approach_traj(new robot_trajectory::RobotTrajectory(planning_scene->getRobotModel(), GROUP_NAME));
+    robot_trajectory::RobotTrajectoryPtr approach_traj(new robot_trajectory::RobotTrajectory(planning_scene->getRobotModel(), PLANNING_GROUP_NAME));
     for (std::size_t k = 0 ; k < approach_traj_result.size() ; ++k)
       approach_traj->addSuffixWayPoint(approach_traj_result[k], 0.0);
 
@@ -702,126 +705,6 @@ public:
     }
 
     return true;
-  }
-
-  // *********************************************************************************************************
-  // Helper Functions
-  // *********************************************************************************************************
-  void publishMesh(double x, double y, double z, double qx, double qy, double qz, double qw )
-  {
-    visualization_msgs::Marker marker;
-    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link_;
-    marker.header.stamp = ros::Time::now();
-
-    // Set the namespace and id for this marker.  This serves to create a unique ID
-    marker.ns = "Mesh";
-
-    // Set the marker type.
-    marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker.mesh_resource = "package://clam_description/stl/gripper_base_link.STL";
-
-    // Set the marker action.  Options are ADD and DELETE
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 0;
-
-    marker.pose.position.x = x;
-    marker.pose.position.y = y;
-    marker.pose.position.z = z;
-
-    marker.pose.orientation.x = qx;
-    marker.pose.orientation.y = qy;
-    marker.pose.orientation.z = qz;
-    marker.pose.orientation.w = qw;
-
-    marker.scale.x = 0.001;
-    marker.scale.y = 0.001;
-    marker.scale.z = 0.001;
-
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
-
-    // Make line color
-    std_msgs::ColorRGBA color;
-    color.r = 0.8;
-    color.g = 0.1;
-    color.b = 0.1;
-    color.a = 1.0;
-
-
-    // Point
-    geometry_msgs::Point point_a;
-    point_a.x = x;
-    point_a.y = y;
-    point_a.z = z;
-    //ROS_INFO_STREAM("Publishing marker \n" << point_a );
-
-    // Add the point pair to the line message
-    marker.points.push_back( point_a );
-    marker.colors.push_back( color );
-
-
-    marker_pub_.publish( marker );
-  }
-
-  void publishSphere(double x, double y, double z)
-  {
-    visualization_msgs::Marker marker;
-    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link_;
-    marker.header.stamp = ros::Time::now();
-
-    // Set the namespace and id for this marker.  This serves to create a unique ID
-    marker.ns = "Sphere";
-
-    // Set the marker type.
-    marker.type = visualization_msgs::Marker::SPHERE_LIST;
-
-    // Set the marker action.  Options are ADD and DELETE
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.id = 0;
-
-    marker.pose.position.x = 0;
-    marker.pose.position.y = 0;
-    marker.pose.position.z = 0;
-
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-
-    marker.scale.x = 0.01;
-    marker.scale.y = 0.01;
-    marker.scale.z = 0.01;
-
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    marker.color.a = 1.0;
-
-    // Make line color
-    std_msgs::ColorRGBA color;
-    color.r = 0.1;
-    color.g = 0.1;
-    color.b = 0.8;
-    color.a = 1.0;
-
-
-    // Point
-    geometry_msgs::Point point_a;
-    point_a.x = x;
-    point_a.y = y;
-    point_a.z = z;
-    //ROS_INFO_STREAM("Publishing marker \n" << point_a );
-
-    // Add the point pair to the line message
-    marker.points.push_back( point_a );
-    marker.colors.push_back( color );
-
-
-    marker_pub_.publish( marker );
   }
 
 }; // end of class

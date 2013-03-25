@@ -69,9 +69,13 @@ namespace block_grasp_generator
 {
 
 // Static const vars
-static const std::string GROUP_NAME = "arm";
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_LINK = "gripper_roll_link";
+
+// Required for RobotVizTools:
+static const std::string PLANNING_GROUP_NAME = "arm";
+static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
+static const std::string EE_GROUP = "gripper_group";
 
 class GraspGeneratorTest
 {
@@ -87,9 +91,10 @@ private:
   std::string base_link_;
 
   // Grasp generator
-  //block_grasp_generator::GraspGeneratorPtr grasp_generator_;
+  block_grasp_generator::GraspGeneratorPtr grasp_generator_;
 
-  //ros::Publisher rviz_marker_pub_;
+  // class for publishing stuff to rviz
+  block_grasp_generator::RobotVizToolsPtr rviz_tools_;
 
 public:
 
@@ -99,13 +104,15 @@ public:
     nh_("~")
   {
 
-    //rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(MARKER_TOPIC, 1);
-
     // ---------------------------------------------------------------------------------------------
     // Create planning scene monitor
     tf_.reset(new tf::TransformListener());
     planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor
                                   (ROBOT_DESCRIPTION, tf_, "dave_world"));
+
+    // ---------------------------------------------------------------------------------------------
+    // Load the Robot Viz Tools for publishing to Rviz
+    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
 
     // ---------------------------------------------------------------------------------------------
     // Wait for complete state to be recieved
@@ -128,8 +135,8 @@ public:
 
     // Create grasp generator
     bool rviz_verbose = true;
-    block_grasp_generator::GraspGenerator grasp_generator(planning_scene_monitor_, base_link_, rviz_verbose);
-    //grasp_generator_.reset( new block_grasp_generator::GraspGenerator(planning_scene_monitor_, base_link_));
+    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(planning_scene_monitor_, base_link_, 
+                                                                      rviz_verbose, rviz_tools_, PLANNING_GROUP_NAME) );
 
     // ---------------------------------------------------------------------------------------------
     // Generate grasps for a bunch of random blocks
@@ -145,7 +152,7 @@ public:
       generateRandomBlock(block_pose);
       //getTestBlock(block_pose);
       possible_grasps.clear();
-      grasp_generator.generateGrasps( block_pose, possible_grasps );      
+      grasp_generator_->generateGrasps( block_pose, possible_grasps );      
     }
 
 
@@ -206,48 +213,6 @@ public:
     return fMin + f * (fMax - fMin);
   }
 
-  /*
-    void publishBlock(const geometry_msgs::Pose &pose, const double& block_size)
-    {
-    visualization_msgs::Marker marker;
-    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = base_link_;
-    marker.header.stamp = ros::Time::now();
-
-    // Set the namespace and id for this marker.  This serves to create a unique ID
-    marker.ns = "Block";
-
-    static int id = 0;
-    marker.id = ++id;
-
-    // Set the marker action.  Options are ADD and DELETE
-    marker.action = visualization_msgs::Marker::ADD;
-
-    // Set the pose
-    marker.pose = pose;
-
-    // Set the marker type.
-    marker.type = visualization_msgs::Marker::CUBE;
-
-    // Set marker size
-    marker.scale.x = block_size;
-    marker.scale.y = block_size;
-    marker.scale.z = block_size;
-
-    // Set marker color
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 0.5;
-
-    //    marker.lifetime = 0.0;
-
-    ROS_INFO_STREAM("Publishing block with pose \n" << marker );
-    rviz_marker_pub_.publish( marker );
-    ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
-    }
-  */
-
 }; // end of class
 
 } // namespace
@@ -262,9 +227,6 @@ int main(int argc, char *argv[])
   // Allow the action server to recieve and send ros messages
   ros::AsyncSpinner spinner(5);
   spinner.start();
-
-  // initialize ros time without using node handle
-  //ros::Time::init();
 
   // Seed random
   srand(ros::Time::now().toSec());

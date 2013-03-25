@@ -4,14 +4,14 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /MotionPlanning1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
+        - /EE Grasp Poses1
         - /EE Grasp Poses1/Namespaces1
+        - /PlanningScene1
         - /PlanningScene1/Scene Robot1
-        - /PlanningScene1/Scene Robot1/Links1
       Splitter Ratio: 0.392982
-    Tree Height: 927
+    Tree Height: 956
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -43,17 +43,71 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
-        {}
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_fixed_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_pan_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tabletop_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: ClamArm
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: true
+      Enabled: false
       MoveIt_Goal_Tolerance: 0
       MoveIt_Planning_Time: 5
       MoveIt_Use_Constraint_Aware_IK: true
@@ -211,7 +265,7 @@ Visualization Manager:
             Value: true
         Robot Alpha: 0.5
         Show Scene Robot: false
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -230,10 +284,7 @@ Visualization Manager:
       Auto Size:
         Auto Size Factor: 1
         Value: true
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
+      Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
         Min Value: -10
@@ -249,6 +300,10 @@ Visualization Manager:
       Depth Map Topic: /camera/depth_registered/image_rect
       Depth Map Transport Hint: raw
       Enabled: true
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
       Name: DepthCloud
       Occlusion Compensation:
         Occlusion Time-Out: 30
@@ -260,16 +315,10 @@ Visualization Manager:
       Style: Spheres
       Topic Filter: true
       Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
+      Use rainbow: true
       Value: true
     - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
+      Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 0.350458
         Min Value: -0.727807
@@ -281,6 +330,10 @@ Visualization Manager:
       Color Transformer: RGB8
       Decay Time: 0
       Enabled: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
       Name: DepthCloudFiltered
       Position Transformer: XYZ
       Queue Size: 10
@@ -290,16 +343,10 @@ Visualization Manager:
       Style: Points
       Topic: /block_detection_server/block_output
       Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
+      Use rainbow: true
       Value: false
     - Alpha: 1
-      Autocompute Intensity Bounds:
-        Max Intensity: 4096
-        Min Intensity: 0
-        Value: true
+      Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
         Min Value: -10
@@ -311,6 +358,10 @@ Visualization Manager:
       Color Transformer: FlatColor
       Decay Time: 0
       Enabled: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
       Name: DepthCloudTable
       Position Transformer: XYZ
       Queue Size: 10
@@ -320,10 +371,7 @@ Visualization Manager:
       Style: Points
       Topic: /block_detection_server/plane_output
       Use Fixed Frame: true
-      Use rainbow:
-        Max Color: 255; 255; 255
-        Min Color: 0; 0; 0
-        Value: true
+      Use rainbow: true
       Value: false
     - Arrow Length: 0.1
       Class: rviz/PoseArray
@@ -357,9 +405,9 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: false
+      Enabled: true
       Name: PlanningScene
-      Planning Scene Topic: /grasp_generator_test/dave_scene
+      Planning Scene Topic: /planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -415,7 +463,7 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-            Value: false
+            Value: true
           wrist_pitch_link:
             Alpha: 1
             Show Axes: false
@@ -428,7 +476,7 @@ Visualization Manager:
             Value: true
         Robot Alpha: 0.5
         Show Scene Robot: true
-      Value: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -443,31 +491,31 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.29728
+      Distance: 1.01444
       Focal Point:
-        X: 0.163806
-        Y: 0.045822
-        Z: 2.41585e-13
+        X: 0.224387
+        Y: -0.104489
+        Z: -5.96044e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.6002
+      Pitch: 0.305199
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.23179
+      Yaw: 5.00677
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1200
+  Height: 1232
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000021500000434fc0200000005fb000000100044006900730070006c006100790073010000004100000434000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006700000002f60000017f0000017400ffffff000004230000043400000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000001000000000000020300000451fc0200000005fb000000100044006900730070006c006100790073010000004100000451000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006700000002f60000017f0000001600000016000004370000045100000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1600
-  X: 3803
-  Y: -468
+  Width: 1606
+  X: 3761
+  Y: -400
