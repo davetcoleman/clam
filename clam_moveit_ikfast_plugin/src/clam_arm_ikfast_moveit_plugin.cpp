@@ -228,10 +228,10 @@ bool IKFastKinematicsPlugin::initialize(const std::string &robot_description,
   node_handle.param("urdf_xml",urdf_xml,robot_description);
   node_handle.searchParam(urdf_xml,full_urdf_xml);
 
-  ROS_DEBUG("Reading xml file from parameter server\n");
+  ROS_DEBUG_NAMED("ikfast","Reading xml file from parameter server");
   if (!node_handle.getParam(full_urdf_xml, xml_string))
   {
-    ROS_FATAL("Could not load the xml from parameter server: %s\n", urdf_xml.c_str());
+    ROS_FATAL_NAMED("ikfast","Could not load the xml from parameter server: %s", urdf_xml.c_str());
     return false;
   }
 
@@ -521,7 +521,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
                                            std::vector<double> &solution,
                                            moveit_msgs::MoveItErrorCodes &error_code) const
 {
-  ROS_INFO_STREAM_NAMED("ikfast","getPositionIK");
+  ROS_DEBUG_STREAM_NAMED("ikfast","getPositionIK");
 
   std::vector<double> vfree(free_params_.size());
   for(std::size_t i = 0; i < free_params_.size(); ++i)
@@ -547,7 +547,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
     {
       std::vector<double> sol;
       getSolution(solutions,s,sol);
-      printf("Sol %d: %e   %e   %e   %e   %e   %e    \n", s, sol[0], sol[1], sol[2], sol[3], sol[4], sol[5] );
+      ROS_DEBUG_NAMED("ikfast","Sol %d: %e   %e   %e   %e   %e   %e", s, sol[0], sol[1], sol[2], sol[3], sol[4], sol[5]);
 
       bool obeys_limits = true;
       for(unsigned int i = 0; i < sol.size(); i++) 
@@ -558,7 +558,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
         {
           // One element of solution is not within limits
           obeys_limits = false;
-          ROS_INFO_STREAM("      Num " << i << " value " << sol[i] << " has limit: " << joint_has_limits_vector_[i] << "  being  " << joint_min_vector_[i] << " to " << joint_max_vector_[i] << "\n");
+          ROS_DEBUG_STREAM_NAMED("ikfast","Not in limits! " << i << " value " << sol[i] << " has limit: " << joint_has_limits_vector_[i] << "  being  " << joint_min_vector_[i] << " to " << joint_max_vector_[i]);
           break;
         }
       }
@@ -566,13 +566,12 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
         // All elements of solution obey limits
         getSolution(solutions,s,solution);
         error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
-        printf("obeys limits \n\n");
         //solution[2] = -2; //-2.61799 0.705631  //DTC
         return true;
       }
     }
   }else{
-    printf("No IK solution \n");
+    ROS_DEBUG_STREAM_NAMED("ikfast","No IK solution");
   }
 
   error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
@@ -586,7 +585,7 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               std::vector<double> &solution,
                                               moveit_msgs::MoveItErrorCodes &error_code) const
 {
-  ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #1 -------------------------------------------- \n\n");
+  ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #1 --------------------------------------------");
 
 
   //DTC

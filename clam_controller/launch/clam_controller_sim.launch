@@ -48,7 +48,7 @@
   <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
 
   <!-- Launch fake joint state publisher -->
-  <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output="screen">
     <rosparam param="source_list">[joint_states]</rosparam>
     <rosparam param="use_gui">FALSE</rosparam>
   </node>

@@ -101,7 +101,7 @@ public:
     base_link_(base_link),
     planning_scene_monitor_(planning_scene_monitor),
     ee_marker_is_loaded_(false),
-    marker_lifetime_(ros::Duration(0.0)),
+    marker_lifetime_(ros::Duration(30.0)),
     nh_("~"),
     muted_(false)
   {
@@ -110,7 +110,7 @@ public:
     // Rviz Visualizations
     rviz_marker_pub_ = nh_.advertise<visualization_msgs::Marker>(marker_topic_, 1);
     ros::spinOnce();
-    ros::Duration(2.0).sleep();
+    ros::Duration(0.5).sleep(); // TODO: better way of doing this?
 
     ROS_DEBUG_STREAM_NAMED("robot_viz","Visualizing rviz markers on topic " << marker_topic_);
   }

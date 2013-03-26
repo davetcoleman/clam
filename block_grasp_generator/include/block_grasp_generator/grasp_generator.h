@@ -44,6 +44,7 @@
 #include <manipulation_msgs/Grasp.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <eigen_conversions/eigen_msg.h>
 
 // Rviz
 #include <visualization_msgs/Marker.h>

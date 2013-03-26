@@ -38,7 +38,6 @@
 
 // ROS
 #include <ros/ros.h>
-//#include <tf/tf.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseArray.h>
@@ -65,8 +64,8 @@ namespace clam_block_manipulation
 {
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
-//static const std::string EE_LINK = "gripper_roll_link";
 static const std::string EE_NAME = "end_effector";
+static const std::string EE_LINK_FRAME = "/gripper_roll_link";
 static const std::string COLLISION_TOPIC = "/collision_object";
 
 static const double BLOCK_SIZE = 0.04;
@@ -128,7 +127,7 @@ public:
     block_published_(false),
     action_server_(name, false)
   {
-    base_link_ = "base_link";
+    base_link_ = "/base_link";
 
     // -----------------------------------------------------------------------------------------------
     // Adding collision objects
@@ -180,6 +179,14 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place_moveit", "Waiting for pick command...");
 
     // ---------------------------------------------------------------------------------------------
+    // Send home
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Sending home");
+    clam_arm_goal_.command = clam_msgs::ClamArmGoal::RESET;
+    clam_arm_client_.sendGoal(clam_arm_goal_);
+    while(!clam_arm_client_.getState().isDone() && ros::ok())
+      ros::Duration(0.1).sleep();
+
+    // ---------------------------------------------------------------------------------------------
     // Send fake command
     fake_goalCB();
   }
@@ -209,9 +216,27 @@ public:
     geometry_msgs::Pose start_block_pose;
     geometry_msgs::Pose end_block_pose;
 
+    // Does not work
+    start_block_pose.position.x = 0.35;
+    start_block_pose.position.y = 0.2;
+    start_block_pose.position.z = 0.02;
+
+    // Works - close
     start_block_pose.position.x = 0.2;
     start_block_pose.position.y = 0.0;
     start_block_pose.position.z = 0.02;
+
+    // 3rd try
+    start_block_pose.position.x = 0.35;
+    start_block_pose.position.y = 0.1;
+    start_block_pose.position.z = 0.02;
+
+    nh_.param<double>("/block_pick_place_server/block_x", start_block_pose.position.x, 0.2);
+    nh_.param<double>("/block_pick_place_server/block_y", start_block_pose.position.y, 0.0);
+    nh_.param<double>("/block_pick_place_server/block_z", start_block_pose.position.z, 0.02);
+
+    ROS_INFO_STREAM_NAMED("pick_place","start block is \n" << start_block_pose.position);
+
 
     end_block_pose.position.x = 0.25;
     end_block_pose.position.y = 0.15;
@@ -440,7 +465,7 @@ public:
     // which group should be used to plan for pickup
     goal.group_name = PLANNING_GROUP_NAME;
 
-    // which end-effector to be used for pickup (ideally descending from the group above)
+    // which end-effector to be used for pickup (ideally descpending from the group above)
     goal.end_effector = EE_NAME;
 
     // a list of possible grasps to be used. At least one grasp must be filled in
@@ -482,7 +507,6 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place","Sending pick action to move_group/Pickup");
 
     movegroup_action_.sendGoal(goal);
-    ros::Duration(5.0).sleep();
 
     if(!movegroup_action_.waitForResult(ros::Duration(20.0)))
     {

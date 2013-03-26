@@ -39,7 +39,7 @@ namespace block_grasp_generator
 
 // Constructor
 GraspGenerator::GraspGenerator(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                               std::string base_link, bool rviz_verbose, RobotVizToolsPtr rviz_tools, 
+                               std::string base_link, bool rviz_verbose, RobotVizToolsPtr rviz_tools,
                                const std::string planning_group ):
   planning_scene_monitor_(planning_scene_monitor),
   base_link_(base_link),
@@ -102,20 +102,20 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   // Generate grasps
 
   // Calculate grasps in two axis in both directions
-  generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-  generateAxisGrasps( possible_grasps, X_AXIS, UP );
-  generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
+  //generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
+  //generateAxisGrasps( possible_grasps, X_AXIS, UP );
+  //generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
   generateAxisGrasps( possible_grasps, Y_AXIS, UP );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
-
-  // Just test with one for now
-  //filterNthGrasp(possible_grasps, 5);
 
   // Visualize initial results
   if(rviz_verbose_)
   {
     //visualizeGrasps(possible_grasps, block_pose);
   }
+
+  // Just test with one for now
+  //filterNthGrasp(possible_grasps, 4);
 
 
   // Visualize results
@@ -149,22 +149,18 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
   // Create re-usable approach motion
   manipulation_msgs::GripperTranslation gripper_approach;
   gripper_approach.direction.header.stamp = ros::Time::now();
-  gripper_approach.direction.header.frame_id = base_link_;
+  gripper_approach.direction.header.frame_id = "/gripper_roll_link";
   gripper_approach.direction.vector.x = 1;
   gripper_approach.direction.vector.y = 0;
   gripper_approach.direction.vector.z = 0; // Approach direction (negative z axis)
-  //gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
-  //gripper_approach.min_distance = .025; // half of the desired? Untested.
-  gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
-  gripper_approach.min_distance = .025; // half of the desired? Untested.
 
   // Create re-usable retreat motion
   manipulation_msgs::GripperTranslation gripper_retreat;
   gripper_retreat.direction.header.stamp = ros::Time::now();
-  gripper_retreat.direction.header.frame_id = base_link_;
-  gripper_retreat.direction.vector.x = 0;
+  gripper_retreat.direction.header.frame_id = "/gripper_roll_link";
+  gripper_retreat.direction.vector.x = -1;
   gripper_retreat.direction.vector.y = 0;
-  gripper_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
+  gripper_retreat.direction.vector.z = 0; // Retreat direction (pos z axis)
   gripper_retreat.desired_distance = .050; // The distance the origin of a robot link needs to travel
   gripper_retreat.min_distance = .025; // half of the desired? Untested.
 
@@ -179,8 +175,8 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
   double xb;
   double yb = 0.0; // stay in the y plane of the block
   double zb;
-  //double angle_resolution = 8.0;
-  double angle_resolution = 16.0;
+  double angle_resolution = 8.0;
+  //double angle_resolution = 16.0;
   double theta1 = 0.0; // Where the point is located around the block
   double theta2 = 0.0; // UP 'direction'
 
@@ -235,11 +231,11 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
       break;
     }
 
-    Eigen::Quaterniond quat(rotation_matrix);
-    grasp_pose.pose.orientation.x = quat.x();
-    grasp_pose.pose.orientation.y = quat.y();
-    grasp_pose.pose.orientation.z = quat.z();
-    grasp_pose.pose.orientation.w = quat.w();
+    Eigen::Quaterniond quaternion(rotation_matrix);
+    grasp_pose.pose.orientation.x = quaternion.x();
+    grasp_pose.pose.orientation.y = quaternion.y();
+    grasp_pose.pose.orientation.z = quaternion.z();
+    grasp_pose.pose.orientation.w = quaternion.w();
 
     // Calculate the theta1 for next time
     theta1 += M_PI / angle_resolution;
@@ -251,6 +247,7 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
     // A name for this grasp
     static int grasp_id = 0;
     new_grasp.id = "Grasp" + boost::lexical_cast<std::string>(grasp_id);
+    ++grasp_id;
 
     // The internal posture of the hand for the pre-grasp
     // only positions are used
@@ -278,10 +275,50 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
     new_grasp.grasp_quality = 1;
 
     // The approach motion
+    // Convert either:
+    // Eigen::Matrix3d rotation_matrix;
+    // Eigen::Quaterniond quaternion
+    // To:
+    // Eigen::Vector3d
+
+    // Method 1
+    // Convert from/to
+    // tf::Pose grasp_pose.pose.orientation
+    // Eigen::Matrix3d
+    /*
+    Eigen::Quaterniond base_frame_quat;
+    base_frame_quat.x() = grasp_pose.pose.orientation.x;
+    base_frame_quat.y() = grasp_pose.pose.orientation.y;
+    base_frame_quat.z() = grasp_pose.pose.orientation.z;
+    base_frame_quat.w() = grasp_pose.pose.orientation.w;
+    Eigen::Matrix3d base_rot_matrix = base_frame_quat.matrix();
+    Eigen::Vector3d approach_direction = base_rot_matrix.eulerAngles(1,0,0);
+    gripper_approach.direction.header.frame_id = "/gripper_roll_link"; //base_link_;
+    tf::vectorEigenToMsg(approach_direction, gripper_approach.direction.vector);
+
+    if( grasp_id == 4 )
+      ROS_INFO_STREAM_NAMED("grasp", new_grasp.id << ": Approach direction 1: [" << gripper_approach.direction.vector.x << "," <<
+                            gripper_approach.direction.vector.y << "," << gripper_approach.direction.vector.z << "]");
+
+    // Method 2
+
+    if( grasp_id == 4 )
+      ROS_INFO_STREAM_NAMED("grasp", new_grasp.id << ": Approach direction 2: [" << gripper_approach.direction.vector.x << "," <<
+                            gripper_approach.direction.vector.y << "," << gripper_approach.direction.vector.z << "]\n");
+    */
+
+    //gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
+    //gripper_approach.min_distance = .025; // half of the desired? Untested.
+    gripper_approach.desired_distance = .050; // The distance the origin of a robot link needs to travel
+    gripper_approach.min_distance = .025; // half of the desired? Untested.
     new_grasp.approach = gripper_approach;
 
     // The retreat motion
     new_grasp.retreat = gripper_retreat;
+
+    if( grasp_id == 4 )
+      ROS_INFO_STREAM_NAMED("grasp", new_grasp.id << ": Retreat direction 2: [" << gripper_retreat.direction.vector.x << "," <<
+                            gripper_retreat.direction.vector.y << "," << gripper_retreat.direction.vector.z << "]\n");
 
     // the maximum contact force to use while grasping (<=0 to disable)
     new_grasp.max_contact_force = 0;
@@ -475,7 +512,7 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
   // isRed = true if possible_blocks is empty
   rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
 
-      // Show robot joint positions if available
+  // Show robot joint positions if available
   if( !possible_grasps.empty() && !possible_grasps[0].grasp_posture.position.empty() )
     rviz_tools_->publishPlanningScene(possible_grasps[0].grasp_posture.position);
 
@@ -490,13 +527,14 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
 
     //rviz_tools_->publishSphere(grasp_pose);
     rviz_tools_->publishArrow(grasp_pose);
-    //rviz_tools_->publishEEMarkers(grasp_pose);
+    rviz_tools_->publishEEMarkers(grasp_pose);
 
     // Show robot joint positions if available
     //if( !grasp_it->grasp_posture.position.empty() )
     //rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
 
-    ros::Duration(0.01).sleep();
+    //ros::Duration(0.01).sleep();
+    ros::Duration(0.1).sleep();
   }
 }
 
