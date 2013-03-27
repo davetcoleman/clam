@@ -69,9 +69,9 @@ private:
   double diagnostics_rate_;
   ros::Publisher diagnostics_pub_;
 
-  ros::ServiceServer start_controller_server_;
-  ros::ServiceServer stop_controller_server_;
-  ros::ServiceServer restart_controller_server_;
+  ros::ServiceServer load_controller_server_;
+  ros::ServiceServer unload_controller_server_;
+  ros::ServiceServer reload_controller_server_;
   ros::ServiceServer list_controllers_server_;
 
   std::map<std::string, dynamixel_hardware_interface::SerialProxy*> serial_proxies_;

@@ -439,19 +439,19 @@ public:
       //    ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/switch_controller" << " to come up");
 
       if (attempts < max_attempts)
-        while (ros::ok() && !ros::service::waitForService(controller_manager_name_ + "/start_controller", ros::Duration(5.0))  && ++attempts < max_attempts)
-          ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/start_controller" << " to come up");
+        while (ros::ok() && !ros::service::waitForService(controller_manager_name_ + "/load_controller", ros::Duration(5.0))  && ++attempts < max_attempts)
+          ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/load_controller" << " to come up");
 
       if (attempts < max_attempts)
-        while (ros::ok() && !ros::service::waitForService(controller_manager_name_ + "/stop_controller", ros::Duration(5.0))  && ++attempts < max_attempts)
-          ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/stop_controller" << " to come up");
+        while (ros::ok() && !ros::service::waitForService(controller_manager_name_ + "/unload_controller", ros::Duration(5.0))  && ++attempts < max_attempts)
+          ROS_INFO_STREAM("Waiting for service " << controller_manager_name_ + "/unload_controller" << " to come up");
 
       if (attempts < max_attempts)
       {
         lister_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::ListControllers>(controller_manager_name_ + "/list_controllers", true);
         //switcher_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::SwitchController>(controller_manager_name_ + "/switch_controller", true);
-        loader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StartController>(controller_manager_name_ + "/start_controller", true);
-        unloader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StopController>(controller_manager_name_ + "/stop_controller", true);
+        loader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StartController>(controller_manager_name_ + "/load_controller", true);
+        unloader_service_ = root_node_handle_.serviceClient<dynamixel_hardware_interface::StopController>(controller_manager_name_ + "/unload_controller", true);
       }
       else
         ROS_ERROR("Not using the Clam controller manager");
@@ -616,8 +616,8 @@ public:
       dynamixel_hardware_interface::SwitchController::Response res;
 
       req.strictness = dynamixel_hardware_interface::SwitchController::Request::BEST_EFFORT;
-      req.start_controllers = activate;
-      req.stop_controllers = deactivate;
+      req.load_controllers = activate;
+      req.unload_controllers = deactivate;
       if (!switcher_service_.call(req, res))
       {
       ROS_WARN_STREAM("Something went wrong with switcher service");

@@ -78,9 +78,9 @@ if __name__ == '__main__':
         command = options.command
         joint_controllers = args
         
-        start_service_name = '%s/start_controller' % manager_namespace
-        stop_service_name = '%s/stop_controller' % manager_namespace
-        restart_service_name = '%s/restart_controller' % manager_namespace
+        start_service_name = '%s/load_controller' % manager_namespace
+        stop_service_name = '%s/unload_controller' % manager_namespace
+        restart_service_name = '%s/reload_controller' % manager_namespace
         
         rospy.init_node('controller_spawner', anonymous=True)
         
@@ -92,17 +92,17 @@ if __name__ == '__main__':
         rospy.wait_for_service(stop_service_name)
         rospy.wait_for_service(restart_service_name)
         
-        start_controller = rospy.ServiceProxy(start_service_name, LoadController)
-        stop_controller = rospy.ServiceProxy(stop_service_name, UnloadController)
-        restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
+        load_controller = rospy.ServiceProxy(start_service_name, LoadController)
+        unload_controller = rospy.ServiceProxy(stop_service_name, UnloadController)
+        reload_controller = rospy.ServiceProxy(restart_service_name, RestartController)
         
         rospy.loginfo('%s: all services are up, %sing %d controllers...' % (node_name, command.lower(), len(joint_controllers)))
         
         for controller_name in joint_controllers:
             try:
-                if command.lower() == 'start': response = start_controller(controller_name, port_namespace)
-                elif command.lower() == 'stop': response = stop_controller(controller_name)
-                elif command.lower() == 'restart': response = restart_controller(controller_name)
+                if command.lower() == 'start': response = load_controller(controller_name, port_namespace)
+                elif command.lower() == 'stop': response = unload_controller(controller_name)
+                elif command.lower() == 'restart': response = reload_controller(controller_name)
                 else: rospy.logerr("%s: invalid command '%s'" % (node_name, command)); parser.print_help(); continue
                 if response: rospy.loginfo("%s: command '%s %s' completed successufully" % (node_name, command.lower(), controller_name));
             except rospy.ServiceException, e:

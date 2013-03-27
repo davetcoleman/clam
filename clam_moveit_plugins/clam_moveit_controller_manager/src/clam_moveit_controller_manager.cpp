@@ -579,8 +579,8 @@ public:
     dynamixel_hardware_interface::SwitchController::Response res;
 
     req.strictness = dynamixel_hardware_interface::SwitchController::Request::BEST_EFFORT;
-    req.start_controllers = activate;
-    req.stop_controllers = deactivate;
+    req.load_controllers = activate;
+    req.unload_controllers = deactivate;
     if (!switcher_service_.call(req, res))
     {
       ROS_WARN_STREAM("Something went wrong with switcher service");

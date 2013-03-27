@@ -207,7 +207,7 @@ void JointTrajectoryActionController::updateState()
 void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::JointTrajectory& traj_msg,
                                                         bool is_action)
 {
-  ROS_INFO("inside process Trajectory");
+  ROS_INFO_STREAM("\n inside process Trajectory with msg:\n" << traj_msg);
   control_msgs::FollowJointTrajectoryResult traj_result;
   std::string error_msg;
 

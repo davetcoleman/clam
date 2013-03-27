@@ -133,13 +133,13 @@ ControllerManager::ControllerManager() : nh_(ros::NodeHandle()), private_nh_(ros
 
   //  diagnostics_pub_ = nh_.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1000);
 
-  start_controller_server_ = nh_.advertiseService(manager_namespace_ + "/start_controller",
+  load_controller_server_ = nh_.advertiseService(manager_namespace_ + "/load_controller",
                                                   &ControllerManager::startControllerSrv, this);
 
-  stop_controller_server_ = nh_.advertiseService(manager_namespace_ + "/stop_controller",
+  unload_controller_server_ = nh_.advertiseService(manager_namespace_ + "/unload_controller",
                                                  &ControllerManager::stopControllerSrv, this);
 
-  restart_controller_server_ = nh_.advertiseService(manager_namespace_ + "/restart_controller",
+  reload_controller_server_ = nh_.advertiseService(manager_namespace_ + "/reload_controller",
                                                     &ControllerManager::restartControllerSrv, this);
 
   list_controllers_server_ = nh_.advertiseService(manager_namespace_ + "/list_controllers",
