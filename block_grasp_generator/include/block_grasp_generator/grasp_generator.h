@@ -37,7 +37,7 @@
 
 // ROS
 #include <ros/ros.h>
-#include <tf/tf.h>
+//#include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -52,7 +52,6 @@
 #include "robot_viz_tools.h"
 
 // MoveIt
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/kinematics_plugin_loader/kinematics_plugin_loader.h>
 
@@ -67,79 +66,29 @@ namespace block_grasp_generator
 static const double RAD2DEG = 57.2957795;
 static const double BLOCK_SIZE = 0.04;
 
-// Struct for passing parameters to threads, for cleaner code
-struct IkThreadStruct
-{
-  IkThreadStruct(std::vector<manipulation_msgs::Grasp> &possible_grasps, // the input
-                 std::vector<manipulation_msgs::Grasp> &filtered_grasps, // the result
-                 int grasps_id_start,
-                 int grasps_id_end,
-                 kinematics::KinematicsBasePtr kin_solver,
-                 double timeout,
-                 boost::mutex *lock,
-                 int thread_id)
-    : possible_grasps_(possible_grasps),
-      filtered_grasps_(filtered_grasps),
-      grasps_id_start_(grasps_id_start),
-      grasps_id_end_(grasps_id_end),
-      kin_solver_(kin_solver),
-      timeout_(timeout),
-      lock_(lock),
-      thread_id_(thread_id)
-  {
-  }
-  std::vector<manipulation_msgs::Grasp> &possible_grasps_;
-  std::vector<manipulation_msgs::Grasp> &filtered_grasps_;
-  int grasps_id_start_;
-  int grasps_id_end_;
-  kinematics::KinematicsBasePtr kin_solver_;
-  double timeout_;
-  boost::mutex *lock_;
-  int thread_id_;
-};
-
-
 // Class
 class GraspGenerator
 {
 private:
-  // A shared node handle
-  ros::NodeHandle nh_;
-
-  // ROS publishers
-  ros::Publisher collision_obj_pub_;
-
-  // Shared planning scene monitor from parent object
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
-
   // Parameters from goal
-  std::string base_link_;
+  const std::string base_link_;
 
-  // TF Frame Transform stuff
-  tf::Transform transform_;
+  // Transform from frame of box to global frame
+  Eigen::Affine3d transform_;
 
   // Grasp axis orientation
   enum grasp_axis_t {X_AXIS, Y_AXIS, Z_AXIS};
   enum grasp_direction_t {UP, DOWN};
 
-  // threaded kinematic solvers
-  std::vector<kinematics::KinematicsBasePtr> kin_solvers_;
-
-  // whether to publish grasp info to rviz
-  bool rviz_verbose_;
-
   // class for publishing stuff to rviz
   block_grasp_generator::RobotVizToolsPtr rviz_tools_;
 
-  // Planning group
-  std::string planning_group_;
 
 public:
 
   // Constructor
-  GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                  std::string base_link, bool rviz_verbose, RobotVizToolsPtr rviz_tools, 
-                  const std::string planning_group );
+  GraspGenerator( const std::string base_link, 
+                  RobotVizToolsPtr rviz_tools);
 
   // Destructor
   ~GraspGenerator();
@@ -148,24 +97,11 @@ public:
   bool generateGrasps(const geometry_msgs::Pose& block_pose,
                       std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
-  // Of an array of grasps, choose just one for use
-  bool chooseBestGrasp( const std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                        manipulation_msgs::Grasp& chosen );
-
-  // Choose the 1st grasp that is kinematically feasible
-  bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
-
 private:
 
   // Create grasp positions in one axis
   bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
                           grasp_direction_t direction );
-
-  // Take the nth grasp from the array
-  bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
-
-  // Thread for checking part of the possible grasps list
-  void filterGraspThread(IkThreadStruct ik_thread_struct);
 
   // Show all grasps in Rviz
   void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,

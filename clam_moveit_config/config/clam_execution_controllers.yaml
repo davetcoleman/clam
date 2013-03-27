@@ -6,10 +6,13 @@ controller_list:
     joints:
       - shoulder_pan_joint
       - gripper_roll_joint
-      - l_gripper_aft_joint
       - shoulder_pitch_joint
 #      - elbow_roll_joint
       - elbow_pitch_joint
       - wrist_roll_joint
       - wrist_pitch_joint
-      
+  - name: clam_gripper_controller
+    ns: gripper_action
+    default: true
+    joints:
+      - gripper_finger_joint

@@ -41,8 +41,8 @@
 
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
-#include <dynamixel_hardware_interface/StartController.h>
-#include <dynamixel_hardware_interface/StopController.h>
+#include <dynamixel_hardware_interface/LoadController.h>
+#include <dynamixel_hardware_interface/UnloadController.h>
 #include <dynamixel_hardware_interface/RestartController.h>
 #include <dynamixel_hardware_interface/ListControllers.h>
 
@@ -96,11 +96,11 @@ private:
   void publishDiagnosticInformation();
   void checkDeps();
 
-  bool startControllerSrv(dynamixel_hardware_interface::StartController::Request& req,
-                          dynamixel_hardware_interface::StartController::Response& res);
+  bool startControllerSrv(dynamixel_hardware_interface::LoadController::Request& req,
+                          dynamixel_hardware_interface::LoadController::Response& res);
 
-  bool stopControllerSrv(dynamixel_hardware_interface::StopController::Request& req,
-                         dynamixel_hardware_interface::StopController::Response& res);
+  bool stopControllerSrv(dynamixel_hardware_interface::UnloadController::Request& req,
+                         dynamixel_hardware_interface::UnloadController::Response& res);
 
   bool restartControllerSrv(dynamixel_hardware_interface::RestartController::Request& req,
                             dynamixel_hardware_interface::RestartController::Response& res);

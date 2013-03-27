@@ -1,11 +1,7 @@
 #goal definition
 int32 command                      # desired function to perform
 int32 RESET = 1                    # go to home position
-int32 END_EFFECTOR_OPEN = 2        # open gripper completely
-int32 END_EFFECTOR_CLOSE = 3       # close gripper until it hits something
-int32 END_EFFECTOR_SET = 4         # move gripper to a setpoint
-int32 SHUTDOWN = 5                 # send clam arm to sleep position so it can power off without falling
-float64 end_effector_setpoint      # for SET_END_EFFECTOR, the desired servo position - but with error feedback
+int32 SHUTDOWN = 2                 # send clam arm to sleep position so it can power off without falling
 ---
 #result definition
 bool success                       # whether command worked successfully

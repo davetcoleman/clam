@@ -53,7 +53,7 @@
     <rosparam param="use_gui">FALSE</rosparam>
   </node>
 
-  <!-- Start the ClamArm action server to help run low level functions -->
-  <node name="clam_arm_action_server" pkg="clam_controller" type="clam_arm_action_server" output="screen" />
+  <!-- Start the Clam Gripper Server to control the end effector -->
+  <node name="clam_gripper_server" pkg="clam_controller" type="clam_gripper_server" output="screen" />
 
 </launch>

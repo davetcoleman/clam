@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
   eigen_conversions
   control_msgs
+  clam_msgs
   dynamixel_hardware_interface
   )
 
@@ -30,16 +31,18 @@ catkin_package(
   LIBRARIES
   clam_moveit_controller_manager
   DEPENDS
-  moveit_core
-  pluginlib
-  actionlib
-  roscpp
-  urdf
-  kdl_parser
-  tf_conversions
-  eigen_conversions
-  control_msgs
-  dynamixel_hardware_interface
+# TESTING...
+#  moveit_core
+#  pluginlib
+#  actionlib
+#  roscpp
+#  urdf
+#  kdl_parser
+#  tf_conversions
+#  eigen_conversions
+#  control_msgs
+#  clam_msgs
+#  dynamixel_hardware_interface
   )
 
 # Enable gdb to show line numbers

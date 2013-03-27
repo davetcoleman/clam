@@ -49,8 +49,8 @@ import roslib
 roslib.load_manifest('dynamixel_simulator_interface')
 
 import rospy
-from dynamixel_hardware_interface.srv import StartController
-from dynamixel_hardware_interface.srv import StopController
+from dynamixel_hardware_interface.srv import LoadController
+from dynamixel_hardware_interface.srv import UnloadController
 from dynamixel_hardware_interface.srv import RestartController
 
 
@@ -92,8 +92,8 @@ if __name__ == '__main__':
         rospy.wait_for_service(stop_service_name)
         rospy.wait_for_service(restart_service_name)
         
-        start_controller = rospy.ServiceProxy(start_service_name, StartController)
-        stop_controller = rospy.ServiceProxy(stop_service_name, StopController)
+        start_controller = rospy.ServiceProxy(start_service_name, LoadController)
+        stop_controller = rospy.ServiceProxy(stop_service_name, UnloadController)
         restart_controller = rospy.ServiceProxy(restart_service_name, RestartController)
         
         rospy.loginfo('%s: all services are up, %sing %d controllers...' % (node_name, command.lower(), len(joint_controllers)))

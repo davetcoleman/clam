@@ -21,8 +21,8 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>wxpython</build_depend>
   <build_depend>clam_msgs</build_depend>
-  <build_depend>moveit_ros_planning</build_depend>
   <build_depend>tf</build_depend>
+
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>actionlib</run_depend>
@@ -32,7 +32,6 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>wxpython</run_depend>
   <run_depend>clam_msgs</run_depend>
-  <run_depend>moveit_ros_planning</run_depend>
   <run_depend>tf</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>

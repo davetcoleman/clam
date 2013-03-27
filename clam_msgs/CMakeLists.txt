@@ -28,6 +28,7 @@ add_action_files(
     action 
   FILES 
     ClamArm.action
+    ClamGripperCommand.action
     BlockPerception.action
     BlockLogic.action
     PickPlace.action

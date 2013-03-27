@@ -313,7 +313,13 @@ public:
     grasp_generator.generateGrasps( start_block_pose, possible_grasps );
 
     manipulation_msgs::Grasp pick_grasp;
-    grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );
+    // Filter grasp poses
+    //block_grasp_generator::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
+    //if( !grasp_generator.filterGrasps( possible_grasps ) )
+    //return false;
+    //grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );
+    // TODO
+    zebra
     geometry_msgs::Pose pick_pose = pick_grasp.grasp_pose.pose;
 
 
@@ -387,7 +393,7 @@ public:
     desired_approach_distance = .050; // The distance the origin of a robot link needs to travel
 
     if( !computeStraightLinePath(approach_direction, desired_approach_distance) )
-    {
+    {xo
       ROS_ERROR_STREAM_NAMED("pick_place","Failed to follow straight line path");
       return false;
     }

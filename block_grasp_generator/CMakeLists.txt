@@ -52,7 +52,7 @@ include_directories(
 link_directories(${catkin_LIBRARY_DIRS})
 
 # Test executable
-#add_executable(grasp_generator_test src/grasp_generator_test.cpp)
-#target_link_libraries(grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
+add_executable(grasp_generator_test src/grasp_generator_test.cpp)
+target_link_libraries(grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
 
 

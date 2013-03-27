@@ -65,6 +65,7 @@ namespace clam_block_manipulation
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_NAME = "end_effector";
+static const std::string EE_GROUP = "gripper_group";
 static const std::string EE_LINK_FRAME = "/gripper_roll_link";
 static const std::string COLLISION_TOPIC = "/collision_object";
 
@@ -73,7 +74,7 @@ static const double BLOCK_SIZE = 0.04;
 // Required for RobotVizTools:
 static const std::string PLANNING_GROUP_NAME = "arm";
 static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
-static const std::string EE_GROUP = "gripper_group";
+
 
 // Class
 class PickPlaceMoveItServer
@@ -136,32 +137,28 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Connect to move_group/Pickup action server
     while(!movegroup_action_.waitForServer(ros::Duration(4.0))){ // wait for server to start
-      ROS_INFO_STREAM_NAMED("pick_place","Waiting for the move_group/Pickup action server");
+      ROS_INFO_STREAM_NAMED("pick_place_moveit","Waiting for the move_group/Pickup action server");
     }
 
     // ---------------------------------------------------------------------------------------------
     // Connect to ClamArm action server
     while(!clam_arm_client_.waitForServer(ros::Duration(5.0))){ // wait for server to start
-      ROS_INFO_STREAM_NAMED("pick place","Waiting for the clam_arm action server");
+      ROS_INFO_STREAM_NAMED("pick_place_moveit","Waiting for the clam_arm action server");
     }
 
     // ---------------------------------------------------------------------------------------------
     // Create planning scene monitor
     planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
 
-    // ---------------------------------------------------------------------------------------------
-    // Check planning scene monitor
     if (planning_scene_monitor_->getPlanningScene())
     {
-      /*
-        planning_scene_monitor_->startWorldGeometryMonitor();
-        planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
-        planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
-      */
+      //planning_scene_monitor_->startWorldGeometryMonitor();
+      //planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
+      //planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
     }
     else
     {
-      ROS_ERROR_STREAM_NAMED("pick_place_moveit","Planning scene not configured");
+      ROS_FATAL_STREAM_NAMED("pick_place_moveit","Planning scene not configured");
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -199,7 +196,7 @@ public:
   // Action server sends goals here
   void goalCB()
   {
-    ROS_INFO_STREAM_NAMED("pick_place","Received goal -----------------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Received goal -----------------------------------------------");
 
     pick_place_goal_ = action_server_.acceptNewGoal();
     base_link_ = pick_place_goal_->frame;
@@ -210,7 +207,7 @@ public:
   // Skip perception
   void fake_goalCB()
   {
-    ROS_INFO_STREAM_NAMED("pick_place","Received fake goal ----------------------------------------");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Received fake goal ----------------------------------------");
 
     // Position
     geometry_msgs::Pose start_block_pose;
@@ -235,7 +232,7 @@ public:
     nh_.param<double>("/block_pick_place_server/block_y", start_block_pose.position.y, 0.0);
     nh_.param<double>("/block_pick_place_server/block_z", start_block_pose.position.z, 0.02);
 
-    ROS_INFO_STREAM_NAMED("pick_place","start block is \n" << start_block_pose.position);
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","start block is \n" << start_block_pose.position);
 
 
     end_block_pose.position.x = 0.25;
@@ -274,7 +271,7 @@ public:
 
     if( !pickAndPlace(start_block_pose, end_block_pose) )
     {
-      ROS_ERROR_STREAM_NAMED("pick_place","Pick and place failed");
+      ROS_ERROR_STREAM_NAMED("pick_place_moveit","Pick and place failed");
 
       if(action_server_.isActive()) // Make sure we haven't sent a fake goal
       {
@@ -316,18 +313,19 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Generate graps
-    ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
-    block_grasp_generator::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_, true, 
-                                                           rviz_tools_, PLANNING_GROUP_NAME );
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Generating grasps for pick and place");
+
+    bool rviz_verbose = true;
+    block_grasp_generator::GraspGenerator grasp_generator( base_link_, PLANNING_GROUP_NAME, rviz_tools_, rviz_verbose);
 
     // Pick grasp
     std::vector<manipulation_msgs::Grasp> possible_grasps;
     grasp_generator.generateGrasps( start_block_pose, possible_grasps );
 
     // Filter grasp poses
+    //block_grasp_generator::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
     //if( !grasp_generator.filterGrasps( possible_grasps ) )
     //return false;
-
 
 
     // Send pick command to move_group
@@ -345,7 +343,7 @@ public:
       return; // only publish the block once!
     }
 
-    ROS_INFO_STREAM_NAMED("pick_place","Creating the collision object");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Creating the collision object");
     // ---------------------------------------------------------------------------------------------
     // Create Solid Primitive
     shape_msgs::SolidPrimitive block_shape;
@@ -394,7 +392,7 @@ public:
     // Send the object
     collision_obj_pub_.publish(block_object);
     block_published_ = true;
-    ROS_INFO_STREAM_NAMED("pick_place","Collision object published for addition");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Collision object published for addition");
   }
 
   // *Requires that the object already be created
@@ -406,13 +404,13 @@ public:
     // Send the object
     block_published_ = false;
     collision_obj_pub_.publish(block_object);
-    ROS_INFO_STREAM_NAMED("pick_place","Collision object published for removal");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Collision object published for removal");
   }
 
   bool executeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                      const geometry_msgs::Pose& block_pose)
   {
-    ROS_INFO_STREAM_NAMED("pick_place","Creating Pickup Goal");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Creating Pickup Goal");
 
 
     // ---------------------------------------------------------------------------------------------
@@ -499,27 +497,27 @@ public:
     // Planning options
     goal.planning_options = options;
 
-    //ROS_INFO_STREAM_NAMED("pick_place","Pause");
+    //ROS_INFO_STREAM_NAMED("pick_place_moveit","Pause");
     //ros::Duration(5.0).sleep();
 
     // ---------------------------------------------------------------------------------------------
     // Send the grasp to move_group/Pickup
-    ROS_INFO_STREAM_NAMED("pick_place","Sending pick action to move_group/Pickup");
+    ROS_INFO_STREAM_NAMED("pick_place_moveit","Sending pick action to move_group/Pickup");
 
     movegroup_action_.sendGoal(goal);
 
     if(!movegroup_action_.waitForResult(ros::Duration(20.0)))
     {
-      ROS_INFO_STREAM_NAMED("pick_place","Returned early?");
+      ROS_INFO_STREAM_NAMED("pick_place_moveit","Returned early?");
       return false;
     }
     if (movegroup_action_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      ROS_INFO_STREAM_NAMED("pick_place","Plan successful!");
+      ROS_INFO_STREAM_NAMED("pick_place_moveit","Plan successful!");
     }
     else
     {
-      ROS_ERROR_STREAM_NAMED("pick_place","FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
+      ROS_ERROR_STREAM_NAMED("pick_place_moveit","FAILED: " << movegroup_action_.getState().toString() << ": " << movegroup_action_.getState().getText());
       return false;
     }
 

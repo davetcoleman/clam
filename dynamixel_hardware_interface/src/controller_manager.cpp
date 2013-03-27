@@ -41,8 +41,8 @@
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 
-#include <dynamixel_hardware_interface/StartController.h>
-#include <dynamixel_hardware_interface/StopController.h>
+#include <dynamixel_hardware_interface/LoadController.h>
+#include <dynamixel_hardware_interface/UnloadController.h>
 #include <dynamixel_hardware_interface/RestartController.h>
 #include <dynamixel_hardware_interface/ListControllers.h>
 
@@ -601,15 +601,15 @@ void ControllerManager::checkDeps()
   }
 }
 
-bool ControllerManager::startControllerSrv(dynamixel_hardware_interface::StartController::Request& req,
-                                           dynamixel_hardware_interface::StartController::Response& res)
+bool ControllerManager::startControllerSrv(dynamixel_hardware_interface::LoadController::Request& req,
+                                           dynamixel_hardware_interface::LoadController::Response& res)
 {
   std::string name = req.name;
 
   if (name.empty())
   {
     ROS_ERROR("Controller name is not specified");
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
@@ -619,24 +619,24 @@ bool ControllerManager::startControllerSrv(dynamixel_hardware_interface::StartCo
 
   if (!startController(name, req.port))
   {
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
   ROS_DEBUG("Controller %s successfully started", name.c_str());
-  res.success = true;
+  res.ok = true;
   return true;
 }
 
-bool ControllerManager::stopControllerSrv(dynamixel_hardware_interface::StopController::Request& req,
-                                          dynamixel_hardware_interface::StopController::Response& res)
+bool ControllerManager::stopControllerSrv(dynamixel_hardware_interface::UnloadController::Request& req,
+                                          dynamixel_hardware_interface::UnloadController::Response& res)
 {
   std::string name = req.name;
 
   if (name.empty())
   {
     ROS_ERROR("Controller name is not specified");
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
@@ -646,12 +646,12 @@ bool ControllerManager::stopControllerSrv(dynamixel_hardware_interface::StopCont
 
   if (!stopController(name))
   {
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
   ROS_DEBUG("Controller %s successfully stopped", name.c_str());
-  res.success = true;
+  res.ok = true;
   return true;
 }
 
@@ -663,7 +663,7 @@ bool ControllerManager::restartControllerSrv(dynamixel_hardware_interface::Resta
   if (name.empty())
   {
     ROS_ERROR("Controller name is not specified");
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
@@ -673,11 +673,11 @@ bool ControllerManager::restartControllerSrv(dynamixel_hardware_interface::Resta
 
   if (!restartController(name))
   {
-    res.success = false;
+    res.ok = false;
     return false;
   }
 
-  res.success = true;
+  res.ok = true;
   return true;
 }
 

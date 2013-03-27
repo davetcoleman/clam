@@ -113,30 +113,11 @@ public:
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
     rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
-
-    // ---------------------------------------------------------------------------------------------
-    // Wait for complete state to be recieved
-    //ros::Duration(0.25).sleep();
-
-    /*
-      std::vector<std::string> missing_joints;
-      while( !planning_scene_monitor_->getStateMonitor()->haveCompleteState() )
-      {
-      ros::Duration(0.1).sleep();
-      ros::spinOnce();
-      ROS_INFO_STREAM_NAMED("pick place","Waiting for complete state...");
-
-      // Show unpublished joints
-      planning_scene_monitor_->getStateMonitor()->haveCompleteState( missing_joints );
-      for(int i = 0; i < missing_joints.size(); ++i)
-      ROS_WARN_STREAM_NAMED("pick_place","Unpublished joints: " << missing_joints[i]);
-      }
-    */
+    rviz_tools_->setLifetime(0.0);
+    rviz_tools_->setMuted(false);
 
     // Create grasp generator
-    bool rviz_verbose = true;
-    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(planning_scene_monitor_, base_link_, 
-                                                                      rviz_verbose, rviz_tools_, PLANNING_GROUP_NAME) );
+    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(base_link_, rviz_tools_) );
 
     // ---------------------------------------------------------------------------------------------
     // Generate grasps for a bunch of random blocks

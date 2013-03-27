@@ -30,8 +30,8 @@ add_service_files(DIRECTORY srv FILES
   SetComplianceSlope.srv
   SetTorqueLimit.srv
   SetVelocity.srv
-  StartController.srv
-  StopController.srv
+  LoadController.srv
+  UnloadController.srv
   TorqueEnable.srv
 )
 

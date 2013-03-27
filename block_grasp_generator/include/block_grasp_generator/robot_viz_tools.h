@@ -93,7 +93,7 @@ public:
   /**
    * \brief Constructor
    */
-  RobotVizTools(std::string marker_topic, std::string ee_group_name, std::string planning_group_name, std::string base_link, 
+  RobotVizTools(std::string marker_topic, std::string ee_group_name, std::string planning_group_name, std::string base_link,
                 planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor) :
     marker_topic_(marker_topic),
     ee_group_name_(ee_group_name),
@@ -143,7 +143,7 @@ public:
   }
 
   /**
-   * \brief 
+   * \brief
    * \return true if it is successful
    */
   // Call this once at begining to load the robot marker
@@ -300,7 +300,7 @@ public:
       rviz_marker_pub_.publish( marker_array_.markers[i] );
       ros::Duration(0.05).sleep();  // Sleep to prevent markers from being 'skipped' in rviz
     }
-    
+
     return true;
   }
 
@@ -554,12 +554,32 @@ public:
   }
 
   /**
-   * \brief Set this class to not actually publish anything to Rviz. verbose=false
+   * \brief Set this class to not actually publish anything to Rviz.
+   * \param muted true if verbose
    */
-  void setxMuted(bool muted)
+  void setMuted(bool muted)
   {
     muted_ = muted;
   }
+
+  /**
+   * \brief Return if we are in verbose mode
+   */
+  bool isMuted()
+  {
+    return muted_;
+  }
+
+  /**
+   * \brief Set the lifetime of markers published to rviz
+   * \param lifetime seconds of how long to show markers. 0 for inifinity
+   */
+  void setLifetime(int lifetime)
+  {
+    marker_lifetime_ = ros::Duration(lifetime);
+  }
+
+
 
 }; // class
 

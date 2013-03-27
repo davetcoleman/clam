@@ -77,9 +77,6 @@ struct IkThreadStruct
                  std::vector<manipulation_msgs::Grasp> &filtered_grasps, // the result
                  int grasps_id_start,
                  int grasps_id_end,
-                 //const robot_model::JointModelGroup* joint_model_group,
-                 //const robot_state::JointStateGroup* joint_state_group, // TODO: remove this
-                 //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator,
                  kinematics::KinematicsBasePtr kin_solver,
                  double timeout,
                  boost::mutex *lock,
@@ -90,9 +87,6 @@ struct IkThreadStruct
       grasps_id_end_(grasps_id_end),
       kin_solver_(kin_solver),
       timeout_(timeout),
-      //joint_model_group_(joint_model_group),
-      //joint_state_group_(joint_state_group),
-      //kinematics_allocator_(kinematics_allocator),
       lock_(lock),
       thread_id_(thread_id)
   {
@@ -101,9 +95,6 @@ struct IkThreadStruct
   std::vector<manipulation_msgs::Grasp> &filtered_grasps_;
   int grasps_id_start_;
   int grasps_id_end_;
-  //const robot_model::JointModelGroup* joint_model_group_;
-  //const robot_state::JointStateGroup* joint_state_group_;
-  //kinematics_plugin_loader::KinematicsLoaderFn kinematics_allocator_;
   kinematics::KinematicsBasePtr kin_solver_;
   double timeout_;
   boost::mutex *lock_;
@@ -112,27 +103,15 @@ struct IkThreadStruct
 
 
 // Class
-class GraspGenerator
+class GraspFilter
 {
 private:
-  // A shared node handle
-  ros::NodeHandle nh_;
-
-  // ROS publishers
-  ros::Publisher collision_obj_pub_;
-
-  // Shared planning scene monitor from parent object
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  // Shared robot model
+  robot_model::RobotModelPtr robot_model_;
 
   // Parameters from goal
-  std::string base_link_;
-
-  // TF Frame Transform stuff
-  tf::Transform transform_;
-
-  // Grasp axis orientation
-  enum grasp_axis_t {X_AXIS, Y_AXIS, Z_AXIS};
-  enum grasp_direction_t {UP, DOWN};
+  const std::string base_link_;
+  const std::string planning_group_;
 
   // threaded kinematic solvers
   std::vector<kinematics::KinematicsBasePtr> kin_solvers_;
@@ -146,25 +125,15 @@ private:
 public:
 
   // Constructor
-  GraspGenerator( planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                  std::string base_link, bool rviz_verbose = false );
+  GraspFilter( robot_model::RobotModelPtr robot_model_, const std::string base_link, bool rviz_verbose, 
+               RobotVizToolsPtr rviz_tools, const std::string planning_group );
 
   // Destructor
-  ~GraspGenerator();
-
-  // Create all possible grasp positions for a block
-  bool generateGrasps(const geometry_msgs::Pose& block_pose,
-                      std::vector<manipulation_msgs::Grasp>& possible_grasps);
+  ~GraspFilter();
 
   // Of an array of grasps, choose just one for use
   bool chooseBestGrasp( const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                         manipulation_msgs::Grasp& chosen );
-
-private:
-
-  // Create grasp positions in one axis
-  bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
-                          grasp_direction_t direction );
 
   // Take the nth grasp from the array
   bool filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps, int n);
@@ -172,17 +141,16 @@ private:
   // Choose the 1st grasp that is kinematically feasible
   bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
+private:
+
   // Thread for checking part of the possible grasps list
   void filterGraspThread(IkThreadStruct ik_thread_struct);
 
-  // Show all grasps in Rviz
-  void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                       const geometry_msgs::Pose& block_pose);
 
 }; // end of class
 
-typedef boost::shared_ptr<GraspGenerator> GraspGeneratorPtr;
-typedef boost::shared_ptr<const GraspGenerator> GraspGeneratorConstPtr;
+typedef boost::shared_ptr<GraspFilter> GraspFilterPtr;
+typedef boost::shared_ptr<const GraspFilter> GraspFilterConstPtr;
 
 } // namespace
 
