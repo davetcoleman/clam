@@ -1,39 +1,41 @@
 /*********************************************************************
- *
  * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2012, Willow Garage, Inc.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************/
+nn *
+*  Copyright (c) 2013, CU Boulder
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of CU Boulder nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 
-/* Author: Ioan Sucan */
+/**
+ * \brief   Simple pick place for blocks using ClamArm
+ * \author  Dave Coleman
+ */
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -69,7 +71,11 @@ block_grasp_generator::BlockGraspGeneratorPtr block_grasp_generator_;
 ros::Publisher pub_co_;
 ros::Publisher pub_aco_;
 
+// data for generating grasps
 block_grasp_generator::RobotGraspData grasp_data_;
+
+// our interface with MoveIt
+boost::scoped_ptr<move_group_interface::MoveGroup> group_;
 
 void loadRobotGraspData()
 {
@@ -98,13 +104,13 @@ void loadRobotGraspData()
   // -------------------------------
   // Links
   grasp_data_.base_link_ = BASE_LINK;
-  grasp_data_.ee_parent_link_ = EE_PARENT_LINK;  
+  grasp_data_.ee_parent_link_ = EE_PARENT_LINK;
   ROS_ERROR_STREAM_NAMED("","EE parent link = " << EE_PARENT_LINK);
 
   // -------------------------------
   // Nums
-  grasp_data_.approach_retreat_desired_dist_ = 0.5;
-  grasp_data_.approach_retreat_min_dist_ = 0.25;
+  grasp_data_.approach_retreat_desired_dist_ = 0.05;
+  grasp_data_.approach_retreat_min_dist_ = 0.025;
 }
 
 double fRand(double fMin, double fMax)
@@ -129,7 +135,7 @@ void generateRandomBlock(geometry_msgs::Pose& block_pose)
   block_pose.orientation.w = quat.w();
 }
 
-void publishBlock(geometry_msgs::Pose block_pose)
+void publishCollisionBlock(geometry_msgs::Pose block_pose)
 {
   moveit_msgs::CollisionObject co;
   co.header.stamp = ros::Time::now();
@@ -147,102 +153,68 @@ void publishBlock(geometry_msgs::Pose block_pose)
   pub_co_.publish(co);
 }
 
-bool pick(move_group_interface::MoveGroup &group, const geometry_msgs::Pose& block_pose)
+bool pick(const geometry_msgs::Pose& block_pose)
 {
   std::vector<manipulation_msgs::Grasp> grasps;
 
   // Pick grasp
-  bool dual_approach = true; // approach straight down and also from an angle
   block_grasp_generator_->generateGrasps( block_pose, grasp_data_, grasps );
 
   // Prevent collision with table
-  group.setSupportSurfaceName("tabletop_link");
+  group_->setSupportSurfaceName("tabletop_link");
 
   //ROS_WARN_STREAM_NAMED("","testing grasp 1:\n" << grasps[0]);
 
-  return group.pick(BLOCK_NAME, grasps);
+  //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << grasps[0]);
+  //ROS_INFO_STREAM_NAMED("","\n\n\nGrasp 10\n" << grasps[10]);
+
+  return group_->pick(BLOCK_NAME, grasps);
 }
 
-bool place(move_group_interface::MoveGroup &group)
+bool place(const geometry_msgs::Pose& block_pose)
 {
   std::vector<manipulation_msgs::PlaceLocation> place_locations;
-
   std::vector<manipulation_msgs::Grasp> grasps;
-  sensor_msgs::JointState pre_grasp_posture;
-  sensor_msgs::JointState grasp_posture;
 
-  // Create random block pose
-  geometry_msgs::Pose block_pose;
-  generateRandomBlock(block_pose);
+  // Re-usable datastruct
+  geometry_msgs::PoseStamped pose_stamped;
+  pose_stamped.header.frame_id = BASE_LINK;
+  pose_stamped.header.stamp = ros::Time::now();
 
-  bool dual_approach = true; // approach straight down and also from an angle
+  // Generate grasps
   block_grasp_generator_->generateGrasps( block_pose, grasp_data_, grasps );
 
+  // Convert 'grasps' to palce_locations format
   for (std::size_t i = 0; i < grasps.size(); ++i)
   {
-    //ROS_INFO_STREAM_NAMED("pose #",i);
-
     // Create new place location
     manipulation_msgs::PlaceLocation place_loc;
 
     // Pose
-    geometry_msgs::PoseStamped pose_stamped;
-    pose_stamped.header.frame_id = BASE_LINK;
-    pose_stamped.header.stamp = ros::Time::now();
     pose_stamped.pose = grasps[i].grasp_pose.pose;
     place_loc.place_pose = pose_stamped;
 
     // Publish to Rviz
-    rviz_tools_->publishArrow(pose_stamped.pose);
+    //rviz_tools_->publishArrow(pose_stamped.pose);
 
     // Approach & Retreat
     place_loc.approach = grasps[i].approach;
+    //ROS_WARN_STREAM_NAMED("","is the same? \n" << place_loc.approach);
     place_loc.retreat = grasps[i].retreat;
-    /*
-    place_loc.approach.direction.header.frame_id = BASE_LINK;
-    place_loc.approach.direction.header.stamp = ros::Time::now();
-    place_loc.approach.direction.vector.z = -1.0;
-    place_loc.approach.min_distance = 0.025;
-    place_loc.approach.desired_distance = 0.050;
-
-    // Retreat
-    place_loc.retreat.direction.header.frame_id = BASE_LINK;
-    place_loc.retreat.direction.header.stamp = ros::Time::now();
-    place_loc.retreat.direction.vector.z = 1.0;
-    place_loc.retreat.min_distance = 0.025;
-    place_loc.retreat.desired_distance = 0.050;
-    */
 
     // Post place posture - use same as pre-grasp posture (the OPEN command_
     place_loc.post_place_posture = grasp_data_.pre_grasp_posture_;
 
     place_locations.push_back(place_loc);
   }
-  ROS_INFO_STREAM_NAMED("pick_place","Created " << place_locations.size() << " place location");
+  ROS_INFO_STREAM_NAMED("pick_place","Created " << place_locations.size() << " place locations");
 
   // Prevent collision with table
-  group.setSupportSurfaceName("tabletop_link");
+  group_->setSupportSurfaceName("tabletop_link");
 
-  // add path constraints
-  /*
-    moveit_msgs::Constraints constr;
-    constr.orientation_constraints.resize(1);
-    moveit_msgs::OrientationConstraint &ocm = constr.orientation_constraints[0];
-    ocm.link_name = "r_wrist_roll_link";
-    ocm.header.frame_id = p.header.frame_id;
-    ocm.orientation.x = 0.0;
-    ocm.orientation.y = 0.0;
-    ocm.orientation.z = 0.0;
-    ocm.orientation.w = 1.0;
-    ocm.absolute_x_axis_tolerance = 0.2;
-    ocm.absolute_y_axis_tolerance = 0.2;
-    ocm.absolute_z_axis_tolerance = M_PI;
-    ocm.weight = 1.0;
-    group.setPathConstraints(constr);
-  */
-  group.setPlannerId("RRTConnectkConfigDefault");
+  group_->setPlannerId("RRTConnectkConfigDefault");
 
-  return group.place(BLOCK_NAME, place_locations);
+  return group_->place(BLOCK_NAME, place_locations);
 }
 
 void cleanupBlocks()
@@ -294,46 +266,65 @@ int main(int argc, char **argv)
 
   // ---------------------------------------------------------------------------------------------
   // Create MoveGroup
-  move_group_interface::MoveGroup group(PLANNING_GROUP_NAME);
-  group.setPlanningTime(30.0);
+  group_.reset(new move_group_interface::MoveGroup(PLANNING_GROUP_NAME));
+  group_->setPlanningTime(30.0);
 
   ros::Duration(1.0).sleep();
-
-  // Cleanup old blocks
-  cleanupBlocks();
-
-  // Create a block pose
-  geometry_msgs::Pose start_block_pose;
-  generateRandomBlock(start_block_pose);
-
-  // Add the block
-  publishBlock(start_block_pose);
-  ROS_INFO_STREAM_NAMED("simple_pick_place","Published collision object");
 
   // --------------------------------------------------------------------------------------------------------
   // Start pick and place loop
 
-  for (std::size_t i = 0; i < 3; ++i)
+  geometry_msgs::Pose start_block_pose;
+  geometry_msgs::Pose end_block_pose;
+
+  bool do_old_block = false;
+  while(true)
   {
-
-    if( !pick(group, start_block_pose) )
+    bool foundBlock = false;
+    while(!foundBlock)
     {
-      ROS_ERROR_STREAM_NAMED("simple_pick_place","Pick failed");
-      break;
+      if(!do_old_block) // if we have already completed a place, get that block again
+      {
+        generateRandomBlock(start_block_pose);
+
+        cleanupBlocks(); // Cleanup old blocks
+        publishCollisionBlock(start_block_pose);
+
+        ROS_INFO_STREAM_NAMED("simple_pick_place","Published collision object");
+      }
+
+      if( !pick(start_block_pose) )
+      {
+        ROS_ERROR_STREAM_NAMED("simple_pick_place","Pick failed. Retrying.");
+      }
+      else
+      {
+        ROS_INFO_STREAM_NAMED("simple_pick_place","Done with pick");
+        foundBlock = true;
+      }
     }
 
-    ROS_INFO_STREAM_NAMED("simple_pick_place","Done with pick");
+    ros::Duration(1.0).sleep();
 
-    // Show the end block pose
-    ros::WallDuration(1.0).sleep();
-
-    if( !place(group) )
+    bool putBlock = false;
+    while(!putBlock)
     {
-      ROS_ERROR_STREAM_NAMED("simple_pick_place","Place failed");
-      break;
+      generateRandomBlock(end_block_pose);
+
+      if( !place(end_block_pose) )
+      {
+        ROS_ERROR_STREAM_NAMED("simple_pick_place","Place failed. Retrying.");
+      }
+      else
+      {
+        ROS_INFO_STREAM_NAMED("simple_pick_place","Done with place");
+        putBlock = true;
+      }
     }
 
-    ROS_INFO_STREAM_NAMED("simple_pick_place","Done with place");
+    // Cycle placed block to become pick block
+    start_block_pose = end_block_pose;
+    do_old_block = true;
   }
 
   ros::shutdown();
@@ -345,24 +336,63 @@ int main(int argc, char **argv)
 
 
 
-  /*
-  // remove pole
-  co.id = "pole";
-  co.operation = moveit_msgs::CollisionObject::REMOVE;
-  pub_co_.publish(co);
+/*
+// remove pole
+co.id = "pole";
+co.operation = moveit_msgs::CollisionObject::REMOVE;
+pub_co_.publish(co);
 
-  // add pole
-  co.operation = moveit_msgs::CollisionObject::ADD;
-  co.primitives.resize(1);
-  co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-  co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.3;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.1;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1.0;
-  co.primitive_poses.resize(1);
-  co.primitive_poses[0].position.x = 0.7;
-  co.primitive_poses[0].position.y = -0.4;
-  co.primitive_poses[0].position.z = 0.85;
-  co.primitive_poses[0].orientation.w = 1.0;
-  pub_co_.publish(co);
-  */
+// add pole
+co.operation = moveit_msgs::CollisionObject::ADD;
+co.primitives.resize(1);
+co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.3;
+co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.1;
+co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1.0;
+co.primitive_poses.resize(1);
+co.primitive_poses[0].position.x = 0.7;
+co.primitive_poses[0].position.y = -0.4;
+co.primitive_poses[0].position.z = 0.85;
+co.primitive_poses[0].orientation.w = 1.0;
+pub_co_.publish(co);
+*/
+
+
+// add path constraints
+/*
+  moveit_msgs::Constraints constr;
+  constr.orientation_constraints.resize(1);
+  moveit_msgs::OrientationConstraint &ocm = constr.orientation_constraints[0];
+  ocm.link_name = "r_wrist_roll_link";
+  ocm.header.frame_id = p.header.frame_id;
+  ocm.orientation.x = 0.0;
+  ocm.orientation.y = 0.0;
+  ocm.orientation.z = 0.0;
+  ocm.orientation.w = 1.0;
+  ocm.absolute_x_axis_tolerance = 0.2;
+  ocm.absolute_y_axis_tolerance = 0.2;
+  ocm.absolute_z_axis_tolerance = M_PI;
+  ocm.weight = 1.0;
+  group.setPathConstraints(constr);
+*/
+
+/*
+  manipulation_msgs::GripperTranslation gripper_approach;
+  gripper_approach.direction.header.frame_id = BASE_LINK;
+  gripper_approach.direction.header.stamp = ros::Time::now();
+  gripper_approach.direction.vector.z = -1.0;
+  gripper_approach.min_distance = 0.025;
+  gripper_approach.desired_distance = 0.050;
+  ROS_WARN_STREAM_NAMED("","is the same? \n" << gripper_approach);
+
+  ros::shutdown();
+  exit(-12);
+
+  // Retreat
+  place_loc.retreat.direction.header.frame_id = BASE_LINK;
+  place_loc.retreat.direction.header.stamp = ros::Time::now();
+  place_loc.retreat.direction.vector.z = 1.0;
+  place_loc.retreat.min_distance = 0.025;
+  place_loc.retreat.desired_distance = 0.050;
+*/

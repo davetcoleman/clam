@@ -248,9 +248,9 @@ void BlockGraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::G
 
     //rviz_tools_->publishSphere(grasp_pose);
 
-    if( i % 2)  // do every other arrow
-      rviz_tools_->publishArrow(grasp_it->grasp_pose.pose);
-    ++i;
+    //if( i % 2)  // do every other arrow
+      //rviz_tools_->publishArrow(grasp_it->grasp_pose.pose);
+    //    ++i;
 
     //rviz_tools_->publishEEMarkers(grasp_pose);
 
