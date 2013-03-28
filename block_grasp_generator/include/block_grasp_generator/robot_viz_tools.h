@@ -56,6 +56,8 @@
 namespace block_grasp_generator
 {
 
+static const std::string ROBOT_DESCRIPTION="robot_description";
+
 class RobotVizTools
 {
 private:
@@ -91,15 +93,24 @@ private:
 public:
 
   /**
-   * \brief Constructor
+   * \brief Constructor with planning scene
    */
   RobotVizTools(std::string marker_topic, std::string ee_group_name, std::string planning_group_name, std::string base_link,
                 planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor) :
+    planning_scene_monitor_(planning_scene_monitor)
+  {
+    // Pass to next contructor
+    RobotVizTools(marker_topic, ee_group_name, planning_group_name, base_link);
+  }
+
+  /**
+   * \brief Constructor
+   */
+  RobotVizTools(std::string marker_topic, std::string ee_group_name, std::string planning_group_name, std::string base_link) :
     marker_topic_(marker_topic),
     ee_group_name_(ee_group_name),
     planning_group_name_(planning_group_name),
     base_link_(base_link),
-    planning_scene_monitor_(planning_scene_monitor),
     ee_marker_is_loaded_(false),
     marker_lifetime_(ros::Duration(30.0)),
     nh_("~"),
@@ -116,6 +127,31 @@ public:
   }
 
   /**
+   * \brief Load a planning scene monitor if one was not passed into the constructor
+   * \return true if successful in loading
+   */
+  bool loadPlanningSceneMonitor()
+  {
+    // ---------------------------------------------------------------------------------------------
+    // Create planning scene monitor
+    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
+
+    if (planning_scene_monitor_->getPlanningScene())
+    {
+      //planning_scene_monitor_->startWorldGeometryMonitor();
+      //planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
+      //planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+    }
+    else
+    {
+      ROS_FATAL_STREAM_NAMED("rviz_tools","Planning scene not configured");
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * \brief Move the robot arm to the ik solution in rviz
    * \param joint_values - the in-order list of values to set the robot's joints
    * \return true if it is successful
@@ -124,6 +160,11 @@ public:
   {
     if(muted_)
       return true; // this function will only work if we have loaded the publishers
+
+    // Load planning scene monitor if one was not already passed in
+    if(!planning_scene_monitor_)
+      if(!loadPlanningSceneMonitor())
+        return false;
 
     ROS_DEBUG_STREAM_NAMED("robot_viz","Publishing planning scene");
 
@@ -149,6 +190,11 @@ public:
   // Call this once at begining to load the robot marker
   bool loadEEMarker()
   {
+    // Load planning scene monitor if one was not already passed in
+    if(!planning_scene_monitor_)
+      if(!loadPlanningSceneMonitor())
+        return false;
+
     // -----------------------------------------------------------------------------------------------
     // Get end effector group
 

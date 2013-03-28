@@ -42,12 +42,11 @@
 #include <clam_msgs/ClamGripperCommandAction.h>
 
 // MoveIt!
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/move_group_interface/move_group.h>
 #include <shape_tools/solid_primitive_dims.h>
 
 // Grasp generation
-#include <block_grasp_generator/grasp_generator.h>
+#include <block_grasp_generator/block_grasp_generator.h>
 #include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
@@ -60,57 +59,52 @@ static const std::string EE_PARENT_LINK = "gripper_roll_link";
 static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
-// Planning Scene Monitor
-planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
-
 // class for publishing stuff to rviz
 block_grasp_generator::RobotVizToolsPtr rviz_tools_;
 
 // grasp generator
-block_grasp_generator::GraspGeneratorPtr grasp_generator_;
+block_grasp_generator::BlockGraspGeneratorPtr block_grasp_generator_;
 
 // publishers
 ros::Publisher pub_co_;
 ros::Publisher pub_aco_;
 
-struct PickPlaceData
-{
-  sensor_msgs::JointState pre_grasp_posture_;
-  sensor_msgs::JointState grasp_posture_;
-};
+block_grasp_generator::RobotGraspData grasp_data_;
 
-PickPlaceData data_;
-
-void generateRobotSpecificData()
+void loadRobotGraspData()
 {
   // -------------------------------
   // Create pre-grasp posture
-  pre_grasp_posture_.header.frame_id = BASE_LINK;
-  pre_grasp_posture_.header.stamp = ros::Time::now();
+  grasp_data_.pre_grasp_posture_.header.frame_id = BASE_LINK;
+  grasp_data_.pre_grasp_posture_.header.stamp = ros::Time::now();
   // Name of joints:
-  pre_grasp_posture_.name.resize(1, EE_JOINT);
-  //pre_grasp_posture_.name.resize(1);
-  //pre_grasp_posture_.name[0] = EE_JOINT;
+  grasp_data_.pre_grasp_posture_.name.resize(1);
+  grasp_data_.pre_grasp_posture_.name[0] = EE_JOINT;
   // Position of joints
-  pre_grasp_posture_.position.resize(1);
-  pre_grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
+  grasp_data_.pre_grasp_posture_.position.resize(1);
+  grasp_data_.pre_grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
 
   // -------------------------------
   // Create grasp posture
-  grasp_posture_.header.frame_id = BASE_LINK;
-  grasp_posture_.header.stamp = ros::Time::now();
+  grasp_data_.grasp_posture_.header.frame_id = BASE_LINK;
+  grasp_data_.grasp_posture_.header.stamp = ros::Time::now();
   // Name of joints:
-  grasp_posture_.name.resize(1, EE_JOINT);
-  //grasp_posture_name.resize(1);
-  //grasp_posture.name[0] = EE_JOINT;
+  grasp_data_.grasp_posture_.name.resize(1);
+  grasp_data_.grasp_posture_.name[0] = EE_JOINT;
   // Position of joints
-  grasp_posture_.position.resize(1);
-  grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
+  grasp_data_.grasp_posture_.position.resize(1);
+  grasp_data_.grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
 
   // -------------------------------
-
+  // Links
+  grasp_data_.base_link_ = BASE_LINK;
+  grasp_data_.ee_parent_link_ = EE_PARENT_LINK;  
+  ROS_ERROR_STREAM_NAMED("","EE parent link = " << EE_PARENT_LINK);
 
   // -------------------------------
+  // Nums
+  grasp_data_.approach_retreat_desired_dist_ = 0.5;
+  grasp_data_.approach_retreat_min_dist_ = 0.25;
 }
 
 double fRand(double fMin, double fMax)
@@ -135,23 +129,43 @@ void generateRandomBlock(geometry_msgs::Pose& block_pose)
   block_pose.orientation.w = quat.w();
 }
 
+void publishBlock(geometry_msgs::Pose block_pose)
+{
+  moveit_msgs::CollisionObject co;
+  co.header.stamp = ros::Time::now();
+  co.header.frame_id = BASE_LINK;
+  co.id = BLOCK_NAME;
+  co.operation = moveit_msgs::CollisionObject::ADD;
+  co.primitives.resize(1);
+  co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+  co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = BLOCK_SIZE;
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = BLOCK_SIZE;
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = BLOCK_SIZE;
+  co.primitive_poses.resize(1);
+  co.primitive_poses[0] = block_pose;
+  pub_co_.publish(co);
+}
+
 bool pick(move_group_interface::MoveGroup &group, const geometry_msgs::Pose& block_pose)
 {
   std::vector<manipulation_msgs::Grasp> grasps;
 
   // Pick grasp
   bool dual_approach = true; // approach straight down and also from an angle
-  grasp_generator_->generateGrasps( block_pose, grasps, pre_grasp_posture_, grasp_posture_, dual_approach );
+  block_grasp_generator_->generateGrasps( block_pose, grasp_data_, grasps );
 
   // Prevent collision with table
   group.setSupportSurfaceName("tabletop_link");
+
+  //ROS_WARN_STREAM_NAMED("","testing grasp 1:\n" << grasps[0]);
 
   return group.pick(BLOCK_NAME, grasps);
 }
 
 bool place(move_group_interface::MoveGroup &group)
 {
-  std::vector<manipulation_msgs::PlaceLocation> loc;
+  std::vector<manipulation_msgs::PlaceLocation> place_locations;
 
   std::vector<manipulation_msgs::Grasp> grasps;
   sensor_msgs::JointState pre_grasp_posture;
@@ -161,12 +175,12 @@ bool place(move_group_interface::MoveGroup &group)
   geometry_msgs::Pose block_pose;
   generateRandomBlock(block_pose);
 
-  bool dual_approach = false; // approach straight down and also from an angle
-  grasp_generator_->generateGrasps( block_pose, grasps, pre_grasp_posture, grasp_posture, dual_approach );
+  bool dual_approach = true; // approach straight down and also from an angle
+  block_grasp_generator_->generateGrasps( block_pose, grasp_data_, grasps );
 
   for (std::size_t i = 0; i < grasps.size(); ++i)
   {
-    ROS_INFO_STREAM_NAMED("pose #",i);
+    //ROS_INFO_STREAM_NAMED("pose #",i);
 
     // Create new place location
     manipulation_msgs::PlaceLocation place_loc;
@@ -181,7 +195,10 @@ bool place(move_group_interface::MoveGroup &group)
     // Publish to Rviz
     rviz_tools_->publishArrow(pose_stamped.pose);
 
-    // Approach  TODO - get from grasp generator
+    // Approach & Retreat
+    place_loc.approach = grasps[i].approach;
+    place_loc.retreat = grasps[i].retreat;
+    /*
     place_loc.approach.direction.header.frame_id = BASE_LINK;
     place_loc.approach.direction.header.stamp = ros::Time::now();
     place_loc.approach.direction.vector.z = -1.0;
@@ -194,14 +211,14 @@ bool place(move_group_interface::MoveGroup &group)
     place_loc.retreat.direction.vector.z = 1.0;
     place_loc.retreat.min_distance = 0.025;
     place_loc.retreat.desired_distance = 0.050;
+    */
 
-    // Post place posture
-    place_loc.post_place_posture.name.resize(1, EE_JOINT);
-    place_loc.post_place_posture.position.resize(1);
-    place_loc.post_place_posture.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
+    // Post place posture - use same as pre-grasp posture (the OPEN command_
+    place_loc.post_place_posture = grasp_data_.pre_grasp_posture_;
 
-    loc.push_back(place_loc);
+    place_locations.push_back(place_loc);
   }
+  ROS_INFO_STREAM_NAMED("pick_place","Created " << place_locations.size() << " place location");
 
   // Prevent collision with table
   group.setSupportSurfaceName("tabletop_link");
@@ -225,7 +242,7 @@ bool place(move_group_interface::MoveGroup &group)
   */
   group.setPlannerId("RRTConnectkConfigDefault");
 
-  return group.place(BLOCK_NAME, loc);
+  return group.place(BLOCK_NAME, place_locations);
 }
 
 void cleanupBlocks()
@@ -266,28 +283,14 @@ int main(int argc, char **argv)
   ros::Duration(1.0).sleep();
 
   // ---------------------------------------------------------------------------------------------
-  // Create planning scene monitor
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(ROBOT_DESCRIPTION));
-
-  if (planning_scene_monitor_->getPlanningScene())
-  {
-    //planning_scene_monitor_->startWorldGeometryMonitor();
-    //planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
-    //planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
-  }
-  else
-  {
-    ROS_FATAL_STREAM_NAMED("pick_place_moveit","Planning scene not configured");
-  }
-
-  // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
   rviz_tools_.reset(new block_grasp_generator::RobotVizTools( RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME,
-                                                              BASE_LINK, planning_scene_monitor_ ));
+                                                              BASE_LINK));
 
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
-  grasp_generator_.reset(new block_grasp_generator::GraspGenerator( BASE_LINK, rviz_tools_ ));
+  loadRobotGraspData(); // Load robot specific data
+  block_grasp_generator_.reset(new block_grasp_generator::BlockGraspGenerator(rviz_tools_));
 
   // ---------------------------------------------------------------------------------------------
   // Create MoveGroup
@@ -295,27 +298,6 @@ int main(int argc, char **argv)
   group.setPlanningTime(30.0);
 
   ros::Duration(1.0).sleep();
-  /*
-  // remove pole
-  co.id = "pole";
-  co.operation = moveit_msgs::CollisionObject::REMOVE;
-  pub_co_.publish(co);
-
-  // add pole
-  co.operation = moveit_msgs::CollisionObject::ADD;
-  co.primitives.resize(1);
-  co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-  co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.3;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.1;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1.0;
-  co.primitive_poses.resize(1);
-  co.primitive_poses[0].position.x = 0.7;
-  co.primitive_poses[0].position.y = -0.4;
-  co.primitive_poses[0].position.z = 0.85;
-  co.primitive_poses[0].orientation.w = 1.0;
-  pub_co_.publish(co);
-  */
 
   // Cleanup old blocks
   cleanupBlocks();
@@ -325,20 +307,7 @@ int main(int argc, char **argv)
   generateRandomBlock(start_block_pose);
 
   // Add the block
-  moveit_msgs::CollisionObject co;
-  co.header.stamp = ros::Time::now();
-  co.header.frame_id = BASE_LINK;
-  co.id = BLOCK_NAME;
-  co.operation = moveit_msgs::CollisionObject::ADD;
-  co.primitives.resize(1);
-  co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-  co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = BLOCK_SIZE;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = BLOCK_SIZE;
-  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = BLOCK_SIZE;
-  co.primitive_poses.resize(1);
-  co.primitive_poses[0] = start_block_pose;
-  pub_co_.publish(co);
+  publishBlock(start_block_pose);
   ROS_INFO_STREAM_NAMED("simple_pick_place","Published collision object");
 
   // --------------------------------------------------------------------------------------------------------
@@ -370,3 +339,30 @@ int main(int argc, char **argv)
   ros::shutdown();
   return 0;
 }
+
+
+
+
+
+
+  /*
+  // remove pole
+  co.id = "pole";
+  co.operation = moveit_msgs::CollisionObject::REMOVE;
+  pub_co_.publish(co);
+
+  // add pole
+  co.operation = moveit_msgs::CollisionObject::ADD;
+  co.primitives.resize(1);
+  co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+  co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.3;
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.1;
+  co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1.0;
+  co.primitive_poses.resize(1);
+  co.primitive_poses[0].position.x = 0.7;
+  co.primitive_poses[0].position.y = -0.4;
+  co.primitive_poses[0].position.z = 0.85;
+  co.primitive_poses[0].orientation.w = 1.0;
+  pub_co_.publish(co);
+  */

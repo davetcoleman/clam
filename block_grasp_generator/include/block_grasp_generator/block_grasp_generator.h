@@ -37,10 +37,9 @@
 
 // ROS
 #include <ros/ros.h>
-//#include <tf/tf.h>
 #include <tf_conversions/tf_eigen.h>
 #include <geometry_msgs/PoseArray.h>
-#include <geometry_msgs/PoseStamped.h>
+//#include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/JointState.h>
 #include <manipulation_msgs/Grasp.h>
 #include <Eigen/Core>
@@ -48,16 +47,17 @@
 #include <eigen_conversions/eigen_msg.h>
 
 // Rviz
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-#include "robot_viz_tools.h"
+//#include "robot_viz_tools.h"
+#include <block_grasp_generator/robot_viz_tools.h>
+//#include <visualization_msgs/Marker.h>
+//#include <visualization_msgs/MarkerArray.h>
+
 
 // MoveIt
-#include <moveit/robot_state/robot_state.h>
-#include <moveit/kinematics_plugin_loader/kinematics_plugin_loader.h>
+//#include <moveit/robot_state/robot_state.h>
+//#include <moveit/kinematics_plugin_loader/kinematics_plugin_loader.h>
 
 // C++
-#include <boost/thread.hpp>
 #include <math.h>
 #define _USE_MATH_DEFINES
 
@@ -65,17 +65,32 @@ namespace block_grasp_generator
 {
 
 static const double RAD2DEG = 57.2957795;
-static const double BLOCK_SIZE = 0.04;
+
+struct RobotGraspData
+{
+  RobotGraspData() :    
+    // Fill in default values where possible:
+    base_link_("/base_link"), 
+    grasp_depth_(0.12), 
+    angle_resolution_(16),
+    approach_retreat_desired_dist_(0.6),
+    approach_retreat_min_dist_(0.4)
+  {}
+  sensor_msgs::JointState pre_grasp_posture_;
+  sensor_msgs::JointState grasp_posture_;
+  std::string base_link_; // name of global frame with z pointing up
+  std::string ee_parent_link_; // the last link in the kinematic chain before the end effector, e.g. "/gripper_roll_link"
+  double grasp_depth_; // distance from center point of object to end effector
+  int angle_resolution_; // generate grasps at PI/angle_resolution increments
+  double approach_retreat_desired_dist_;
+  double approach_retreat_min_dist_;
+};
+
 
 // Class
-class GraspGenerator
+class BlockGraspGenerator
 {
 private:
-  // Parameters from goal
-  const std::string base_link_;
-
-  // Transform from frame of box to global frame
-  Eigen::Affine3d transform_;
 
   // Grasp axis orientation
   enum grasp_axis_t {X_AXIS, Y_AXIS, Z_AXIS};
@@ -84,37 +99,35 @@ private:
   // class for publishing stuff to rviz
   block_grasp_generator::RobotVizToolsPtr rviz_tools_;
 
+  // Transform from frame of box to global frame
+  Eigen::Affine3d block_global_transform_; 
 
 public:
 
   // Constructor
-  GraspGenerator( const std::string base_link, 
-                  RobotVizToolsPtr rviz_tools);
+  BlockGraspGenerator( RobotVizToolsPtr rviz_tools);                  
 
   // Destructor
-  ~GraspGenerator();
+  ~BlockGraspGenerator();
 
   // Create all possible grasp positions for a block
-  bool generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                      const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture, 
-                      bool dual_approach);
+  bool generateGrasps(const geometry_msgs::Pose& block_pose, const RobotGraspData& grasp_data,
+                      std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
 private:
 
   // Create grasp positions in one axis
   bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
-                          grasp_direction_t direction,
-                          const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture,
-                          bool dual_approach);
-
+                          grasp_direction_t direction, const RobotGraspData& grasp_data);
+                          
   // Show all grasps in Rviz
   void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
                        const geometry_msgs::Pose& block_pose);
 
 }; // end of class
 
-typedef boost::shared_ptr<GraspGenerator> GraspGeneratorPtr;
-typedef boost::shared_ptr<const GraspGenerator> GraspGeneratorConstPtr;
+typedef boost::shared_ptr<BlockGraspGenerator> BlockGraspGeneratorPtr;
+typedef boost::shared_ptr<const BlockGraspGenerator> GraspGeneratorConstPtr;
 
 } // namespace
 

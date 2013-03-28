@@ -19,15 +19,15 @@ find_package(catkin REQUIRED
 )
 
 # Grasp Library
-add_library(${PROJECT_NAME}_grasp_generator
-  src/grasp_generator.cpp
+add_library(${PROJECT_NAME}_block_grasp_generator
+  src/block_grasp_generator.cpp
 )
-target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_block_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
 catkin_package(
   LIBRARIES
-    ${PROJECT_NAME}_grasp_generator
+    ${PROJECT_NAME}_block_grasp_generator
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -54,7 +54,7 @@ include_directories(
 link_directories(${catkin_LIBRARY_DIRS})
 
 # Test executable
-add_executable(grasp_generator_test src/grasp_generator_test.cpp)
-target_link_libraries(grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_grasp_generator)
+#add_executable(grasp_generator_test src/grasp_generator_test.cpp)
+#target_link_libraries(grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_block_grasp_generator)
 
 

@@ -538,7 +538,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       if (is_action && action_server_->isPreemptRequested())
       {
         traj_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
-        error_msg = "New trajectory received. Aborting old trajectory.";
+        error_msg = "Trajectory controller recieved preempt request from action server. Canceling trajectory.";
 
         std::map<std::string, std::vector<std::vector<int> > > multi_port_commands;
 
