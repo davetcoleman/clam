@@ -157,7 +157,8 @@ public:
       generateRandomBlock(block_pose);
       //getTestBlock(block_pose);
       possible_grasps.clear();
-      grasp_generator_->generateGrasps( block_pose, possible_grasps, pre_grasp_posture, grasp_posture);
+      bool dual_approach = true; // approach straight down and also from an angle
+      grasp_generator_->generateGrasps( block_pose, possible_grasps, pre_grasp_posture, grasp_posture, dual_approach);
     }
 
 

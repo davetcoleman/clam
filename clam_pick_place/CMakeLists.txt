@@ -4,7 +4,13 @@ project(clam_pick_place)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS moveit_core moveit_ros_planning moveit_ros_planning_interface block_grasp_generator)
+find_package(catkin REQUIRED COMPONENTS 
+  moveit_core 
+  moveit_ros_planning 
+  moveit_ros_planning_interface 
+  block_grasp_generator
+  clam_msgs
+)
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED system thread)
 

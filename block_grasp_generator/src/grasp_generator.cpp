@@ -55,7 +55,8 @@ GraspGenerator::~GraspGenerator()
 
 // Create all possible grasp positions for a block
 bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                                    const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture)
+                                    const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture,
+                                    bool dual_approach)
 {
   // ---------------------------------------------------------------------------------------------
   // Create a transform from the block's frame (center of block) to /base_link
@@ -66,13 +67,11 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
   //rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, true);
 
   // ---------------------------------------------------------------------------------------------
-  // Generate grasps
-
   // Calculate grasps in two axis in both directions
-  generateAxisGrasps( possible_grasps, X_AXIS, DOWN, pre_grasp_posture, grasp_posture );
-  generateAxisGrasps( possible_grasps, X_AXIS, UP, pre_grasp_posture, grasp_posture );
-  generateAxisGrasps( possible_grasps, Y_AXIS, DOWN, pre_grasp_posture, grasp_posture );
-  generateAxisGrasps( possible_grasps, Y_AXIS, UP, pre_grasp_posture, grasp_posture );
+  generateAxisGrasps( possible_grasps, X_AXIS, DOWN, pre_grasp_posture, grasp_posture, dual_approach );
+  generateAxisGrasps( possible_grasps, X_AXIS, UP, pre_grasp_posture, grasp_posture, dual_approach );
+  generateAxisGrasps( possible_grasps, Y_AXIS, DOWN, pre_grasp_posture, grasp_posture, dual_approach );
+  generateAxisGrasps( possible_grasps, Y_AXIS, UP, pre_grasp_posture, grasp_posture, dual_approach );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
 
   // Visualize results
@@ -83,11 +82,11 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
 
 // Create grasp positions in one axis
 bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
-                                        grasp_direction_t direction,
-                                        const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture)
+                                        grasp_direction_t direction, const sensor_msgs::JointState& pre_grasp_posture, 
+                                        const sensor_msgs::JointState& grasp_posture, bool dual_approach)
 {
   // ---------------------------------------------------------------------------------------------
-  // manipulation_msgs:Grasp parameters
+  // Grasp parameters
 
   // Create re-usable approach motion
   manipulation_msgs::GripperTranslation gripper_approach;
@@ -108,11 +107,11 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
 
   // ---------------------------------------------------------------------------------------------
   // Variables needed for calculations
-  double radius = 0.15;
+  double radius = 0.12; //0.15
   double xb;
   double yb = 0.0; // stay in the y plane of the block
   double zb;
-  double angle_resolution = 8.0; // 16.0;
+  double angle_resolution = 16.0; // 16.0;
   double theta1 = 0.0; // Where the point is located around the block
   double theta2 = 0.0; // UP 'direction'
 
@@ -208,24 +207,27 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
     // -------------------------------------------------------------------------------------------------------
     // Approach and retreat - add pose twice to possible grasps - two different approach and retreat motions
 
-    // Straight down ---------------------------------------------------------------------------------------
+    if( dual_approach ) // optionally don't do this
+    {
+      // Straight down ---------------------------------------------------------------------------------------
 
-    // Approach
-    gripper_approach.direction.header.frame_id = base_link_;
-    gripper_approach.direction.vector.x = 0;
-    gripper_approach.direction.vector.y = 0;
-    gripper_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
-    new_grasp.approach = gripper_approach;
+      // Approach
+      gripper_approach.direction.header.frame_id = base_link_;
+      gripper_approach.direction.vector.x = 0;
+      gripper_approach.direction.vector.y = 0;
+      gripper_approach.direction.vector.z = -1; // Approach direction (negative z axis)  // TODO: document this assumption
+      new_grasp.approach = gripper_approach;
 
-    // Retreat
-    gripper_retreat.direction.header.frame_id = base_link_;
-    gripper_retreat.direction.vector.x = 0;
-    gripper_retreat.direction.vector.y = 0;
-    gripper_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
-    new_grasp.retreat = gripper_retreat;
+      // Retreat
+      gripper_retreat.direction.header.frame_id = base_link_;
+      gripper_retreat.direction.vector.x = 0;
+      gripper_retreat.direction.vector.y = 0;
+      gripper_retreat.direction.vector.z = 1; // Retreat direction (pos z axis)
+      new_grasp.retreat = gripper_retreat;
 
-    // Add to vector
-    possible_grasps.push_back(new_grasp);
+      // Add to vector
+      possible_grasps.push_back(new_grasp);
+    }
 
     // Angled with pose -------------------------------------------------------------------------------------
 
@@ -259,12 +261,10 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     return; // this function will only work if we have loaded the publishers
 
   // isRed = true if possible_blocks is empty
-  rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
+  //rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, possible_grasps.empty() );
+  rviz_tools_->publishSphere(block_pose);
 
-  // Show robot joint positions if available
-  if( !possible_grasps.empty() && !possible_grasps[0].grasp_posture.position.empty() )
-    rviz_tools_->publishPlanningScene(possible_grasps[0].grasp_posture.position);
-
+  int i = 0;
   for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
       grasp_it < possible_grasps.end(); ++grasp_it)
   {
@@ -273,14 +273,18 @@ void GraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::Grasp>
     //ROS_DEBUG_STREAM_NAMED("grasp","Visualizing grasp pose");
 
     //rviz_tools_->publishSphere(grasp_pose);
-    rviz_tools_->publishArrow(grasp_pose);
+
+    if( i % 2)  // do every other arrow
+      rviz_tools_->publishArrow(grasp_pose);
+    ++i;
+
     //rviz_tools_->publishEEMarkers(grasp_pose);
 
     // Show robot joint positions if available
     //if( !grasp_it->grasp_posture.position.empty() )
     //rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
 
-    ros::Duration(0.01).sleep();
+    ros::Duration(0.005).sleep();
     //ros::Duration(0.1).sleep();
   }
 }

@@ -151,7 +151,7 @@ public:
 
   bool doGripperAction(const clam_msgs::ClamGripperCommandGoalConstPtr& goal)
   {
-    if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN ) // Open
+    if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN ) 
     {
       ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received open end effector goal");
 
@@ -168,7 +168,7 @@ public:
         return openEndEffector();
       }
     }
-    else if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE ) // Closed
+    else if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE )
     {
       ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received close end effector goal");
 
@@ -176,7 +176,7 @@ public:
       {
         // Publish command to servos
         std_msgs::Float64 joint_value;
-        joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
+        joint_value.data = END_EFFECTOR_OPEN_VALUE_MAX * 0.80;
         end_effector_pub_.publish(joint_value);
         return true;
       }

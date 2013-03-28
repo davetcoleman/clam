@@ -52,91 +52,89 @@ namespace clam_moveit_controller_manager
 {
 
 static const double DEFAULT_MAX_GRIPPER_EFFORT = 10000.0;
-static const double GRIPPER_OPEN = 0.086;
-static const double GRIPPER_CLOSED = 0.0;
 
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-// New Class
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-template<typename T>
-class ActionBasedControllerHandle : public moveit_controller_manager::MoveItControllerHandle
-{
-public:
-  ActionBasedControllerHandle(const std::string &name, const std::string &ns) :
-    moveit_controller_manager::MoveItControllerHandle(name),
-    namespace_(ns),
-    done_(true)
+  // ------------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------
+  // New Class
+  // ------------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------
+  template<typename T>
+  class ActionBasedControllerHandle : public moveit_controller_manager::MoveItControllerHandle
   {
-    controller_action_client_.reset(new actionlib::SimpleActionClient<T>(name_ +"/" + namespace_, true));
-    unsigned int attempts = 0;
-    while (ros::ok() && !controller_action_client_->waitForServer(ros::Duration(5.0)) && ++attempts < 3)
-      ROS_INFO_STREAM("Waiting for " << name_ + "/" + namespace_ << " to come up");
-
-    if (!controller_action_client_->isServerConnected())
+  public:
+    ActionBasedControllerHandle(const std::string &name, const std::string &ns) :
+      moveit_controller_manager::MoveItControllerHandle(name),
+      namespace_(ns),
+      done_(true)
     {
-      ROS_ERROR_STREAM("Action client not connected: " << name_ + "/" + namespace_);
-      controller_action_client_.reset();
+      controller_action_client_.reset(new actionlib::SimpleActionClient<T>(name_ +"/" + namespace_, true));
+      unsigned int attempts = 0;
+      while (ros::ok() && !controller_action_client_->waitForServer(ros::Duration(5.0)) && ++attempts < 3)
+        ROS_INFO_STREAM("Waiting for " << name_ + "/" + namespace_ << " to come up");
+
+      if (!controller_action_client_->isServerConnected())
+      {
+        ROS_ERROR_STREAM("Action client not connected: " << name_ + "/" + namespace_);
+        controller_action_client_.reset();
+      }
+
+      last_exec_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
     }
 
-    last_exec_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
-  }
-
-  bool isConnected() const
-  {
-    return controller_action_client_;
-  }
-
-  virtual bool cancelExecution()
-  {
-    if (!controller_action_client_)
-      return false;
-    if (!done_)
+    bool isConnected() const
     {
-      ROS_INFO_STREAM("Cancelling execution for " << name_);
-      controller_action_client_->cancelGoal();
-      last_exec_ = moveit_controller_manager::ExecutionStatus::PREEMPTED;
+      return controller_action_client_;
+    }
+
+    virtual bool cancelExecution()
+    {
+      if (!controller_action_client_)
+        return false;
+      if (!done_)
+      {
+        ROS_INFO_STREAM("Cancelling execution for " << name_);
+        controller_action_client_->cancelGoal();
+        last_exec_ = moveit_controller_manager::ExecutionStatus::PREEMPTED;
+        done_ = true;
+      }
+      return true;
+    }
+
+    virtual bool waitForExecution(const ros::Duration &timeout = ros::Duration(0))
+    {
+      if (controller_action_client_ && !done_)
+        return controller_action_client_->waitForResult(timeout);
+      return true;
+    }
+
+    virtual moveit_controller_manager::ExecutionStatus getLastExecutionStatus()
+    {
+      return last_exec_;
+    }
+
+  protected:
+
+    void finishControllerExecution(const actionlib::SimpleClientGoalState& state)
+    {
+      ROS_DEBUG_STREAM("Controller " << name_ << " is done with state " << state.toString() << ": " << state.getText());
+      if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
+        last_exec_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
+      else
+        if (state == actionlib::SimpleClientGoalState::ABORTED)
+          last_exec_ = moveit_controller_manager::ExecutionStatus::ABORTED;
+        else
+          if (state == actionlib::SimpleClientGoalState::PREEMPTED)
+            last_exec_ = moveit_controller_manager::ExecutionStatus::PREEMPTED;
+          else
+            last_exec_ = moveit_controller_manager::ExecutionStatus::FAILED;
       done_ = true;
     }
-    return true;
-  }
 
-  virtual bool waitForExecution(const ros::Duration &timeout = ros::Duration(0))
-  {
-    if (controller_action_client_ && !done_)
-      return controller_action_client_->waitForResult(timeout);
-    return true;
-  }
-
-  virtual moveit_controller_manager::ExecutionStatus getLastExecutionStatus()
-  {
-    return last_exec_;
-  }
-
-protected:
-
-  void finishControllerExecution(const actionlib::SimpleClientGoalState& state)
-  {
-    ROS_DEBUG_STREAM("Controller " << name_ << " is done with state " << state.toString() << ": " << state.getText());
-    if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
-      last_exec_ = moveit_controller_manager::ExecutionStatus::SUCCEEDED;
-    else
-      if (state == actionlib::SimpleClientGoalState::ABORTED)
-        last_exec_ = moveit_controller_manager::ExecutionStatus::ABORTED;
-      else
-        if (state == actionlib::SimpleClientGoalState::PREEMPTED)
-          last_exec_ = moveit_controller_manager::ExecutionStatus::PREEMPTED;
-        else
-          last_exec_ = moveit_controller_manager::ExecutionStatus::FAILED;
-    done_ = true;
-  }
-
-  moveit_controller_manager::ExecutionStatus last_exec_;
-  std::string namespace_;
-  bool done_;
-  boost::shared_ptr<actionlib::SimpleActionClient<T> > controller_action_client_;
-};
+    moveit_controller_manager::ExecutionStatus last_exec_;
+    std::string namespace_;
+    bool done_;
+    boost::shared_ptr<actionlib::SimpleActionClient<T> > controller_action_client_;
+  };
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
@@ -176,19 +174,22 @@ public:
 
     clam_msgs::ClamGripperCommandGoal goal;
     goal.max_effort = DEFAULT_MAX_GRIPPER_EFFORT;
+    goal.position = trajectory.joint_trajectory.points[0].positions[0];
 
-    if (trajectory.joint_trajectory.points[0].positions[0] > 0.5)
-    {
-      goal.position = GRIPPER_OPEN;
+    /*
+      if (trajectory.joint_trajectory.points[0].positions[0] > 0.5)
+      {
+      goal.position = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
       closing_ = false;
       ROS_DEBUG_STREAM("Sending gripper open command");
-    }
-    else
-    {
-      goal.position = GRIPPER_CLOSED;
+      }
+      else
+      {
+      goal.position = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSED;
       closing_ = true;
       ROS_DEBUG_STREAM("Sending gripper close command");
-    }
+      }
+    */
 
     controller_action_client_->sendGoal(goal,
 					boost::bind(&ClamGripperControllerHandle::controllerDoneCallback, this, _1, _2),
@@ -204,17 +205,21 @@ private:
   void controllerDoneCallback(const actionlib::SimpleClientGoalState& state,
                               const clam_msgs::ClamGripperCommandResultConstPtr& result)
   {
+    /*
     // the gripper action reports failure when closing the gripper and an object is inside
     if (state == actionlib::SimpleClientGoalState::ABORTED && closing_)
     {
-      ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports failure");
-      finishControllerExecution(actionlib::SimpleClientGoalState::SUCCEEDED);
+    ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports failure");
+    finishControllerExecution(actionlib::SimpleClientGoalState::SUCCEEDED);
     }
     else
     {
-      ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports sucess");
-      finishControllerExecution(state);
+    ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports sucess");
+    finishControllerExecution(state);
     }
+    */
+    ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","Gripper done callback");
+    finishControllerExecution(state);
   }
 
   void controllerActiveCallback()
@@ -542,7 +547,7 @@ public:
     // TODO: make this cleaner somehow - move the clam_gripper_controller into the domain of dynamixel_hardware_interface?
     if (name == "clam_gripper_controller")
     {
-      ROS_INFO_STREAM_NAMED("loadController","Faked true response for clam_gripper_controller");
+      ROS_DEBUG_STREAM_NAMED("loadController","Faked true response for clam_gripper_controller");
       return true;
     }
 
@@ -593,30 +598,30 @@ public:
 
   virtual bool switchControllers(const std::vector<std::string> &activate, const std::vector<std::string> &deactivate)
   {
-    ROS_ERROR_STREAM_NAMED("clam_moveit_controller_manager","switchController NOT IMPLEMENTED. activate:");
-    std::copy(activate.begin(),activate.end(), std::ostream_iterator<std::string>(std::cout, "\n"));      
-    
+    ROS_DEBUG_STREAM_NAMED("clam_moveit_controller_manager","switchController NOT IMPLEMENTED. activate:");
+    //std::copy(activate.begin(),activate.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
+
     /*
-    if (!use_controller_manager_)
-    {
+      if (!use_controller_manager_)
+      {
       ROS_WARN_STREAM("Cannot switch controllers without using the controller manager");
       return false;
-    }
-    last_lister_response_ = ros::Time();
-    dynamixel_hardware_interface::SwitchController::Request req;
-    dynamixel_hardware_interface::SwitchController::Response res;
+      }
+      last_lister_response_ = ros::Time();
+      dynamixel_hardware_interface::SwitchController::Request req;
+      dynamixel_hardware_interface::SwitchController::Response res;
 
-    req.strictness = dynamixel_hardware_interface::SwitchController::Request::BEST_EFFORT;
-    req.load_controllers = activate;
-    req.unload_controllers = deactivate;
-    if (!switcher_service_.call(req, res))
-    {
+      req.strictness = dynamixel_hardware_interface::SwitchController::Request::BEST_EFFORT;
+      req.load_controllers = activate;
+      req.unload_controllers = deactivate;
+      if (!switcher_service_.call(req, res))
+      {
       ROS_WARN_STREAM("Something went wrong with switcher service");
       return false;
-    }
-    if (!res.ok)
+      }
+      if (!res.ok)
       ROS_WARN_STREAM("Switcher service failed");
-    return res.ok;
+      return res.ok;
     */
     return true;
   }

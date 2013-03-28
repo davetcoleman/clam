@@ -44,11 +44,13 @@
   <build_depend>moveit_ros_planning</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>block_grasp_generator</build_depend>
+  <build_depend>clam_msgs</build_depend>
 
   <run_depend>moveit_core</run_depend>
   <run_depend>moveit_ros_planning</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>block_grasp_generator</run_depend>
+  <run_depend>clam_msgs</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

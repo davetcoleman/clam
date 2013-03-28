@@ -379,7 +379,7 @@ public:
    * \brief Publish an marker of a sphere to rviz
    * \return true if it is successful
    */
-  bool publishSphere(double x, double y, double z)
+  bool publishSphere(const geometry_msgs::Pose &pose)
   {
     if(muted_)
       return true; // this function will only work if we have loaded the publishers
@@ -426,12 +426,9 @@ public:
     color.b = 0.8;
     color.a = 1.0;
 
-
     // Point
     geometry_msgs::Point point_a;
-    point_a.x = x;
-    point_a.y = y;
-    point_a.z = z;
+    point_a = pose.position;
     //ROS_INFO_STREAM("Publishing marker \n" << point_a );
 
     // Add the point pair to the line message

@@ -96,14 +96,16 @@ public:
 
   // Create all possible grasp positions for a block
   bool generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                      const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture);
+                      const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture, 
+                      bool dual_approach);
 
 private:
 
   // Create grasp positions in one axis
   bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
                           grasp_direction_t direction,
-                          const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture);
+                          const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture,
+                          bool dual_approach);
 
   // Show all grasps in Rviz
   void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
