@@ -206,9 +206,15 @@ private:
   {
     // the gripper action reports failure when closing the gripper and an object is inside
     if (state == actionlib::SimpleClientGoalState::ABORTED && closing_)
+    {
+      ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports failure");
       finishControllerExecution(actionlib::SimpleClientGoalState::SUCCEEDED);
+    }
     else
+    {
+      ROS_DEBUG_STREAM_NAMED("controllerDoneCallback","gripper reports sucess");
       finishControllerExecution(state);
+    }
   }
 
   void controllerActiveCallback()
@@ -394,6 +400,8 @@ public:
 
   virtual moveit_controller_manager::MoveItControllerHandlePtr getControllerHandle(const std::string &name)
   {
+    ROS_DEBUG_STREAM_NAMED("getControllerHandle","Name is " << name);
+
     std::map<std::string, moveit_controller_manager::MoveItControllerHandlePtr>::const_iterator it = handle_cache_.find(name);
     if (it != handle_cache_.end())
       return it->second;
@@ -423,6 +431,7 @@ public:
 
     names.clear();
     names.insert(names.end(), names_set.begin(), names_set.end());
+
   }
 
   virtual void getActiveControllers(std::vector<std::string> &names)
@@ -439,6 +448,7 @@ public:
       // we assume best case scenario if we can't test whether the controller is active or not
       for (std::map<std::string, ControllerInformation>::const_iterator it = possibly_unloaded_controllers_.begin() ; it != possibly_unloaded_controllers_.end() ; ++it)
         names.push_back(it->first);
+
   }
 
   virtual void getLoadedControllers(std::vector<std::string> &names)
@@ -454,6 +464,7 @@ public:
       for (std::map<std::string, ControllerInformation>::const_iterator it = possibly_unloaded_controllers_.begin() ; it != possibly_unloaded_controllers_.end() ; ++it)
         names.push_back(it->first);
     }
+
   }
 
   virtual void getControllerJoints(const std::string &name, std::vector<std::string> &joints)
@@ -489,6 +500,7 @@ public:
         ci.joints_ = joints;
       }
     }
+
   }
 
   virtual moveit_controller_manager::MoveItControllerManager::ControllerState getControllerState(const std::string &name)
@@ -524,11 +536,22 @@ public:
 
   virtual bool loadController(const std::string &name)
   {
+    ROS_DEBUG_STREAM_NAMED("clam_moveit_controller_manager","loadController(" << name << ")");
+
+    // Fake out the controller manager if we are requesting the clam_gripper_controller
+    // TODO: make this cleaner somehow - move the clam_gripper_controller into the domain of dynamixel_hardware_interface?
+    if (name == "clam_gripper_controller")
+    {
+      ROS_INFO_STREAM_NAMED("loadController","Faked true response for clam_gripper_controller");
+      return true;
+    }
+
     if (!use_controller_manager_)
     {
       ROS_WARN_STREAM("Cannot load controller without using the controller manager");
       return false;
     }
+
     last_lister_response_ = ros::Time();
     handle_cache_.erase(name);
     dynamixel_hardware_interface::LoadController::Request req;
@@ -546,6 +569,8 @@ public:
 
   virtual bool unloadController(const std::string &name)
   {
+    ROS_DEBUG_STREAM_NAMED("clam_moveit_controller_manager","unloadController(" << name << ")");
+
     if (!use_controller_manager_)
     {
       ROS_WARN_STREAM("Cannot unload controller without using the controller manager");
@@ -568,6 +593,9 @@ public:
 
   virtual bool switchControllers(const std::vector<std::string> &activate, const std::vector<std::string> &deactivate)
   {
+    ROS_ERROR_STREAM_NAMED("clam_moveit_controller_manager","switchController NOT IMPLEMENTED. activate:");
+    std::copy(activate.begin(),activate.end(), std::ostream_iterator<std::string>(std::cout, "\n"));      
+    
     /*
     if (!use_controller_manager_)
     {
@@ -614,7 +642,7 @@ protected:
   moveit_controller_manager::MoveItControllerHandlePtr getControllerHandleHelper(const std::string &name, const std::string &ns)
   {
     moveit_controller_manager::MoveItControllerHandlePtr new_handle;
-    ROS_ERROR_STREAM_NAMED("getControllerHandleHelper","Name = " << name);
+    ROS_DEBUG_STREAM_NAMED("getControllerHandleHelper","Name = " << name);
 
     if (name == "clam_gripper_controller")
     {

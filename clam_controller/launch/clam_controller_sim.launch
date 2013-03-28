@@ -23,7 +23,7 @@
               --port=port_ttl
               shoulder_pan_controller
               gripper_roll_controller
-              l_gripper_aft_controller"
+              gripper_finger_controller"
         output="screen"/>
 
   <node name="clam_controller_spawner_rs485" pkg="dynamixel_simulator_interface" type="controller_spawner.py"
@@ -54,6 +54,7 @@
   </node>
 
   <!-- Start the Clam Gripper Server to control the end effector -->
-  <node name="clam_gripper_server" pkg="clam_controller" type="clam_gripper_server" output="screen" />
+  <node name="clam_gripper_controller" pkg="clam_controller" type="clam_gripper_controller" output="screen"
+	args="_simulate:=true" />
 
 </launch>

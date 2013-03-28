@@ -5,8 +5,11 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /ClamArm1
+        - /ClamArm1/Links1
+        - /ClamArm1/Links1/gripper_finger_link1
       Splitter Ratio: 0.5
-    Tree Height: 910
+    Tree Height: 938
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -55,14 +58,9 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        gripper_fake_tip_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         gripper_finger_link:
           Alpha: 1
-          Show Axes: false
+          Show Axes: true
           Show Trail: false
           Value: true
         gripper_fixed_finger_link:
@@ -113,17 +111,18 @@ Visualization Manager:
   Name: root
   Tools:
     - Class: rviz/Interact
+      Hide Inactive Objects: true
     - Class: rviz/MoveCamera
     - Class: rviz/Select
   Value: true
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.36175
+      Distance: 0.816635
       Focal Point:
-        X: 0.353895
-        Y: -0.0621281
-        Z: 0.385625
+        X: 0.313421
+        Y: -0.0129126
+        Z: 0.549821
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 0.354797
@@ -134,14 +133,14 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1200
+  Height: 1230
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001d600000435fc0200000004fb000000100044006900730070006c006100790073010000004100000435000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003160000017c0000000000000000000004640000043500000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001d600000451fc0200000004fb000000100044006900730070006c006100790073010000004100000451000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000003160000017c0000000000000000000004640000045100000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1600
-  X: 3823
-  Y: -297
+  Width: 1602
+  X: 3822
+  Y: -326

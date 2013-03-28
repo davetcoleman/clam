@@ -46,8 +46,12 @@ target_link_libraries(joint_state_aggregator ${catkin_LIBRARIES} )
 #target_link_libraries(clam_arm_action_server ${catkin_LIBRARIES})
 
 # ---------------
-add_executable(clam_gripper_server src/clam_gripper_server.cpp)
+add_executable(clam_gripper_controller src/clam_gripper_controller.cpp)
 # This line is needed to ensure that messages are done being built before this is built
-add_dependencies(clam_gripper_server clam_msgs_gencpp)
-target_link_libraries(clam_gripper_server ${catkin_LIBRARIES})
+add_dependencies(clam_gripper_controller clam_msgs_gencpp)
+target_link_libraries(clam_gripper_controller ${catkin_LIBRARIES})
+
+# ---------------
+add_executable(clam_gripper_controller_test src/clam_gripper_controller_test.cpp)
+target_link_libraries(clam_gripper_controller_test ${catkin_LIBRARIES})
 

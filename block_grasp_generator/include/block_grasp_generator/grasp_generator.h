@@ -41,6 +41,7 @@
 #include <tf_conversions/tf_eigen.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/JointState.h>
 #include <manipulation_msgs/Grasp.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -94,14 +95,15 @@ public:
   ~GraspGenerator();
 
   // Create all possible grasp positions for a block
-  bool generateGrasps(const geometry_msgs::Pose& block_pose,
-                      std::vector<manipulation_msgs::Grasp>& possible_grasps);
+  bool generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps,
+                      const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture);
 
 private:
 
   // Create grasp positions in one axis
   bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
-                          grasp_direction_t direction );
+                          grasp_direction_t direction,
+                          const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture);
 
   // Show all grasps in Rviz
   void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,

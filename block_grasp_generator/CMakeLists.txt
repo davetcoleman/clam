@@ -8,6 +8,7 @@ find_package(Boost REQUIRED thread system)
 find_package(catkin REQUIRED
   roscpp
   std_msgs
+  sensor_msgs
   visualization_msgs 
   eigen_conversions 
   moveit_ros_planning 
@@ -30,6 +31,7 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     std_msgs
+    sensor_msgs
     visualization_msgs 
     eigen_conversions 
     moveit_ros_planning 

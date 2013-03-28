@@ -70,7 +70,7 @@ namespace controller
 {
 // TODO: lower this const:
 static const double ACCEPTABLE_BOUND = 0.05; // amount two positions can vary without being considered different positions.
-static const bool USE_ERROR_OUTPUT_LOG = true; // during trajectory execution, log the position and velcoty error
+static const bool USE_ERROR_OUTPUT_LOG = false; // during trajectory execution, log the position and velcoty error
 
 
 JointTrajectoryActionController::JointTrajectoryActionController()
@@ -169,7 +169,6 @@ void JointTrajectoryActionController::processCommand(const trajectory_msgs::Join
 // This is what MoveIt is sending out
 void JointTrajectoryActionController::processFollowTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal)
 {
-  ROS_INFO("before process traj");
   processTrajectory(goal->trajectory, true);
 }
 
@@ -217,7 +216,6 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
 
   // Maps from an index in joint_names_ to an index in the JointTrajectory msg "traj_msg"
   std::vector<int> lookup(num_joints_, -1);
-  ROS_INFO("lookup");
 
   // Check that all the joints in the trajectory exist in this multiDOF controller
   for (size_t j = 0; j < num_joints_; ++j)
@@ -243,7 +241,6 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
       return;
     }
   }
-  ROS_INFO("after for");
 
   // Check for initial position
   if (traj_msg.points[0].positions.empty())
@@ -381,14 +378,13 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     action_server_->setSucceeded(traj_result, error_msg);
     return;
   }
-    ROS_INFO("6");
 
   // Set the compliance margin and slope
   // TODO: move this to configuration file
   int traj_compliance_margin = 1;
   int traj_compliance_slope = 10; //20
   MultiJointController::setAllComplianceMarginSlope( traj_compliance_margin, traj_compliance_slope );
-    ROS_INFO("7");
+
   // -----------------------------------------------------------------------------------------------
   // Log position and velocity error for each joint to file
   std::ofstream error_log_file;
@@ -411,7 +407,7 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     }
     error_log_file << "\n";
   }
-    ROS_INFO("8");
+
   // Wait until we've reached the trajectory start time
   ROS_INFO("Trajectory start requested at %.3lf, waiting...", traj_msg.header.stamp.toSec());
   ros::Time::sleepUntil(traj_msg.header.stamp);
@@ -507,15 +503,15 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
         // Set the simulated joint position and velocity
         joint_to_controller_[*joint_it]->setDesiredPositionVelocity(desired_position, desired_velocity);
 
-        /*          
+        /*
         // Generate raw motor commands
         std::vector<std::vector<int> > joint_motor_commands =
-          joint_to_controller_[*joint_it]->getRawMotorCommands(desired_position, desired_velocity);
+        joint_to_controller_[*joint_it]->getRawMotorCommands(desired_position, desired_velocity);
 
         // Copy raw motor commands to port vector
         for (size_t i = 0; i < joint_motor_commands.size(); ++i)
         {
-          port_motor_commands.push_back(joint_motor_commands[i]);
+        port_motor_commands.push_back(joint_motor_commands[i]);
         }
 
         // Copy port vector to multi port vector
@@ -527,17 +523,18 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
     /*
     // Loop through every port and send it their raw commands
     for ( std::map<std::string, std::vector<std::vector<int> > >::const_iterator
-            multi_port_commands_it = multi_port_commands.begin();
-          multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
+    multi_port_commands_it = multi_port_commands.begin();
+    multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
     {
-      //port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
+    //port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
     }
     */
 
     // Now wait for the next segment to be ready to go
     while (time < seg_end_times[traj_seg])
     {
-      // check if new trajectory was received, if so abort old one by setting the desired state to current state
+      // check if new trajectory was received, if so abort old one
+      // setting the desired position of all the servos to each of their current states, so as to pause everything
       if (is_action && action_server_->isPreemptRequested())
       {
         traj_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
@@ -559,23 +556,29 @@ void JointTrajectoryActionController::processTrajectory(const trajectory_msgs::J
             double desired_position = joint_states_[joint]->position;
             double desired_velocity = joint_states_[joint]->velocity;
 
-            std::vector<std::vector<int> > joint_motor_commands = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
-            for (size_t i = 0; i < joint_motor_commands.size(); ++i)
-            {
-              port_motor_commands.push_back(joint_motor_commands[i]);
-            }
+            // Set the simulated joint position and velocity
+            joint_to_controller_[joint]->setDesiredPositionVelocity(desired_position, desired_velocity);
 
-            multi_port_commands[port_it->first] = port_motor_commands;
+            /*
+              std::vector<std::vector<int> > joint_motor_commands = joint_to_controller_[joint]->getRawMotorCommands(desired_position, desired_velocity);
+              for (size_t i = 0; i < joint_motor_commands.size(); ++i)
+              {
+              port_motor_commands.push_back(joint_motor_commands[i]);
+              }
+
+              multi_port_commands[port_it->first] = port_motor_commands;
+            */
           }
         }
 
-        std::map<std::string, std::vector<std::vector<int> > >::const_iterator multi_port_commands_it;
-        for (multi_port_commands_it = multi_port_commands.begin(); multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
-        {
-          //          port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
-          // TODO: zebra: copy the positions to the joint state publishers!
-          ROS_ERROR("implement copy pos and vel to simulation here!");
-        }
+        // Generate raw motor commands
+        /*
+          std::map<std::string, std::vector<std::vector<int> > >::const_iterator multi_port_commands_it;
+          for (multi_port_commands_it = multi_port_commands.begin(); multi_port_commands_it != multi_port_commands.end(); ++multi_port_commands_it)
+          {
+          port_to_io_[multi_port_commands_it->first]->setMultiPositionVelocity(multi_port_commands_it->second);
+          }
+        */
 
         action_server_->setPreempted(traj_result, error_msg);
         ROS_WARN("%s", error_msg.c_str());

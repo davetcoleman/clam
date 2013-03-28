@@ -38,7 +38,7 @@ namespace block_grasp_generator
 {
 
 // Constructor
-GraspGenerator::GraspGenerator( const std::string base_link, 
+GraspGenerator::GraspGenerator( const std::string base_link,
                                 RobotVizToolsPtr rviz_tools) :
   base_link_(base_link),
   rviz_tools_(rviz_tools)
@@ -54,7 +54,8 @@ GraspGenerator::~GraspGenerator()
 
 
 // Create all possible grasp positions for a block
-bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps)
+bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps,
+                                    const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture)
 {
   // ---------------------------------------------------------------------------------------------
   // Create a transform from the block's frame (center of block) to /base_link
@@ -62,27 +63,28 @@ bool GraspGenerator::generateGrasps(const geometry_msgs::Pose& block_pose, std::
 
   // ---------------------------------------------------------------------------------------------
   // Show block
-    //rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, true);
+  //rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, true);
 
   // ---------------------------------------------------------------------------------------------
   // Generate grasps
 
   // Calculate grasps in two axis in both directions
-  generateAxisGrasps( possible_grasps, X_AXIS, DOWN );
-  generateAxisGrasps( possible_grasps, X_AXIS, UP );
-  generateAxisGrasps( possible_grasps, Y_AXIS, DOWN );
-  generateAxisGrasps( possible_grasps, Y_AXIS, UP );
+  generateAxisGrasps( possible_grasps, X_AXIS, DOWN, pre_grasp_posture, grasp_posture );
+  generateAxisGrasps( possible_grasps, X_AXIS, UP, pre_grasp_posture, grasp_posture );
+  generateAxisGrasps( possible_grasps, Y_AXIS, DOWN, pre_grasp_posture, grasp_posture );
+  generateAxisGrasps( possible_grasps, Y_AXIS, UP, pre_grasp_posture, grasp_posture );
   ROS_DEBUG_STREAM_NAMED("grasp", "Generated " << possible_grasps.size() << " grasps." );
 
   // Visualize results
-    visualizeGrasps(possible_grasps, block_pose);
+  visualizeGrasps(possible_grasps, block_pose);
 
   return true;
 }
 
 // Create grasp positions in one axis
 bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
-                                        grasp_direction_t direction )
+                                        grasp_direction_t direction,
+                                        const sensor_msgs::JointState& pre_grasp_posture, const sensor_msgs::JointState& grasp_posture)
 {
   // ---------------------------------------------------------------------------------------------
   // manipulation_msgs:Grasp parameters
@@ -173,23 +175,13 @@ bool GraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& p
 
     // PreGrasp and Grasp Postures --------------------------------------------------------------------------
 
-    // The internal posture of the hand for the pre-grasp
-    // only positions are used
+    // The internal posture of the hand for the pre-grasp only positions are used
     //sensor_msgs/JointState pre_grasp_posture
-    new_grasp.pre_grasp_posture.header.frame_id = base_link_;
-    new_grasp.grasp_posture.name.resize(1);
-    new_grasp.grasp_posture.name[0] = "gripper_finger_joint"; // TODO move this string
-    new_grasp.pre_grasp_posture.position.resize(1);
-    new_grasp.pre_grasp_posture.position[0] = -1.0;
+    new_grasp.pre_grasp_posture = pre_grasp_posture;
 
-    // The internal posture of the hand for the grasp
-    // positions and efforts are used
+    // The internal posture of the hand for the grasp positions and efforts are used
     //sensor_msgs/JointState grasp_posture
-    new_grasp.grasp_posture.header.frame_id = base_link_;
-    new_grasp.grasp_posture.name.resize(1);
-    new_grasp.grasp_posture.name[0] = "gripper_finger_joint"; // TODO move this string
-    new_grasp.grasp_posture.position.resize(1);
-    new_grasp.grasp_posture.position[0] = -0.05;
+    new_grasp.grasp_posture = grasp_posture;
 
     // Grasp ------------------------------------------------------------------------------------------------
 

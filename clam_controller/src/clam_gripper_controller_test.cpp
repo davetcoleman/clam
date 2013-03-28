@@ -70,13 +70,13 @@ int main(int argc, char **argv)
       // -----------------------------------------------------------------------------------------------
       // Open gripper
       ROS_INFO("[gripper test] Opening gripper");
-      gripper_goal_.command = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
+      gripper_goal_.position = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
       clam_gripper_controller_.sendGoal(gripper_goal_);
       clam_gripper_controller_.waitForResult(ros::Duration(10.0)); // has a timeout
       
       // Error check
       if( !clam_gripper_controller_.getState().isDone() ||
-          !clam_gripper_controller_.getResult()->success )
+          !clam_gripper_controller_.getResult()->reached_goal )
       {
         ROS_ERROR("[gripper test] Timeout: Unable to open end effector");
         return 2;
@@ -88,14 +88,14 @@ int main(int argc, char **argv)
       // -----------------------------------------------------------------------------------------------
       // Close gripper
       ROS_INFO("[gripper test] Closing gripper");
-      gripper_goal_.command = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
+      gripper_goal_.position = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
       //gripper_goal_.end_effector_setpoint = 0.0; // -0.1
       clam_gripper_controller_.sendGoal(gripper_goal_);
       clam_gripper_controller_.waitForResult(ros::Duration(10.0)); // has a timeout
 
       // Error check
       if( !clam_gripper_controller_.getState().isDone() ||
-          !clam_gripper_controller_.getResult()->success )
+          !clam_gripper_controller_.getResult()->reached_goal )
       {
         ROS_ERROR("[gripper test] Timeout: Unable to close end effector");
         return 2;

@@ -58,13 +58,22 @@ namespace clam_controller
 {
 
 // Hardware
-static const double END_EFFECTOR_OPEN_VALUE_MAX = -1.0;
-static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
+//static const double END_EFFECTOR_OPEN_VALUE_MAX = -1.0;
+//static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
+
+// Simulation
+static const double END_EFFECTOR_OPEN_VALUE_MAX = 0.05;
+static const double END_EFFECTOR_CLOSE_VALUE_MAX = 0.0; //-0.1;
 
 // Software
+/*
 static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
 static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
 static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
+*/
+static const std::string EE_VELOCITY_SRV_NAME = "/gripper_finger_controller/set_velocity";
+static const std::string EE_STATE_MSG_NAME = "/gripper_finger_controller/state";
+static const std::string EE_POSITION_MSG_NAME = "/gripper_finger_controller/command";
 
 // Perforance
 static const double END_EFFECTOR_POSITION_TOLERANCE = 0.02;
@@ -73,13 +82,16 @@ static const double END_EFFECTOR_MEDIUM_VELOCITY = 0.4;
 static const double END_EFFECTOR_SLOW_VELOCITY = 0.1;
 static const double END_EFFECTOR_LOAD_SETPOINT = -0.35; // when less than this number, stop closing. original value: -0.3
 
-class ClamGripperServer
+class ClamGripperController
 {
 private:
   ros::NodeHandle nh_;
 
   // Internal action server stuff
-  actionlib::SimpleActionServer<clam_msgs::ClamGripperCommandAction> action_server_;
+  typedef actionlib::SimpleActionServer<clam_msgs::ClamGripperCommandAction> CGCAS;
+  boost::scoped_ptr<CGCAS> action_server_;
+
+  //actionlib::SimpleActionServer<clam_msgs::ClamGripperCommandAction> action_server_;
   clam_msgs::ClamGripperCommandFeedback     feedback_;
   clam_msgs::ClamGripperCommandResult       result_;
   clam_msgs::ClamGripperCommandGoalConstPtr goal_;
@@ -92,66 +104,95 @@ private:
   // Tracking status of EE
   dynamixel_hardware_interface::JointState ee_status_;
 
+  // Simulation mode
+  bool simulation_mode_;
+
 public:
-  ClamGripperServer(const std::string name) :
-    action_server_(name, false),
-    nh_("~")
+  ClamGripperController(const std::string name, bool simulation_mode) :
+    nh_("~"),
+    simulation_mode_(simulation_mode)
   {
 
     // Create publishers for servo positions
     end_effector_pub_ = nh_.advertise< std_msgs::Float64 >(EE_POSITION_MSG_NAME, 1, true);
 
     // Get the position of the end effector
-    ROS_INFO("Reading end effector position");
-    end_effector_status_ = nh_.subscribe( EE_STATE_MSG_NAME, 1, &ClamGripperServer::proccessEEStatus, this);
+    ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Reading end effector position");
+    end_effector_status_ = nh_.subscribe( EE_STATE_MSG_NAME, 1, &ClamGripperController::proccessEEStatus, this);
 
     // -----------------------------------------------------------------------------------------------
-    // Register the goal and feeback callbacks
-    action_server_.registerGoalCallback(boost::bind(&ClamGripperServer::goalCB, this));
-    action_server_.registerPreemptCallback(boost::bind(&ClamGripperServer::preemptCB, this));
-    action_server_.start();
+    // Register action server
+    action_server_.reset(new CGCAS(nh_, "gripper_action",
+                                   boost::bind(&ClamGripperController::processGripperAction, this, _1),
+                                   //                                   boost::bind(&ClamGripperController::preemptCB, this),
+                                   false));
+    action_server_->start();
 
-    ROS_INFO("ClamGripperCommand action server ready");
+    ROS_INFO_STREAM_NAMED("clam_gripper_controller","ClamGripperCommand action server ready");
   }
 
   // Recieve Action Goal Function
-  void goalCB()
+  void processGripperAction(const clam_msgs::ClamGripperCommandGoalConstPtr& goal)
   {
-    goal_ = action_server_.acceptNewGoal();
+    goal_ = goal;
 
-    if( goal_->position > 0.5 ) // Open
+    if( doGripperAction(goal) )
     {
-      ROS_INFO("Received open end effector goal");
+      result_.reached_goal = true;
+      action_server_->setSucceeded(result_);
+    }
+    else
+    {
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Failed to complete gripper action");
+      result_.reached_goal = false;
+      action_server_->setSucceeded(result_);
+    }
+  }
 
-      if( openEndEffector() )
+  bool doGripperAction(const clam_msgs::ClamGripperCommandGoalConstPtr& goal)
+  {
+    if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN ) // Open
+    {
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received open end effector goal");
+
+      if( simulation_mode_ )
       {
-        result_.reached_goal = true;
-        action_server_.setSucceeded(result_);
+        // Publish command to servos
+        std_msgs::Float64 joint_value;
+        joint_value.data = END_EFFECTOR_OPEN_VALUE_MAX;
+        end_effector_pub_.publish(joint_value);
+        return true;
       }
       else
       {
-        result_.reached_goal = false;
-        action_server_.setSucceeded(result_);
+        return openEndEffector();
+      }
+    }
+    else if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE ) // Closed
+    {
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received close end effector goal");
+
+      if( simulation_mode_ )
+      {
+        // Publish command to servos
+        std_msgs::Float64 joint_value;
+        joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
+        end_effector_pub_.publish(joint_value);
+        return true;
+      }
+      else
+      {
+        return closeEndEffector();
       }
     }
     else
     {
-      ROS_INFO("Received close end effector goal");
-      if( closeEndEffector() )
-      {
-        result_.reached_goal = true;
-        action_server_.setSucceeded(result_);
-      }
-      else
-      {
-        result_.reached_goal = false;
-        action_server_.setSucceeded(result_);
-      }
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Unrecognized command " << goal_->position);
     }
 
     /*
       case clam_msgs::ClamGripperCommandGoal::END_EFFECTOR_SET:
-      ROS_INFO("Received close end effector to setpoint goal");
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received close end effector to setpoint goal");
       setEndEffector(goal_->end_effector_setpoint);
     */
   }
@@ -159,28 +200,21 @@ public:
   // Cancel the action
   void preemptCB()
   {
-    ROS_INFO_STREAM("Action prempted");
+    ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Action prempted - NOT IMPLEMENTED");
     // set the action state to preempted
-    action_server_.setPreempted();
+    action_server_->setPreempted();
   }
-
-  //! Returns the current state of the action
-  /*actionlib::SimpleClientGoalState getState()
-  {
-    return trajectory_client_->getState();
-  }
-  */
 
   bool endEffectorResponding()
   {
     if( ee_status_.header.stamp < ros::Time::now() - ros::Duration(1.0) )
     {
-      ROS_ERROR("Unable to open end effector: servo status is expired");
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Unable to control end effector: servo status is expired");
       return false;
     }
     if( !ee_status_.alive )
     {
-      ROS_ERROR("Unable to open end effector: servo not responding");
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Unable to control end effector: servo not responding");
       return false;
     }
     return true;
@@ -202,23 +236,23 @@ public:
         ee_status_.position < END_EFFECTOR_OPEN_VALUE_MAX - END_EFFECTOR_POSITION_TOLERANCE )
     {
       // Consider the ee to already be in the corret position
-      ROS_INFO("End effector open: already in position");
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","End effector open: already in position");
       return true;
     }
 
     // Set the velocity for the end effector servo
-    ROS_INFO("Setting end effector servo velocity");
+    ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Setting end effector servo velocity");
     velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
     while(!velocity_client_.waitForExistence(ros::Duration(10.0)))
     {
-      ROS_ERROR("Failed to set the end effector servo velocity via service call");
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Failed to set the end effector servo velocity via service call");
       return false;
     }
     dynamixel_hardware_interface::SetVelocity set_velocity_srv;
     set_velocity_srv.request.velocity = END_EFFECTOR_VELOCITY;
     if( !velocity_client_.call(set_velocity_srv) )
     {
-      ROS_ERROR("Failed to set the end effector servo velocity via service call");
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Failed to set the end effector servo velocity via service call");
       return false;
     }
 
@@ -237,20 +271,20 @@ public:
       // Feedback
       feedback_.position = ee_status_.position;
       //TODO: fill in more of the feedback
-      action_server_.publishFeedback(feedback_);
+      action_server_->publishFeedback(feedback_);
 
       // Looping
       ros::Duration(0.25).sleep();
       ++timeout;
       if( timeout > 16 )  // wait 4 seconds
       {
-        ROS_ERROR("Unable to open end effector: timeout on goal position");
+        ROS_ERROR_NAMED("clam_gripper_controller","Unable to open end effector: timeout on goal position");
         return false;
       }
     }
 
     // It worked!
-    ROS_INFO("Finished end effector action");
+    ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Finished end effector action");
     return true;
   }
 
@@ -267,7 +301,7 @@ public:
     if( setpoint >= END_EFFECTOR_CLOSE_VALUE_MAX &&
         setpoint <= END_EFFECTOR_OPEN_VALUE_MAX )
     {
-      ROS_ERROR_STREAM("Unable to set end effector: out of range setpoint of " <<
+      ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Unable to set end effector: out of range setpoint of " <<
                        setpoint << ". Valid range is " << END_EFFECTOR_CLOSE_VALUE_MAX << " to "
                        << END_EFFECTOR_OPEN_VALUE_MAX );
       return false;
@@ -280,7 +314,7 @@ public:
         ee_status_.position < setpoint - END_EFFECTOR_POSITION_TOLERANCE )
     {
       // Consider the ee to already be in the corret position
-      ROS_INFO("End effector close: already in position");
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","End effector close: already in position");
 
       return true;
     }
@@ -300,13 +334,13 @@ public:
       // Feedback
       feedback_.position = ee_status_.position;
       //TODO: fill in more of the feedback
-      action_server_.publishFeedback(feedback_);
+      action_server_->publishFeedback(feedback_);
 
       ros::Duration(0.25).sleep();
       ++timeout;
       if( timeout > 16 )  // wait 4 seconds
       {
-        ROS_ERROR("Unable to close end effector: timeout on goal position");
+        ROS_ERROR_NAMED("clam_gripper_controller","Unable to close end effector: timeout on goal position");
 
         return false;
       }
@@ -331,16 +365,16 @@ public:
         ee_status_.position < END_EFFECTOR_CLOSE_VALUE_MAX + END_EFFECTOR_POSITION_TOLERANCE )
     {
       // Consider the ee to already be in the correct position
-      ROS_INFO("End effector already closed within tolerance, unable to close further");
+      ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","End effector already closed within tolerance, unable to close further");
       return true;
     }
 
     // Set the velocity for the end effector to a low value
-    ROS_INFO("Setting end effector servo velocity low");
+    ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Setting end effector servo velocity low");
     velocity_client_ = nh_.serviceClient< dynamixel_hardware_interface::SetVelocity >(EE_VELOCITY_SRV_NAME);
     if( !velocity_client_.waitForExistence(ros::Duration(5.0)) )
     {
-      ROS_ERROR("Timed out waiting for velocity client existance");
+      ROS_ERROR_NAMED("clam_gripper_controller","Timed out waiting for velocity client existance");
       return false;
     }
 
@@ -348,7 +382,7 @@ public:
     set_velocity_srv.request.velocity = END_EFFECTOR_MEDIUM_VELOCITY;
     if( !velocity_client_.call(set_velocity_srv) )
     {
-      ROS_ERROR("Failed to set the end effector servo velocity via service call");
+      ROS_ERROR_NAMED("clam_gripper_controller","Failed to set the end effector servo velocity via service call");
       return false;
     }
 
@@ -363,7 +397,7 @@ public:
     for(int i = 0; i < 2; ++i)
     {
       timeout_sec = 10; // reset timeout;
-      ROS_INFO_STREAM("Grasping with end effector - grasp number " << i + 1);
+      ROS_DEBUG_STREAM("Grasping with end effector - grasp number " << i + 1);
 
       // Tell servos to start closing slowly to max amount
       joint_value.data = END_EFFECTOR_CLOSE_VALUE_MAX;
@@ -371,7 +405,7 @@ public:
 
       // Wait until end effector is done moving
       while( ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
-                                   ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
+             ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
       {
         ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
 
@@ -386,18 +420,18 @@ public:
           if( joint_value.data < END_EFFECTOR_OPEN_VALUE_MAX )
             joint_value.data = END_EFFECTOR_OPEN_VALUE_MAX;
 
-          ROS_DEBUG("Setting end effector setpoint to %f when it was %f", joint_value.data, ee_status_.position);
+          ROS_DEBUG_NAMED("clam_gripper_controller","Setting end effector setpoint to %f when it was %f", joint_value.data, ee_status_.position);
           end_effector_pub_.publish(joint_value);
 
           if( i == 0 ) // give lots of time to pull out the first time
           {
             ros::Duration(1.00).sleep();
-            ROS_INFO_STREAM("Sleeping as we publish joint value " << joint_value.data);
+            ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Sleeping as we publish joint value " << joint_value.data);
 
             set_velocity_srv.request.velocity = END_EFFECTOR_SLOW_VELOCITY;
             if( !velocity_client_.call(set_velocity_srv) )
             {
-              ROS_ERROR("Failed to set the end effector servo velocity via service call");
+              ROS_ERROR_NAMED("clam_gripper_controller","Failed to set the end effector servo velocity via service call");
               return false;
             }
             ros::Duration(1.0).sleep();
@@ -406,14 +440,14 @@ public:
         }
 
         // Debug output
-        ROS_DEBUG_STREAM("" << joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
+        ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","" << joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
                          ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
                          << " -- LOAD: " << ee_status_.load );
 
         // Feedback
         feedback_.position = ee_status_.position;
         //TODO: fill in more of the feedback
-        action_server_.publishFeedback(feedback_);
+        action_server_->publishFeedback(feedback_);
 
         // Wait an interval before checking again
         ros::Duration(CHECK_INTERVAL).sleep();
@@ -422,14 +456,14 @@ public:
         timeout_sec -= CHECK_INTERVAL;
         if( timeout_sec <= 0 )
         {
-          ROS_ERROR("Timeout: Unable to close end effector");
+          ROS_ERROR_NAMED("clam_gripper_controller","Timeout: Unable to close end effector");
           return false;
         }
       }
     }
 
     // DONE
-    ROS_INFO("Finished closing end effector action");
+    ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Finished closing end effector action");
     return true;
   }
 
@@ -447,9 +481,17 @@ public:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "clam_gripper_server");
+  ros::init(argc, argv, "clam_gripper_controller");
 
-  clam_controller::ClamGripperServer server("clam_gripper_server");
+  // Simulation mode
+  bool simulation_mode = false;
+  ros::NodeHandle nh("~");
+  nh.getParam("simulate", simulation_mode);
+  if(simulation_mode)
+      ROS_WARN_STREAM_NAMED("clam_gripper_controller","In simulation mode");
+
+  // Start controller
+  clam_controller::ClamGripperController server("gripper_action", simulation_mode);
 
   ros::spin();
 

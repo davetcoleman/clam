@@ -365,13 +365,13 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     </collision>
   </link>
   <!-- Gripper Moving Finger -->
-  <joint name="gripper_finger_joint" type="fixed">
-    <origin rpy="3.14159 0 0" xyz="0.055 -0.0275 0.0"/>
+  <joint name="gripper_finger_joint" type="prismatic">
+    <origin rpy="3.14159 0 0" xyz="0.055 0.0225 0.0"/>
     <!-- x=up to heaven  y=left to wall z=back towards motor houseing -->
     <parent link="gripper_roll_link"/>
     <child link="gripper_finger_link"/>
     <axis xyz="0 1 0"/>
-    <limit effort="300" lower="-0.925023722222" upper="0.0" velocity="1"/>
+    <limit effort="300" lower="0.05" upper="0" velocity="1"/>
     <dynamics damping="50" friction="1"/>
   </joint>
   <link name="gripper_finger_link">

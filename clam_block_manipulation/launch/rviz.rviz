@@ -4,16 +4,15 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /ClamArm1
-        - /ClamArm1/Links1
-        - /ClamArm1/Links1/gripper_roll_link1
+        - /MotionPlanning1
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /EE Grasp Poses1/Namespaces1
+        - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
-        - /MarkerArray1
+        - /PlanningScene1/Scene Robot1/Links1
       Splitter Ratio: 0.392982
-    Tree Height: 890
+    Tree Height: 591
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -45,71 +44,17 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: true
+      Enabled: false
       Links:
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_pitch_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_roll_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        gripper_finger_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        gripper_fixed_finger_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        gripper_roll_link:
-          Alpha: 1
-          Show Axes: true
-          Show Trail: false
-          Value: true
-        shoulder_pan_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_pitch_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        tabletop_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_pitch_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_roll_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
+        {}
       Name: ClamArm
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: true
+      Value: false
       Visual Enabled: true
     - Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: false
+      Enabled: true
       MoveIt_Goal_Tolerance: 0
       MoveIt_Planning_Time: 5
       MoveIt_Use_Constraint_Aware_IK: true
@@ -118,7 +63,61 @@ Visualization Manager:
       Name: MotionPlanning
       Planned Path:
         Links:
-          {}
+          base_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_fixed_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pan_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          tabletop_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Loop Animation: true
         Robot Alpha: 0.5
         Show Robot Collision: false
@@ -140,11 +139,11 @@ Visualization Manager:
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
         Query Goal State: false
-        Query Start State: true
+        Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: /grasp_generator_test/dave_scene
+      Planning Scene Topic: /move_group/monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -156,10 +155,64 @@ Visualization Manager:
       Scene Robot:
         Attached Body Color: 150; 50; 150
         Links:
-          {}
+          base_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_fixed_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pan_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          tabletop_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Robot Alpha: 0.5
-        Show Scene Robot: false
-      Value: false
+        Show Scene Robot: true
+      Value: true
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -193,7 +246,7 @@ Visualization Manager:
       Decay Time: 0
       Depth Map Topic: /camera/depth_registered/image_rect
       Depth Map Transport Hint: raw
-      Enabled: true
+      Enabled: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
       Min Color: 0; 0; 0
@@ -210,7 +263,7 @@ Visualization Manager:
       Topic Filter: true
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -270,18 +323,18 @@ Visualization Manager:
     - Arrow Length: 0.1
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Name: BlockPoseArray
       Topic: /block_detection_server/block_orientation
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /move_clam_arm_markers_array
       Name: MoveArm Collisions
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: false
       Marker Topic: /block_perception_server/block_marker
@@ -291,17 +344,17 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /end_effector_marker
       Name: EE Grasp Poses
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: false
       Name: PlanningScene
-      Planning Scene Topic: /planning_scene
+      Planning Scene Topic: /move_group/monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.9
@@ -313,7 +366,61 @@ Visualization Manager:
       Scene Robot:
         Attached Body Color: 150; 50; 150
         Links:
-          {}
+          base_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          elbow_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_fixed_finger_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          gripper_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pan_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          shoulder_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          tabletop_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_pitch_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          wrist_roll_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Robot Alpha: 0.5
         Show Scene Robot: true
       Value: false
@@ -339,31 +446,31 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 0.788864
+      Distance: 1.94265
       Focal Point:
-        X: 0.390023
-        Y: -0.0117552
-        Z: -1.04308e-07
+        X: 0.409689
+        Y: 0.0765432
+        Z: -4.47031e-08
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.320199
+      Pitch: 0.3852
       Target Frame: /base_link
       Value: XYOrbit (rviz)
-      Yaw: 0.503603
+      Yaw: 5.72178
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1164
+  Height: 1254
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000012e0000040ffc0200000005fb000000100044006900730070006c00610079007301000000410000040f000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006700000002f60000017f0000017400ffffff000004160000040f00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002e000000469fc0200000005fb000000100044006900730070006c0061007900730100000041000002e4000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e0067010000032b0000017f0000017400ffffff0000026a0000046900000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1356
-  X: 1391
-  Y: -293
+  Width: 1362
+  X: 1331
+  Y: -364

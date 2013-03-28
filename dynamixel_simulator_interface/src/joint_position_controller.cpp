@@ -56,7 +56,8 @@ bool JointPositionController::initialize(std::string name,
                                          std::string port_namespace,
                                          dynamixel_simulator_interface::DynamixelIO* dxl_io)
 {
-  ROS_DEBUG_STREAM_NAMED("joint_position_controller","Initializing controller " << name);
+  ROS_DEBUG_STREAM_NAMED(name_,"initialize(" << name << "," << port_namespace << ")");
+
   if (!SingleJointController::initialize(name, port_namespace, dxl_io))
   {
     return false;
@@ -225,7 +226,17 @@ void JointPositionController::processMotorStates()
 
 void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& msg)
 {
-  uint16_t pos_enc = posRad2Enc(msg->data);
+  ROS_DEBUG_STREAM_NAMED(name_,"processCommand(" << msg->data << ")");
+
+  // Simulator:
+  double desired_position = msg->data;
+  double desired_velocity = 1.0; // TODO: this is a dummy number
+
+  setDesiredPositionVelocity(desired_position, desired_velocity);
+
+  /*
+  uint16_t pos_enc = posRad2Enc(msg->data);  
+
   std::vector<std::vector<int> > mcv;
 
   for (size_t i = 0; i < motor_ids_.size(); ++i)
@@ -257,6 +268,7 @@ void JointPositionController::processCommand(const std_msgs::Float64ConstPtr& ms
     ROS_DEBUG("%s: setting position for motor %d to %d", name_.c_str(), motor_id, pair[1]);
     mcv.push_back(pair);
   }
+  */
 
   //  dxl_io_->setMultiPosition(mcv);
 }

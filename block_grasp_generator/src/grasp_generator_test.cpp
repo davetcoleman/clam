@@ -40,6 +40,7 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 #include <geometry_msgs/PoseArray.h>
+#include <sensor_msgs/JointState.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -76,6 +77,8 @@ static const std::string EE_LINK = "gripper_roll_link";
 static const std::string PLANNING_GROUP_NAME = "arm";
 static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
 static const std::string EE_GROUP = "gripper_group";
+static const std::string EE_JOINT = "gripper_finger_joint"; // TODO: remove this dependency!!
+static const std::string BASE_LINK = "/base_link";
 
 class GraspGeneratorTest
 {
@@ -87,9 +90,6 @@ private:
   boost::shared_ptr<tf::TransformListener> tf_;
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
-  // Parameters from goal
-  std::string base_link_;
-
   // Grasp generator
   block_grasp_generator::GraspGeneratorPtr grasp_generator_;
 
@@ -100,7 +100,6 @@ public:
 
   // Constructor
   GraspGeneratorTest(int num_tests) :
-    base_link_("base_link"),
     nh_("~")
   {
 
@@ -112,12 +111,37 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
+    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, BASE_LINK, planning_scene_monitor_));
     rviz_tools_->setLifetime(0.0);
     rviz_tools_->setMuted(false);
 
     // Create grasp generator
-    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(base_link_, rviz_tools_) );
+    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(BASE_LINK, rviz_tools_) );
+
+    // ---------------------------------------------------------------------------------------------
+    // Create pre-grasp posture
+    sensor_msgs::JointState pre_grasp_posture;
+    {
+      pre_grasp_posture.header.frame_id = BASE_LINK;
+      // Name of joints:
+      pre_grasp_posture.name.resize(1);
+      pre_grasp_posture.name[0] = EE_JOINT;
+      // Position of joints
+      pre_grasp_posture.position.resize(1);
+      pre_grasp_posture.position[0] = 0.0; // OPEN
+    }
+
+    // Create grasp posture
+    sensor_msgs::JointState grasp_posture;
+    {
+      grasp_posture.header.frame_id = BASE_LINK;
+      // Name of joints:
+      grasp_posture.name.resize(1);
+      grasp_posture.name[0] = EE_JOINT;
+      // Position of joints
+      grasp_posture.position.resize(1);
+      grasp_posture.position[0] = 1.0; // CLOSE
+    }
 
     // ---------------------------------------------------------------------------------------------
     // Generate grasps for a bunch of random blocks
@@ -133,14 +157,14 @@ public:
       generateRandomBlock(block_pose);
       //getTestBlock(block_pose);
       possible_grasps.clear();
-      grasp_generator_->generateGrasps( block_pose, possible_grasps );      
+      grasp_generator_->generateGrasps( block_pose, possible_grasps, pre_grasp_posture, grasp_posture);
     }
 
 
   }
 
   void getTestBlock(geometry_msgs::Pose& block_pose)
-  {    
+  {
     // Position
     geometry_msgs::Pose start_block_pose;
     geometry_msgs::Pose end_block_pose;

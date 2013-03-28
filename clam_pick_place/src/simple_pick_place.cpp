@@ -36,6 +36,7 @@
 /* Author: Ioan Sucan */
 
 #include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 
 // MoveIt!
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -51,6 +52,7 @@ static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
 static const std::string PLANNING_GROUP_NAME = "arm";
 static const std::string BASE_LINK = "/base_link";
 static const std::string EE_GROUP = "gripper_group"; // TODO: remove this dependency!!
+static const std::string EE_JOINT = "gripper_finger_joint"; // TODO: remove this dependency!!
 static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
@@ -68,13 +70,37 @@ void pick(move_group_interface::MoveGroup &group, const geometry_msgs::Pose& blo
   rviz_tools_.reset(new block_grasp_generator::RobotVizTools( RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME,
                                                               BASE_LINK, planning_scene_monitor_ ));
 
+  // Create pre-grasp posture
+  sensor_msgs::JointState pre_grasp_posture;
+  {
+    pre_grasp_posture.header.frame_id = BASE_LINK;
+    // Name of joints:
+    pre_grasp_posture.name.resize(1);
+    pre_grasp_posture.name[0] = EE_JOINT;
+    // Position of joints
+    pre_grasp_posture.position.resize(1);
+    pre_grasp_posture.position[0] = 0.0; // OPEN
+  }
+
+  // Create grasp posture
+  sensor_msgs::JointState grasp_posture;
+  {
+    grasp_posture.header.frame_id = BASE_LINK;
+    // Name of joints:
+    grasp_posture.name.resize(1);
+    grasp_posture.name[0] = EE_JOINT;
+    // Position of joints
+    grasp_posture.position.resize(1);
+    grasp_posture.position[0] = 1.0; // CLOSE
+  }
+
   // Load grasp generator
-  block_grasp_generator::GraspGenerator grasp_generator( BASE_LINK, rviz_tools_);
+  block_grasp_generator::GraspGenerator grasp_generator( BASE_LINK, rviz_tools_ );
 
   // Pick grasp
-  grasp_generator.generateGrasps( block_pose, grasps );
+  grasp_generator.generateGrasps( block_pose, grasps, pre_grasp_posture, grasp_posture );
 
-  //group.setSupportSurfaceName("table");
+  group.setSupportSurfaceName("tabletop_link");
   group.pick(BLOCK_NAME, grasps);
 }
 
@@ -237,6 +263,9 @@ int main(int argc, char **argv)
   // Create a obstacle
   co.id = BLOCK_NAME;
   co.operation = moveit_msgs::CollisionObject::REMOVE;
+  ros::WallDuration(0.5).sleep();
+  pub_co.publish(co);
+  ros::WallDuration(0.5).sleep();
   pub_co.publish(co);
 
   co.operation = moveit_msgs::CollisionObject::ADD;
@@ -261,7 +290,8 @@ int main(int argc, char **argv)
 
   //place(group, end_block_pose);
   //ROS_INFO_STREAM_NAMED("simple_pick_place","Done with place");
-
+  
+  ros::shutdown();
   //ros::waitForShutdown();
   return 0;
 }

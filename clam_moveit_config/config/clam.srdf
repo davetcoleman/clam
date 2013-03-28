@@ -13,7 +13,7 @@
         <chain base_link="base_link" tip_link="gripper_roll_link" />
     </group>
     <group name="gripper_group">
-        <link name="gripper_roll_link" />
+        <!--link name="gripper_roll_link" /-->
         <link name="gripper_fixed_finger_link" />
         <link name="gripper_finger_link" />
         <!--link name="gripper_fake_tip_link" /-->
