@@ -5,4 +5,4 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/clam.srdf
   CONFIG:
-    generated_timestamp: 1364270683
+    generated_timestamp: 1364546588
