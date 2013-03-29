@@ -195,7 +195,7 @@ bool place(const geometry_msgs::Pose& block_pose)
     place_loc.place_pose = pose_stamped;
 
     // Publish to Rviz
-    //rviz_tools_->publishArrow(pose_stamped.pose);
+    rviz_tools_->publishArrow(pose_stamped.pose);
 
     // Approach & Retreat
     place_loc.approach = grasps[i].approach;

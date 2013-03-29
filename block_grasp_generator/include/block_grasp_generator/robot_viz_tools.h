@@ -112,7 +112,7 @@ public:
     planning_group_name_(planning_group_name),
     base_link_(base_link),
     ee_marker_is_loaded_(false),
-    marker_lifetime_(ros::Duration(30.0)),
+    marker_lifetime_(ros::Duration(10.0)),
     nh_("~"),
     muted_(false)
   {
@@ -531,7 +531,7 @@ public:
     marker.lifetime = marker_lifetime_;
 
     rviz_marker_pub_.publish( marker );
-    ros::Duration(0.05).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
+    ros::Duration(0.01).sleep(); // Sleep to prevent markers from being 'skipped' in rviz
 
     return true;
   }
