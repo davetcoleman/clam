@@ -184,6 +184,10 @@ bool BlockGraspGenerator::generateAxisGrasps(std::vector<manipulation_msgs::Gras
 
     // an optional list of obstacles that we have semantic information about and that can be touched/pushed/moved in the course of grasping
     //string[] allowed_touch_objects
+    new_grasp.allowed_touch_objects.push_back("Block1");
+    new_grasp.allowed_touch_objects.push_back("Block2");
+    new_grasp.allowed_touch_objects.push_back("Block3");
+    new_grasp.allowed_touch_objects.push_back("Block4");
 
     // -------------------------------------------------------------------------------------------------------
     // Approach and retreat - add pose twice to possible grasps - two different approach and retreat motions
