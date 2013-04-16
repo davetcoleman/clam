@@ -70,7 +70,7 @@ namespace controller
 {
 // TODO: lower this const:
 static const double ACCEPTABLE_BOUND = 0.05; // amount two positions can vary without being considered different positions.
-static const bool USE_ERROR_OUTPUT_LOG = true; // during trajectory execution, log the position and velcoty error
+static const bool USE_ERROR_OUTPUT_LOG = false; // during trajectory execution, log the position and velcoty error
 
 
 JointTrajectoryActionController::JointTrajectoryActionController()

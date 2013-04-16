@@ -66,11 +66,6 @@ static const double END_EFFECTOR_OPEN_VALUE_MAX = 0.05;
 static const double END_EFFECTOR_CLOSE_VALUE_MAX = 0.0; //-0.1;
 
 // Software
-/*
-static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
-static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
-static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
-*/
 static const std::string EE_VELOCITY_SRV_NAME = "/gripper_finger_controller/set_velocity";
 static const std::string EE_STATE_MSG_NAME = "/gripper_finger_controller/state";
 static const std::string EE_POSITION_MSG_NAME = "/gripper_finger_controller/command";

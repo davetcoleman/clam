@@ -23,7 +23,7 @@
               --port=port_ttl
               shoulder_pan_controller
               gripper_roll_controller
-              l_gripper_aft_controller"
+              gripper_finger_controller"
         output="screen"/>
 
   <node name="clam_controller_spawner_rs485" pkg="dynamixel_hardware_interface" type="controller_spawner.py"
@@ -48,12 +48,13 @@
   <include file="$(find clam_controller)/launch/joint_state_aggregator.launch" />
 
   <!-- Launch fake joint state publisher -->
-  <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
+  <!--node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py" output="screen">
     <rosparam param="source_list">[joint_states]</rosparam>
     <rosparam param="use_gui">FALSE</rosparam>
-  </node>
+  </node-->
 
   <!-- Start the Clam Gripper Server to control the end effector -->
-  <node name="clam_gripper_controller" pkg="clam_controller" type="clam_gripper_controller" output="screen" />
-  
+  <node name="clam_gripper_controller" pkg="clam_controller" type="clam_gripper_controller" output="screen"
+	args="_simulate:=false" />  
+
 </launch>
