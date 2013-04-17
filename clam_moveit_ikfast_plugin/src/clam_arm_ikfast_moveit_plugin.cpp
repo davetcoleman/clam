@@ -81,6 +81,7 @@ public:
    * @param ik_seed_state an initial guess solution for the inverse kinematics
    * @param solution the solution vector
    * @param error_code an error code that encodes the reason for failure or success
+   * @param lock_redundant_joints ?
    * @return True if a valid solution was found, false otherwise
    */
 
@@ -88,7 +89,8 @@ public:
   bool getPositionIK(const geometry_msgs::Pose &ik_pose,
                      const std::vector<double> &ik_seed_state,
                      std::vector<double> &solution,
-                     moveit_msgs::MoveItErrorCodes &error_code) const;
+                     moveit_msgs::MoveItErrorCodes &error_code,
+                     bool lock_redundant_joints = false) const;
 
   /**
    * @brief Given a desired pose of the end-effector, search for the joint angles required to reach it.
@@ -102,7 +104,8 @@ public:
                         const std::vector<double> &ik_seed_state,
                         double timeout,
                         std::vector<double> &solution,
-                        moveit_msgs::MoveItErrorCodes &error_code) const;
+                        moveit_msgs::MoveItErrorCodes &error_code,
+                        bool lock_redundant_joints = false) const;
 
   /**
    * @brief Given a desired pose of the end-effector, search for the joint angles required to reach it.
@@ -118,7 +121,8 @@ public:
                         double timeout,
                         const std::vector<double> &consistency_limits,
                         std::vector<double> &solution,
-                        moveit_msgs::MoveItErrorCodes &error_code) const;
+                        moveit_msgs::MoveItErrorCodes &error_code,
+                        bool lock_redundant_joints = false) const;
 
   /**
    * @brief Given a desired pose of the end-effector, search for the joint angles required to reach it.
@@ -133,9 +137,9 @@ public:
                         const std::vector<double> &ik_seed_state,
                         double timeout,
                         std::vector<double> &solution,
-                        const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
-                                                   moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-    moveit_msgs::MoveItErrorCodes &error_code) const;
+                        const IKCallbackFn &solution_callback,
+                        moveit_msgs::MoveItErrorCodes &error_code,
+                        bool lock_redundant_joints = false) const;
 
   /**
    * @brief Given a desired pose of the end-effector, search for the joint angles required to reach it.
@@ -152,9 +156,9 @@ public:
                         double timeout,
                         const std::vector<double> &consistency_limits,
                         std::vector<double> &solution,
-                        const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
-                                                   moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-    moveit_msgs::MoveItErrorCodes &error_code) const;
+                        const IKCallbackFn &solution_callback,
+                        moveit_msgs::MoveItErrorCodes &error_code,
+                        bool lock_redundant_joints = false) const;
 
   /**
    * @brief Given a set of joint angles and a set of links, compute their pose
@@ -519,7 +523,8 @@ bool IKFastKinematicsPlugin::getPositionFK(const std::vector<std::string> &link_
 bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
                                            const std::vector<double> &ik_seed_state,
                                            std::vector<double> &solution,
-                                           moveit_msgs::MoveItErrorCodes &error_code) const
+                                           moveit_msgs::MoveItErrorCodes &error_code,
+                                           bool lock_redundant_joints) const
 {
   ROS_DEBUG_STREAM_NAMED("ikfast","getPositionIK");
 
@@ -535,7 +540,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
   KDL::Frame frame;
   tf::poseMsgToKDL(ik_pose,frame);
 
-  
+
   IkSolutionList<IkReal> solutions;
   int numsol = solve(frame,vfree,solutions);
 
@@ -550,7 +555,7 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
       ROS_DEBUG_NAMED("ikfast","Sol %d: %e   %e   %e   %e   %e   %e", s, sol[0], sol[1], sol[2], sol[3], sol[4], sol[5]);
 
       bool obeys_limits = true;
-      for(unsigned int i = 0; i < sol.size(); i++) 
+      for(unsigned int i = 0; i < sol.size(); i++)
       {
         // Add tolerance to limit check
         if(joint_has_limits_vector_[i] && ( (sol[i] < (joint_min_vector_[i]-LIMIT_TOLERANCE)) ||
@@ -583,7 +588,8 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               const std::vector<double> &ik_seed_state,
                                               double timeout,
                                               std::vector<double> &solution,
-                                              moveit_msgs::MoveItErrorCodes &error_code) const
+                                              moveit_msgs::MoveItErrorCodes &error_code,
+                                              bool lock_redundant_joints) const
 {
   ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #1 --------------------------------------------");
 
@@ -686,7 +692,8 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               double timeout,
                                               const std::vector<double> &consistency_limits,
                                               std::vector<double> &solution,
-                                              moveit_msgs::MoveItErrorCodes &error_code) const
+                                              moveit_msgs::MoveItErrorCodes &error_code,
+                                              bool lock_redundant_joints) const
 {
   ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #2");
   if(free_params_.size()==0){
@@ -786,9 +793,9 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               const std::vector<double> &ik_seed_state,
                                               double timeout,
                                               std::vector<double> &solution,
-                                              const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
-                                                                         moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-                                              moveit_msgs::MoveItErrorCodes &error_code) const
+                                              const IKCallbackFn &solution_callback,
+                                              moveit_msgs::MoveItErrorCodes &error_code,
+                                              bool lock_redundant_joints) const
 {
   ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #3");
   // If manipulator has no free links
@@ -889,9 +896,9 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
                                               double timeout,
                                               const std::vector<double> &consistency_limits,
                                               std::vector<double> &solution,
-                                              const boost::function<void(const geometry_msgs::Pose &ik_pose,const std::vector<double> &ik_solution,
-                                                                         moveit_msgs::MoveItErrorCodes &error_code)> &solution_callback,
-                                              moveit_msgs::MoveItErrorCodes &error_code) const
+                                              const IKCallbackFn &solution_callback,
+                                              moveit_msgs::MoveItErrorCodes &error_code,
+                                              bool lock_redundant_joints) const
 {
   ROS_DEBUG_STREAM_NAMED("ikfast","searchPositionIK #4");
   if(free_params_.size()==0){
@@ -988,7 +995,7 @@ bool IKFastKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose
 }
 
 } // end namespace
-  
+
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(clam_arm_kinematics::IKFastKinematicsPlugin, kinematics::KinematicsBase);
 

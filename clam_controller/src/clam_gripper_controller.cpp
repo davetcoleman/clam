@@ -58,12 +58,12 @@ namespace clam_controller
 {
 
 // Hardware
-//static const double END_EFFECTOR_OPEN_VALUE_MAX = -1.0;
-//static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
+static const double END_EFFECTOR_OPEN_VALUE_MAX = -1.0;
+static const double END_EFFECTOR_CLOSE_VALUE_MAX = -0.05; //-0.1;
 
 // Simulation
-static const double END_EFFECTOR_OPEN_VALUE_MAX = 0.05;
-static const double END_EFFECTOR_CLOSE_VALUE_MAX = 0.0; //-0.1;
+//static const double END_EFFECTOR_OPEN_VALUE_MAX = 0.05;
+//static const double END_EFFECTOR_CLOSE_VALUE_MAX = 0.0; //-0.1;
 
 // Software
 static const std::string EE_VELOCITY_SRV_NAME = "/gripper_finger_controller/set_velocity";
@@ -146,7 +146,7 @@ public:
 
   bool doGripperAction(const clam_msgs::ClamGripperCommandGoalConstPtr& goal)
   {
-    if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN ) 
+    if( goal_->position == clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN )
     {
       ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Received open end effector goal");
 
@@ -263,6 +263,7 @@ public:
            ee_status_.position < END_EFFECTOR_OPEN_VALUE_MAX - END_EFFECTOR_POSITION_TOLERANCE &&
            ros::ok() )
     {
+      //      ROS_ERROR_STREAM_NAMED("temp","done waiting with ee_states_.position " << ee_status_.position << " with desired position " << END_EFFECTOR_OPEN_VALUE_MAX);
       // Feedback
       feedback_.position = ee_status_.position;
       //TODO: fill in more of the feedback
@@ -277,6 +278,7 @@ public:
         return false;
       }
     }
+    //ROS_ERROR_STREAM_NAMED("temp","done waiting with ee_states_.position " << ee_status_.position << " with desired position " << END_EFFECTOR_OPEN_VALUE_MAX);
 
     // It worked!
     ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Finished end effector action");
@@ -297,8 +299,8 @@ public:
         setpoint <= END_EFFECTOR_OPEN_VALUE_MAX )
     {
       ROS_ERROR_STREAM_NAMED("clam_gripper_controller","Unable to set end effector: out of range setpoint of " <<
-                       setpoint << ". Valid range is " << END_EFFECTOR_CLOSE_VALUE_MAX << " to "
-                       << END_EFFECTOR_OPEN_VALUE_MAX );
+                             setpoint << ". Valid range is " << END_EFFECTOR_CLOSE_VALUE_MAX << " to "
+                             << END_EFFECTOR_OPEN_VALUE_MAX );
       return false;
     }
 
@@ -400,7 +402,7 @@ public:
 
       // Wait until end effector is done moving
       while( ee_status_.position < joint_value.data - END_EFFECTOR_POSITION_TOLERANCE ||
-             ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
+                                   ee_status_.position > joint_value.data + END_EFFECTOR_POSITION_TOLERANCE )
       {
         ros::spinOnce(); // Allows ros to get the latest servo message - we need the load
 
@@ -436,8 +438,8 @@ public:
 
         // Debug output
         ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","" << joint_value.data - END_EFFECTOR_POSITION_TOLERANCE << " < " <<
-                         ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
-                         << " -- LOAD: " << ee_status_.load );
+                               ee_status_.position << " < " << joint_value.data + END_EFFECTOR_POSITION_TOLERANCE
+                               << " -- LOAD: " << ee_status_.load );
 
         // Feedback
         feedback_.position = ee_status_.position;
@@ -483,7 +485,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh("~");
   nh.getParam("simulate", simulation_mode);
   if(simulation_mode)
-      ROS_WARN_STREAM_NAMED("clam_gripper_controller","In simulation mode");
+    ROS_WARN_STREAM_NAMED("clam_gripper_controller","In simulation mode");
 
   // Start controller
   clam_controller::ClamGripperController server("gripper_action", simulation_mode);

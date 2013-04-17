@@ -67,9 +67,9 @@ private:
   actionlib::SimpleActionClient<clam_msgs::ClamArmAction> clam_arm_client_;
 
   // Action messages
-  clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
-  clam_msgs::PickPlaceFeedback     feedback_;
-  clam_msgs::PickPlaceResult       result_;
+  //  clam_msgs::ClamArmGoal           clam_arm_goal_; // sent to the clam_arm_action_server
+  //  clam_msgs::PickPlaceFeedback     feedback_;
+  //  clam_msgs::PickPlaceResult       result_;
 
 public:
 

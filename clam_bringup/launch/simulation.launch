@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  <!-- send erratic robot XML to param server -->
+  <!-- send robot XML to param server -->
   <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
 
   <!-- send fake joint values -->
   <node name="joint_state_publisher" pkg="clam_controller" type="joint_state_publisher.py">
     <param name="use_gui" value="TRUE"/>
+    <!--rosparam param="source_list">[joint_states]</rosparam-->
   </node>
 
   <!-- Combine joint values -->

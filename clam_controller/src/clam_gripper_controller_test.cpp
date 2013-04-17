@@ -63,7 +63,9 @@ int main(int argc, char **argv)
     ROS_INFO("[gripper test] Waiting for the clam_gripper_controller to come up");
   }
 
-  for(int i = 0; i < 20; ++i)
+  //for(int i = 0; i < 20; ++i)
+  int i = 0;
+  while(ros::ok())
   {
     if( i % 2 )
     {
@@ -104,6 +106,7 @@ int main(int argc, char **argv)
     }
     ROS_WARN("Sleeping");
     ros::Duration(5).sleep();
+    ++i;
   }
 
   return 0;

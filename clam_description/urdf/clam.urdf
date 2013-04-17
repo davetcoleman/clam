@@ -337,63 +337,173 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <material>Gazebo/Blue</material>
     <turnGravityOff>false</turnGravityOff>
   </gazebo>
-  <!-- Gripper Fixed Finger -->
-  <joint name="gripper_fixed_finger_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.055 0.0275 0.0"/>
-    <!-- x=up to heaven  y=left to wall z=back towards motor houseing -->
-    <parent link="gripper_roll_link"/>
-    <child link="gripper_fixed_finger_link"/>
-  </joint>
-  <link name="gripper_fixed_finger_link">
-    <inertial>
-      <origin xyz="0 0 0"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="0.001 0.001 0.001"/>
-      </geometry>
-      <material name="Grey"/>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-  </link>
-  <!-- Gripper Moving Finger -->
-  <joint name="gripper_finger_joint" type="prismatic">
-    <origin rpy="3.14159 0 0" xyz="0.055 0.0225 0.0"/>
-    <!-- x=up to heaven  y=left to wall z=back towards motor houseing -->
+  <joint name="gripper_finger_joint" type="revolute">
     <parent link="gripper_roll_link"/>
     <child link="gripper_finger_link"/>
-    <axis xyz="0 1 0"/>
-    <limit effort="300" lower="0.05" upper="0" velocity="1"/>
+    <origin rpy="3.2672536 1.570795 0.603534345556" xyz="0.026 .017 0"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-0.925023722222" upper="0.0" velocity="1"/>
     <dynamics damping="50" friction="1"/>
   </joint>
+  <!-- LEFT GRIPPER AFT LINK -->
   <link name="gripper_finger_link">
     <inertial>
       <origin xyz="0 0 0"/>
-      <mass value="0.01"/>
+      <mass value="1.0"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
     </inertial>
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://clam_description/stl/l_gripper_aft_link.STL" scale="1 1 1"/>
       </geometry>
       <material name="Grey"/>
     </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <geometry>
-        <mesh filename="package://clam_description/stl/gripper_finger_link.STL" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
   </link>
+  <gazebo reference="l_gripper_aft_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="r_gripper_aft_joint" type="revolute">
+    <parent link="gripper_roll_link"/>
+    <child link="r_gripper_aft_link"/>
+    <origin rpy="4.22543855 1.570795 0.603534345556" xyz="0.026 -0.011  0"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-3.14" upper="3.14" velocity="1"/>
+    <mimic joint="gripper_finger_joint" multiplier="-1.0" offset="0.0"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  <!-- RIGHT GRIPPER AFT LINK -->
+  <link name="r_gripper_aft_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://clam_description/stl/r_gripper_aft_link.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+  </link>
+  <gazebo reference="r_gripper_aft_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="l_gripper_fwd_joint" type="revolute">
+    <parent link="gripper_roll_link"/>
+    <child link="l_gripper_fwd_link"/>
+    <origin rpy="3.2672536 1.570795 3.74512434556" xyz="0.05 0.008 0.007"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="0" upper="1.57" velocity="1"/>
+    <mimic joint="gripper_finger_joint" multiplier="1.0" offset="0"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  <!-- LEFT GRIPPER FWD LINK -->
+  <link name="l_gripper_fwd_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://clam_description/stl/l_gripper_fwd_link.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+  </link>
+  <gazebo reference="l_gripper_fwd_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="r_gripper_fwd_joint" type="revolute">
+    <parent link="gripper_roll_link"/>
+    <child link="r_gripper_fwd_link"/>
+    <origin rpy="3.0159264 1.570795 2.53805565444" xyz="0.05 -0.0014 0.007"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-1.57" upper="0" velocity="1"/>
+    <mimic joint="gripper_finger_joint" multiplier="-1.0" offset="0"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  <!-- RIGHT GRIPPER FWD LINK -->
+  <link name="r_gripper_fwd_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://clam_description/stl/r_gripper_fwd_link.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+  </link>
+  <gazebo reference="r_gripper_fwd_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="gripper_finger_pincher_joint" type="continuous">
+    <parent link="gripper_finger_link"/>
+    <child link="l_gripper_pincher_link"/>
+    <origin rpy="2.55812692389 0 0" xyz="-0.0032 0 -0.0508"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="-1.57" upper="1.57" velocity="1"/>
+    <mimic joint="gripper_finger_joint" multiplier="-1.0" offset="0"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  <!-- LEFT GRIPPER PINCHER -->
+  <link name="l_gripper_pincher_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://clam_description/stl/l_gripper_pincher.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+  </link>
+  <gazebo reference="l_gripper_pincher_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="r_gripper_aft_pincher_joint" type="revolute">
+    <parent link="r_gripper_aft_link"/>
+    <child link="r_gripper_pincher_link"/>
+    <origin rpy="-0.583463076111 3.14159 0" xyz="0 0 -0.0508"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="300" lower="0" upper="1.57" velocity="1"/>
+    <mimic joint="gripper_finger_joint" multiplier="-1.0" offset="0"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+  <!-- RIGHT GRIPPER PINCHER -->
+  <link name="r_gripper_pincher_link">
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="100.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 3.14159" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://clam_description/stl/r_gripper_pincher.STL" scale="1 1 1"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+  </link>
+  <gazebo reference="r_gripper_pincher_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
   <!-- FAKE CAMERA CALIBRATION POINT AT GRIPPER TIP -->
   <!--joint name="gripper_fake_tip_joint" type="fixed">
     <origin xyz="0.1785 0.0 0.0" rpy="0 0 0" />
