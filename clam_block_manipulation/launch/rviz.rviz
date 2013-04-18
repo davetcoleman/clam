@@ -13,7 +13,7 @@ Panels:
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
       Splitter Ratio: 0.613383
-    Tree Height: 928
+    Tree Height: 578
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -55,7 +55,7 @@ Visualization Manager:
       Value: false
       Visual Enabled: true
     - Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: false
+      Enabled: true
       MoveIt_Goal_Tolerance: 0
       MoveIt_Planning_Time: 5
       MoveIt_Use_Constraint_Aware_IK: true
@@ -84,12 +84,32 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_fixed_finger_link:
+          gripper_roll_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_roll_link:
+          l_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_pincher_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_aft_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_pincher_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -177,12 +197,32 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_fixed_finger_link:
+          gripper_roll_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_roll_link:
+          l_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_pincher_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_aft_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_pincher_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -214,7 +254,7 @@ Visualization Manager:
             Value: true
         Robot Alpha: 0.5
         Show Scene Robot: true
-      Value: false
+      Value: true
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -354,7 +394,7 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: true
+      Enabled: false
       Name: PlanningScene
       Planning Scene Topic: /move_group/monitored_planning_scene
       Robot Description: robot_description
@@ -388,12 +428,32 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_fixed_finger_link:
+          gripper_roll_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          gripper_roll_link:
+          l_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_pincher_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_aft_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_fwd_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_pincher_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -425,7 +485,7 @@ Visualization Manager:
             Value: true
         Robot Alpha: 0.5
         Show Scene Robot: true
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /move_group/display_grasp_markers
@@ -463,16 +523,16 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1200
+  Height: 1236
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: false
   Motion Planning:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001ac00000435fc0200000005fb000000100044006900730070006c006100790073010000004100000435000000dd00fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670000000460000000160000001600000016fb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff0000016100000000000000000000048e0000043500000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002a200000451fc0200000005fb000000100044006900730070006c0061007900730100000041000002d7000000dd00fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e0067010000031e000001740000017400fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000003b0000000b0000000b000fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000000003980000045100000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1600
-  X: 3208
+  Width: 1616
+  X: 3201
   Y: -411

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+
+
+  <!-- KINECT LINK ?? -->
+  <joint name="base_kinect_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="kinect_link"/>
+  </joint>
+
+  <link name="kinect_link">
+    <visual>
+      <origin rpy="0 0 0" xyz=" 0 0 0 "/>
+      <geometry>
+	<sphere radius=".005"/>
+      </geometry>
+    </visual>
+  </link>
+
