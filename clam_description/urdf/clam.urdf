@@ -322,14 +322,14 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/gripper_base_link.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://clam_description/stl/gripper_roll_link.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="Orange"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://clam_description/stl/gripper_base_link.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://clam_description/stl/gripper_roll_link.STL" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>

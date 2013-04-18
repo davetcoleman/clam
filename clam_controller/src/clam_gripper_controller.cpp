@@ -263,7 +263,6 @@ public:
            ee_status_.position < END_EFFECTOR_OPEN_VALUE_MAX - END_EFFECTOR_POSITION_TOLERANCE &&
            ros::ok() )
     {
-      //      ROS_ERROR_STREAM_NAMED("temp","done waiting with ee_states_.position " << ee_status_.position << " with desired position " << END_EFFECTOR_OPEN_VALUE_MAX);
       // Feedback
       feedback_.position = ee_status_.position;
       //TODO: fill in more of the feedback
@@ -278,7 +277,6 @@ public:
         return false;
       }
     }
-    //ROS_ERROR_STREAM_NAMED("temp","done waiting with ee_states_.position " << ee_status_.position << " with desired position " << END_EFFECTOR_OPEN_VALUE_MAX);
 
     // It worked!
     ROS_DEBUG_STREAM_NAMED("clam_gripper_controller","Finished end effector action");
