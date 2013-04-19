@@ -32,21 +32,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <block_grasp_generator/grasp_generator.h>
+#include <block_grasp_generator/grasp_filter.h>
 
 namespace block_grasp_generator
 {
 
 // Constructor
-GraspFilter::GraspFilter( robot_model::RobotModelPtr robot_model_, const std::string base_link, bool rviz_verbose,
-                          RobotVizToolsPtr rviz_tools, const std::string planning_group ):
-  robot_model_(robot_model_),
+GraspFilter::GraspFilter( const std::string& base_link, bool rviz_verbose,
+                          RobotVizToolsPtr rviz_tools, const std::string& planning_group ):
   base_link_(base_link),
   rviz_verbose_(rviz_verbose),
   rviz_tools_(rviz_tools),
   planning_group_(planning_group)
 {
   ROS_INFO_STREAM_NAMED("grasp","GraspFilter ready.");
+
+  // Get the planning 
+  robot_model_ = rviz_tools_->getPlanningSceneMonitor()->getPlanningScene()->getRobotModel();
 }
 
 GraspFilter::~GraspFilter()
@@ -81,13 +83,14 @@ bool GraspFilter::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_g
   if( num_threads > possible_grasps.size() )
     num_threads = possible_grasps.size();
   num_threads = 1;
+  ROS_WARN_STREAM_NAMED("grasp_filter","Using " << num_threads << " threads");
 
   // -----------------------------------------------------------------------------------------------
   // Get the solver timeout from kinematics.yaml
   //double timeout = planning_scene_monitor_->getPlanningScene()->getCurrentState().
   //  getJointStateGroup(planning_group_)->getDefaultIKTimeout();
 
-  double timeout = robot_model_->getJointModelGroup( planning_group_ ).getDefaultIKTimeout();
+  double timeout = robot_model_->getJointModelGroup( planning_group_ )->getDefaultIKTimeout();
 
   // -----------------------------------------------------------------------------------------------
   // Load kinematic solvers if not already loaded
@@ -97,15 +100,23 @@ bool GraspFilter::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_g
 
     boost::shared_ptr<kinematics_plugin_loader::KinematicsPluginLoader> kin_plugin_loader;
     kin_plugin_loader.reset(new kinematics_plugin_loader::KinematicsPluginLoader());
-    kinematics_plugin_loader::KinematicsLoaderFn kin_allocator = kin_plugin_loader->getLoaderFunction();
+    robot_model::SolverAllocatorFn kin_allocator = kin_plugin_loader->getLoaderFunction();
 
     const robot_model::JointModelGroup* joint_model_group = robot_model_->getJointModelGroup(planning_group_);
 
     // Create an ik solver for every thread
     for (int i = 0; i < num_threads; ++i)
     {
-      //ROS_INFO_STREAM_NAMED("grasp","Creating ik solver " << i);
+      ROS_INFO_STREAM_NAMED("grasp","Creating ik solver " << i);
+
       kin_solvers_.push_back(kin_allocator(joint_model_group));
+
+      // Test to make sure we have a valid kinematics solver
+      if( !kin_solvers_[i] )
+      {
+        ROS_ERROR_STREAM_NAMED("grasp_filter","No kinematic solver found");
+        return false;
+      }
     }
   }
 
@@ -180,7 +191,7 @@ void GraspFilter::filterGraspThread(IkThreadStruct ik_thread_struct)
 
     // Pointer to current pose
     ik_pose = &ik_thread_struct.possible_grasps_[i].grasp_pose.pose;
-
+    
     // Test it with IK
     ik_thread_struct.kin_solver_->
       searchPositionIK(*ik_pose, ik_seed_state, ik_thread_struct.timeout_, solution, error_code);

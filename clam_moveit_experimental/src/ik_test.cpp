@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Generates grasps for a cube
+   Desc:   Tests IK solver
 */
 
 // ROS

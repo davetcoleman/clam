@@ -63,12 +63,11 @@
 namespace block_grasp_generator
 {
 
-static const std::string EE_GROUP = "gripper_group";
-static const std::string EE_NAME = "end_effector";
-static const std::string PLANNING_GROUP_NAME = "arm";
-static const std::string RVIZ_MARKER_TOPIC = "/end_effectors";
-static const double RAD2DEG = 57.2957795;
-static const double BLOCK_SIZE = 0.04;
+//static const std::string EE_GROUP = "gripper_group";
+//static const std::string EE_NAME = "end_effector";
+//static const std::string PLANNING_GROUP_NAME = "arm";
+//static const std::string RVIZ_MARKER_TOPIC = "/end_effectors";
+//static const double BLOCK_SIZE = 0.04;
 
 // Struct for passing parameters to threads, for cleaner code
 struct IkThreadStruct
@@ -107,7 +106,7 @@ class GraspFilter
 {
 private:
   // Shared robot model
-  robot_model::RobotModelPtr robot_model_;
+  robot_model::RobotModelConstPtr robot_model_;
 
   // Parameters from goal
   const std::string base_link_;
@@ -125,8 +124,8 @@ private:
 public:
 
   // Constructor
-  GraspFilter( robot_model::RobotModelPtr robot_model_, const std::string base_link, bool rviz_verbose, 
-               RobotVizToolsPtr rviz_tools, const std::string planning_group );
+  GraspFilter( const std::string& base_link, bool rviz_verbose, 
+               RobotVizToolsPtr rviz_tools, const std::string& planning_group );
 
   // Destructor
   ~GraspFilter();

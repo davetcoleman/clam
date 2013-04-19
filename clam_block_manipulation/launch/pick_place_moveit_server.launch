@@ -1,19 +1,12 @@
 <launch>
 
-  <!-- Launch controller manager in this namespace -->
-  <include ns="block_pick_place_server" file="$(find clam_moveit_config)/launch/trajectory_execution.launch">
-    <arg name="moveit_controller_manager" value="clam" /> 
-    <arg name="moveit_manage_controllers" value="true" />
-  </include>
-  
   <!-- Launch pick and place -->
   <node name="block_pick_place_server" pkg="clam_block_manipulation" type="block_pick_place_moveit_server" output="screen">
-    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/> <!-- this allows the computeCartesianPath() func to have an IK solver -->
-    <rosparam>
+    <!--rosparam>
       block_x: 0.2
       block_y: 0.1
       block_z: 0.02
-    </rosparam>
+    </rosparam-->
   </node>
 
 </launch>

@@ -252,18 +252,18 @@ void BlockGraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::G
 
     //rviz_tools_->publishSphere(grasp_pose);
 
-    if( i % 2)  // do every other arrow
-    rviz_tools_->publishArrow(grasp_it->grasp_pose.pose);
-        ++i;
+    //if( i % 2)  // do every other arrow
+      //rviz_tools_->publishArrow(grasp_it->grasp_pose.pose);
+    ++i;
 
     //rviz_tools_->publishEEMarkers(grasp_pose);
 
     // Show robot joint positions if available
-    //if( !grasp_it->grasp_posture.position.empty() )
-    //rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
+    if( !grasp_it->grasp_posture.position.empty() )
+      rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
 
     //ros::Duration(0.005).sleep();
-    //ros::Duration(0.1).sleep();
+    ros::Duration(1.0).sleep();
   }
 }
 

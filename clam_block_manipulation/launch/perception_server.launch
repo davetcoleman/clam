@@ -1,7 +1,12 @@
 <launch>
 
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
   <!-- Launch perception -->
-  <node name="block_perception_server" pkg="clam_block_manipulation" type="block_perception_server" output="screen">
+  <node name="block_perception_server" launch-prefix="$(arg launch_prefix)" pkg="clam_block_manipulation" 
+	type="block_perception_server" output="screen">
     <!--remap from="/camera/depth_registered/points" to="/camera/rgb/points" /-->
   </node>
 

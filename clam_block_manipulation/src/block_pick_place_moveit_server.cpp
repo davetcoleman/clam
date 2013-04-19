@@ -51,7 +51,7 @@
 #include <clam_msgs/ClamArmAction.h>
 
 // Grasp generation
-#include <block_grasp_generator/grasp_generator.h>
+#include <block_grasp_generator/block_grasp_generator.h>
 #include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
 
 // MoveIt

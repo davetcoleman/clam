@@ -114,16 +114,16 @@ public:
   bool generateGrasps(const geometry_msgs::Pose& block_pose, const RobotGraspData& grasp_data,
                       std::vector<manipulation_msgs::Grasp>& possible_grasps);
 
+  // Show all grasps in Rviz
+  void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+                       const geometry_msgs::Pose& block_pose);
+
 private:
 
   // Create grasp positions in one axis
   bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
                           grasp_direction_t direction, const RobotGraspData& grasp_data);
                           
-  // Show all grasps in Rviz
-  void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
-                       const geometry_msgs::Pose& block_pose);
-
 }; // end of class
 
 typedef boost::shared_ptr<BlockGraspGenerator> BlockGraspGeneratorPtr;

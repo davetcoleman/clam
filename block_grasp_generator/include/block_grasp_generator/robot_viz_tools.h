@@ -141,6 +141,8 @@ public:
       //planning_scene_monitor_->startWorldGeometryMonitor();
       //planning_scene_monitor_->startSceneMonitor("/move_group/monitored_planning_scene");
       //planning_scene_monitor_->startStateMonitor("/joint_states", "/attached_collision_object");
+      planning_scene_monitor_->startPublishingPlanningScene(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE,
+                                                            "dave_planning_scene");
     }
     else
     {
@@ -184,10 +186,9 @@ public:
   }
 
   /**
-   * \brief
+   * \brief Call this once at begining to load the robot marker
    * \return true if it is successful
    */
-  // Call this once at begining to load the robot marker
   bool loadEEMarker()
   {
     // Load planning scene monitor if one was not already passed in
@@ -622,6 +623,20 @@ public:
     marker_lifetime_ = ros::Duration(lifetime);
   }
 
+  /**
+   * @brief Get the planning scene monitor that this class is using
+   * @param planning_scene_monitor
+   * @return true if successful
+   */
+  planning_scene_monitor::PlanningSceneMonitorPtr getPlanningSceneMonitor()
+  {
+    // Load planning scene monitor if one was not already passed in
+    if(!planning_scene_monitor_)
+      if(!loadPlanningSceneMonitor())
+        ROS_ERROR_STREAM_NAMED("","Unable to get planning scene");
+    
+    return planning_scene_monitor_;
+  }
 
 
 }; // class

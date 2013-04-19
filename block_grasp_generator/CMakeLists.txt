@@ -18,16 +18,24 @@ find_package(catkin REQUIRED
   tf_conversions
 )
 
-# Grasp Library
+# Grasp Generator Library
 add_library(${PROJECT_NAME}_block_grasp_generator
   src/block_grasp_generator.cpp
+  src/grasp_filter.cpp
 )
 target_link_libraries(${PROJECT_NAME}_block_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+# Grasp Filter Library
+add_library(${PROJECT_NAME}_grasp_filter
+  src/grasp_filter.cpp
+)
+target_link_libraries(${PROJECT_NAME}_grasp_filter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+# Catkin
 catkin_package(
   LIBRARIES
     ${PROJECT_NAME}_block_grasp_generator
+    ${PROJECT_NAME}_grasp_filter
   CATKIN_DEPENDS
     roscpp
     std_msgs
@@ -54,7 +62,11 @@ include_directories(
 link_directories(${catkin_LIBRARY_DIRS})
 
 # Test executable
-#add_executable(grasp_generator_test src/grasp_generator_test.cpp)
-#target_link_libraries(grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_block_grasp_generator)
+add_executable(block_grasp_generator_test src/block_grasp_generator_test.cpp)
+target_link_libraries(block_grasp_generator_test ${catkin_LIBRARIES} ${PROJECT_NAME}_block_grasp_generator)
+
+# Test executable
+add_executable(grasp_filter_test src/grasp_filter_test.cpp)
+target_link_libraries(grasp_filter_test ${catkin_LIBRARIES} ${PROJECT_NAME}_block_grasp_generator ${PROJECT_NAME}_grasp_filter)
 
 

@@ -1,0 +1,12 @@
+<launch>
+  
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- -->
+  <node name="grasp_filter_test" launch-prefix="$(arg launch_prefix)" pkg="block_grasp_generator" type="grasp_filter_test" output="screen">
+    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
+  </node>
+
+</launch>

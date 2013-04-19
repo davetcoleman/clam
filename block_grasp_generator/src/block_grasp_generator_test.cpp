@@ -38,7 +38,6 @@
 
 // ROS
 #include <ros/ros.h>
-#include <tf/tf.h>
 #include <geometry_msgs/PoseArray.h>
 #include <sensor_msgs/JointState.h>
 #include <Eigen/Core>
@@ -49,7 +48,6 @@
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit_msgs/RobotState.h>
 #include <moveit/kinematic_constraints/utils.h>
-#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/robot_state/joint_state_group.h>
@@ -59,19 +57,22 @@
 #include <moveit/trajectory_processing/trajectory_tools.h> // for plan_execution
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
+// Clam
+#include <clam_msgs/ClamGripperCommandAction.h>
+
 // Rviz
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
 // Grasp generation
-#include <block_grasp_generator/grasp_generator.h>
+#include <block_grasp_generator/block_grasp_generator.h>
 
 namespace block_grasp_generator
 {
 
 // Static const vars
-static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string EE_LINK = "gripper_roll_link";
+static const std::string EE_PARENT_LINK = "gripper_roll_link";
 
 // Required for RobotVizTools:
 static const std::string PLANNING_GROUP_NAME = "arm";
@@ -86,15 +87,14 @@ private:
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // MoveIt Components
-  boost::shared_ptr<tf::TransformListener> tf_;
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
-
   // Grasp generator
-  block_grasp_generator::GraspGeneratorPtr grasp_generator_;
+  block_grasp_generator::BlockGraspGeneratorPtr block_grasp_generator_;
 
   // class for publishing stuff to rviz
   block_grasp_generator::RobotVizToolsPtr rviz_tools_;
+
+  // data for generating grasps
+  block_grasp_generator::RobotGraspData grasp_data_;
 
 public:
 
@@ -104,44 +104,15 @@ public:
   {
 
     // ---------------------------------------------------------------------------------------------
-    // Create planning scene monitor
-    tf_.reset(new tf::TransformListener());
-    planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor
-                                  (ROBOT_DESCRIPTION, tf_, "dave_world"));
-
-    // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, BASE_LINK, planning_scene_monitor_));
+    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, BASE_LINK));
     rviz_tools_->setLifetime(0.0);
     rviz_tools_->setMuted(false);
 
-    // Create grasp generator
-    grasp_generator_.reset( new block_grasp_generator::GraspGenerator(BASE_LINK, rviz_tools_) );
-
     // ---------------------------------------------------------------------------------------------
-    // Create pre-grasp posture
-    sensor_msgs::JointState pre_grasp_posture;
-    {
-      pre_grasp_posture.header.frame_id = BASE_LINK;
-      // Name of joints:
-      pre_grasp_posture.name.resize(1);
-      pre_grasp_posture.name[0] = EE_JOINT;
-      // Position of joints
-      pre_grasp_posture.position.resize(1);
-      pre_grasp_posture.position[0] = 0.0; // OPEN
-    }
-
-    // Create grasp posture
-    sensor_msgs::JointState grasp_posture;
-    {
-      grasp_posture.header.frame_id = BASE_LINK;
-      // Name of joints:
-      grasp_posture.name.resize(1);
-      grasp_posture.name[0] = EE_JOINT;
-      // Position of joints
-      grasp_posture.position.resize(1);
-      grasp_posture.position[0] = 1.0; // CLOSE
-    }
+    // Load grasp generator
+    loadRobotGraspData(); // Load robot specific data
+    block_grasp_generator_.reset( new block_grasp_generator::BlockGraspGenerator(rviz_tools_) );
 
     // ---------------------------------------------------------------------------------------------
     // Generate grasps for a bunch of random blocks
@@ -158,10 +129,45 @@ public:
       //getTestBlock(block_pose);
       possible_grasps.clear();
       bool dual_approach = true; // approach straight down and also from an angle
-      grasp_generator_->generateGrasps( block_pose, possible_grasps, pre_grasp_posture, grasp_posture, dual_approach);
+      block_grasp_generator_->generateGrasps( block_pose, grasp_data_, possible_grasps);
     }
 
 
+  }
+
+  void loadRobotGraspData()
+  {
+    // -------------------------------
+    // Create pre-grasp posture
+    grasp_data_.pre_grasp_posture_.header.frame_id = BASE_LINK;
+    grasp_data_.pre_grasp_posture_.header.stamp = ros::Time::now();
+    // Name of joints:
+    grasp_data_.pre_grasp_posture_.name.resize(1);
+    grasp_data_.pre_grasp_posture_.name[0] = EE_JOINT;
+    // Position of joints
+    grasp_data_.pre_grasp_posture_.position.resize(1);
+    grasp_data_.pre_grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
+
+    // -------------------------------
+    // Create grasp posture
+    grasp_data_.grasp_posture_.header.frame_id = BASE_LINK;
+    grasp_data_.grasp_posture_.header.stamp = ros::Time::now();
+    // Name of joints:
+    grasp_data_.grasp_posture_.name.resize(1);
+    grasp_data_.grasp_posture_.name[0] = EE_JOINT;
+    // Position of joints
+    grasp_data_.grasp_posture_.position.resize(1);
+    grasp_data_.grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
+
+    // -------------------------------
+    // Links
+    grasp_data_.base_link_ = BASE_LINK;
+    grasp_data_.ee_parent_link_ = EE_PARENT_LINK;
+
+    // -------------------------------
+    // Nums
+    grasp_data_.approach_retreat_desired_dist_ = 0.05;
+    grasp_data_.approach_retreat_min_dist_ = 0.025;
   }
 
   void getTestBlock(geometry_msgs::Pose& block_pose)
