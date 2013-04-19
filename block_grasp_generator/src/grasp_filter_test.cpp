@@ -81,6 +81,7 @@ static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
 static const std::string EE_GROUP = "gripper_group";
 static const std::string EE_JOINT = "gripper_finger_joint"; // TODO: remove this dependency!!
 static const std::string BASE_LINK = "/base_link";
+static const double BLOCK_SIZE = 0.04;
 
 class GraspGeneratorTest
 {
@@ -136,6 +137,8 @@ public:
 
       generateRandomBlock(block_pose);
       //getTestBlock(block_pose);
+      rviz_tools_->publishBlock(block_pose, BLOCK_SIZE, false);
+
       possible_grasps.clear();
 
       // Generate set of grasps for one block
@@ -148,6 +151,10 @@ public:
 
       // Visualize them
       block_grasp_generator_->visualizeGrasps(possible_grasps, block_pose);
+
+      // Make sure ros is still going
+      if(!ros::ok)
+        break;
     }
 
 
@@ -186,6 +193,7 @@ public:
     // Nums
     grasp_data_.approach_retreat_desired_dist_ = 0.05;
     grasp_data_.approach_retreat_min_dist_ = 0.025;
+    grasp_data_.grasp_depth_ = 0.16;
   }
 
   void getTestBlock(geometry_msgs::Pose& block_pose)
@@ -224,7 +232,7 @@ public:
   void generateRandomBlock(geometry_msgs::Pose& block_pose)
   {
     // Position
-    block_pose.position.x = fRand(0.1,0.9); //0.55);
+    block_pose.position.x = fRand(0.1,0.55);
     block_pose.position.y = fRand(-0.28,0.28);
     block_pose.position.z = 0.02;
 
@@ -250,7 +258,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-  int num_tests = 1;
+  int num_tests = 100;
 
   ros::init(argc, argv, "grasp_generator_test");
 

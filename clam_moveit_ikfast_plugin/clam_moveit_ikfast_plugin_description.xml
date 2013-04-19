@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ASCII'?>
 <library path="lib/libclam_moveit_ikfast_kinematics_plugin">
-  <class name="clam_arm_kinematics/IKFastKinematicsPlugin" type="clam_arm_kinematics::IKFastKinematicsPlugin" base_class_type="kinematics::KinematicsBase">
+  <class name="clam_arm_kinematics/IKFastKinematicsPlugin" type="ikfast_kinematics_plugin::IKFastKinematicsPlugin" base_class_type="kinematics::KinematicsBase">
     <description>IKFast61 plugin for closed-form kinematics</description>
   </class>
 </library>

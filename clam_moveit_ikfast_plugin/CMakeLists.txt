@@ -40,19 +40,4 @@ install(
   clam_moveit_ikfast_plugin_description.xml
   DESTINATION
   ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+)

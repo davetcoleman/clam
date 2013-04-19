@@ -243,6 +243,7 @@ void BlockGraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::G
 
   // isRed = true if possible_blocks is empty
   rviz_tools_->publishSphere(block_pose);
+  //rviz_tools_->publishBlock(block_pose, block_size, false);
 
   int i = 0;
   for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
@@ -263,7 +264,7 @@ void BlockGraspGenerator::visualizeGrasps(const std::vector<manipulation_msgs::G
       rviz_tools_->publishPlanningScene(grasp_it->grasp_posture.position);
 
     //ros::Duration(0.005).sleep();
-    ros::Duration(1.0).sleep();
+    ros::Duration(0.25).sleep();
   }
 }
 

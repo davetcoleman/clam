@@ -47,7 +47,7 @@ GraspFilter::GraspFilter( const std::string& base_link, bool rviz_verbose,
 {
   ROS_INFO_STREAM_NAMED("grasp","GraspFilter ready.");
 
-  // Get the planning 
+  // Get the planning
   robot_model_ = rviz_tools_->getPlanningSceneMonitor()->getPlanningScene()->getRobotModel();
 }
 
@@ -82,8 +82,12 @@ bool GraspFilter::filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_g
   int num_threads = boost::thread::hardware_concurrency();
   if( num_threads > possible_grasps.size() )
     num_threads = possible_grasps.size();
-  num_threads = 1;
-  ROS_WARN_STREAM_NAMED("grasp_filter","Using " << num_threads << " threads");
+
+  if(false)
+  {
+    num_threads = 1;
+    ROS_ERROR_STREAM_NAMED("grasp_filter","Using " << num_threads << " threads");
+  }
 
   // -----------------------------------------------------------------------------------------------
   // Get the solver timeout from kinematics.yaml
@@ -191,7 +195,7 @@ void GraspFilter::filterGraspThread(IkThreadStruct ik_thread_struct)
 
     // Pointer to current pose
     ik_pose = &ik_thread_struct.possible_grasps_[i].grasp_pose.pose;
-    
+
     // Test it with IK
     ik_thread_struct.kin_solver_->
       searchPositionIK(*ik_pose, ik_seed_state, ik_thread_struct.timeout_, solution, error_code);
