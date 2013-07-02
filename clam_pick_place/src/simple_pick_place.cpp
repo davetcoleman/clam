@@ -193,7 +193,7 @@ bool place(const MetaBlock block)
   // Generate grasps
   block_grasp_generator_->generateGrasps( block.second, grasp_data_, grasps );
 
-  // Convert 'grasps' to palce_locations format
+  // Convert 'grasps' to place_locations format
   for (std::size_t i = 0; i < grasps.size(); ++i)
   {
     // Create new place location

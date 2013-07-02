@@ -518,7 +518,7 @@ public:
       {
         if (res.controllers[i] == name)
         {
-          state.loaded_ = true;
+          state.active_ = false;
           if (res.state[i] == "running")
             state.active_ = true;
           break;
@@ -528,7 +528,7 @@ public:
     else
     {
       // if we cannot test, assume best case scenario.
-      state.loaded_ = true;
+      //state.loaded_ = true;
       state.active_ = true;
     }
 

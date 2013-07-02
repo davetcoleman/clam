@@ -1,7 +1,0 @@
-<launch>
-  <!-- -->
-  <node name="grasp_generator_test" pkg="block_grasp_generator" type="grasp_generator_test" output="screen">
-    <rosparam command="load" file="$(find clam_moveit_config)/config/kinematics.yaml"/>
-  </node>
-
-</launch>

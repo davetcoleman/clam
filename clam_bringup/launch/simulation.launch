@@ -1,5 +1,3 @@
-<?xml version="1.0"?>
-
 <launch>
   <!-- send robot XML to param server -->
   <param name="robot_description" command="cat $(find clam_description)/urdf/clam.urdf" />
