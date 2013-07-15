@@ -1,2 +1,0 @@
-string object_id
-bool use_visual_feedback

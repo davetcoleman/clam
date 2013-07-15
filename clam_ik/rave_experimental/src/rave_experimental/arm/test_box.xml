@@ -1,9 +1,0 @@
-<KinBody name="test2">
-    <Translation>-.5 -.5 -.17 </Translation>
-    <Body type="dynamic">
-        <Geom type="box">
-            <extents>.03 .03 .03</extents>
-            <diffuseColor>1 0 .4 </diffuseColor>
-        </Geom>
-    </Body>
-</KinBody>
