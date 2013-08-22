@@ -16,7 +16,6 @@ BUILD AND RUN
 See [Documentation](http://correll.cs.colorado.edu/clam/?page_id=28)
 
 
-CONTRIBUTORS
+ISSUES
 ---------
-   - Andy McEvoy - CU Boulder
-   - Antons Rebguns - University of Arizona
+I (Dave Coleman) am no longer maintaining this package unless motivation is given for me to do so. Please file issues on this GitHub issue tracker then visit [BountySource](https://www.bountysource.com/trackers/226615-davetcoleman-clam) to provide motivation :)
