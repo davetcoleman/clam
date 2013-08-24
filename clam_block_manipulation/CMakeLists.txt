@@ -70,6 +70,7 @@ target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
 # Pick Place - MoveIt
 add_executable(block_pick_place_moveit_server src/block_pick_place_moveit_server.cpp)
+add_dependencies(block_pick_place_moveit_server clam_msgs_gencpp ${PROJECT_NAME}_gencfg) # wait for msgs to be buil
 target_link_libraries(block_pick_place_moveit_server ${catkin_LIBRARIES})
 
 # Logic

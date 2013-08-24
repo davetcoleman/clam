@@ -133,13 +133,6 @@ int main(int argc, char **argv)
   group_.reset(new move_group_interface::MoveGroup(PLANNING_GROUP_NAME));
   group_->setPlanningTime(30.0);
 
-  // --------------------------------------------------------------------------------------------------------
-  // Add objects to scene
-  publishCollisionTable();
-
-  // --------------------------------------------------------------------------------------------------------
-  // Create publishers for stuff
-
   // Wait for everything to be ready
   ros::Duration(2.0).sleep();
 
