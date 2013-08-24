@@ -8,7 +8,7 @@ ClamArm Manipulator
 
 Controls for the 7-dof robotic arm in the Correll Lab at the University of Colorado Boulder. 
 
-**This version uses the new catkin build system and runs on Groovy**
+Runs on ROS Groovy and Hydro
 
 BUILD AND RUN
 ---------
@@ -18,4 +18,4 @@ See [Documentation](http://correll.cs.colorado.edu/clam/?page_id=28)
 
 ISSUES
 ---------
-I (Dave Coleman) am no longer maintaining this package unless motivation is given for me to do so. Please file issues on this GitHub issue tracker then visit [BountySource](https://www.bountysource.com/trackers/226615-davetcoleman-clam) to provide motivation :)
+I ([Dave Coleman](http://davetcoleman.com/)) am no longer maintaining this package unless motivation is given for me to do so. Please file issues on this GitHub issue tracker then visit [BountySource](https://www.bountysource.com/trackers/226615-davetcoleman-clam) to provide motivation :)
