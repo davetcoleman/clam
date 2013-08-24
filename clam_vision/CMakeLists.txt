@@ -7,7 +7,7 @@ project(clam_vision)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   pcl_ros
-  pcl
+  pcl_conversions
   image_transport
   cv_bridge
   image_geometry
@@ -18,15 +18,11 @@ include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-# Eigen
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV REQUIRED)
+find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
-
-# OpenCV
-find_package(OpenCV REQUIRED)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and scripts declared therein get installed
@@ -43,8 +39,8 @@ catkin_package(
   #INCLUDE_DIRS include
   CATKIN_DEPENDS
   roscpp
-  pcl
   pcl_ros
+  pcl_conversions
   image_transport
   cv_bridge
   image_geometry
