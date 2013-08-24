@@ -109,7 +109,6 @@ void loadRobotGraspData()
   // Links
   grasp_data_.base_link_ = BASE_LINK;
   grasp_data_.ee_parent_link_ = EE_PARENT_LINK;
-  ROS_ERROR_STREAM_NAMED("","EE parent link = " << EE_PARENT_LINK);
 
   // -------------------------------
   // Nums
