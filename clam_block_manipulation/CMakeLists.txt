@@ -25,12 +25,6 @@ find_package(catkin REQUIRED
 
 find_package(OpenCV REQUIRED)
 
-# Grasp Library
-#add_library(${PROJECT_NAME}_grasp_generator
-#  src/grasp_generator.cpp
-#)
-#target_link_libraries(${PROJECT_NAME}_grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
 
 catkin_package(
   CATKIN_DEPENDS
@@ -53,8 +47,8 @@ catkin_package(
 )
 
 # Enable gdb to show line numbers
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+#set(CMAKE_BUILD_TYPE Debug)
 
 ## Build 
 include_directories(
@@ -63,10 +57,11 @@ include_directories(
 )
 link_directories(${catkin_LIBRARY_DIRS})
 
-## Action Servers 
+## Action Servers  -------------------------------------------
 
 # Perception
 add_executable(block_perception_server src/block_perception_server.cpp)
+add_dependencies(block_perception_server clam_msgs_gencpp ${PROJECT_NAME}_gencfg) # wait for msgs to be buil
 target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 
 # Pick Place - Custom
@@ -74,11 +69,12 @@ target_link_libraries(block_perception_server ${catkin_LIBRARIES})
 #target_link_libraries(block_pick_place_server ${catkin_LIBRARIES})
 
 # Pick Place - MoveIt
-#add_executable(block_pick_place_moveit_server src/block_pick_place_moveit_server.cpp)
-#target_link_libraries(block_pick_place_moveit_server ${catkin_LIBRARIES})
+add_executable(block_pick_place_moveit_server src/block_pick_place_moveit_server.cpp)
+target_link_libraries(block_pick_place_moveit_server ${catkin_LIBRARIES})
 
 # Logic
 add_executable(block_manipulation_logic src/block_manipulation_logic.cpp)
+add_dependencies(block_manipulation_logic clam_msgs_gencpp ${PROJECT_NAME}_gencfg) # wait for msgs to be buil
 target_link_libraries(block_manipulation_logic ${catkin_LIBRARIES})
 
 

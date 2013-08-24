@@ -104,6 +104,9 @@ private:
   // Planning Scene Monitor
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
+  // data for generating grasps
+  block_grasp_generator::RobotGraspData grasp_data_;
+
   // Parameters
   std::string base_link_;
 
@@ -183,6 +186,8 @@ public:
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
 
+    loadRobotGraspData();
+
     // ---------------------------------------------------------------------------------------------
     // Send fake command
     fake_goalCB();
@@ -191,6 +196,59 @@ public:
   // Destructor
   ~PickPlaceMoveItServer()
   {
+  }
+
+  void loadRobotGraspData()
+  {
+    // \todo fill this all out for ClamArm
+
+    // -------------------------------
+    // Create pre-grasp posture (Gripper open)
+    grasp_data_.pre_grasp_posture_.header.frame_id = "";
+    grasp_data_.pre_grasp_posture_.header.stamp = ros::Time::now();
+    // Name of joints:
+    grasp_data_.pre_grasp_posture_.name.resize(1);
+    grasp_data_.pre_grasp_posture_.name[0] = "";
+    // Position of joints
+    grasp_data_.pre_grasp_posture_.position.resize(1);
+    grasp_data_.pre_grasp_posture_.position[0] = 1;
+
+    // -------------------------------
+    // Create grasp posture (Gripper closed)
+    grasp_data_.grasp_posture_.header.frame_id = "";
+    grasp_data_.grasp_posture_.header.stamp = ros::Time::now();
+    // Name of joints:
+    grasp_data_.grasp_posture_.name.resize(1);
+    grasp_data_.grasp_posture_.name[0] = "";
+    // Position of joints
+    grasp_data_.grasp_posture_.position.resize(1);
+    grasp_data_.grasp_posture_.position[0] = 0;
+
+    // -------------------------------
+    // Links
+    grasp_data_.base_link_ = "";
+    grasp_data_.ee_parent_link_ = "";
+
+    // -------------------------------
+    // Nums
+    /* Clam
+       grasp_data_.approach_retreat_desired_dist_ = 0.05;
+       grasp_data_.approach_retreat_min_dist_ = 0.025;
+    */
+    grasp_data_.approach_retreat_desired_dist_ = 0.3; // 0.1;
+    grasp_data_.approach_retreat_min_dist_ = 0.06; // 0.001;
+
+
+    // distance from center point of object to end effector
+    grasp_data_.grasp_depth_ = 0.06; // 0.1;
+
+    grasp_data_.block_size_ = 0.04;
+
+    // generate grasps at PI/angle_resolution increments
+    grasp_data_.angle_resolution_ = 16;
+
+    // Debug
+    block_grasp_generator::BlockGraspGenerator::printBlockGraspData(grasp_data_);
   }
 
   // Action server sends goals here
@@ -316,11 +374,11 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place_moveit","Generating grasps for pick and place");
 
     bool rviz_verbose = true;
-    block_grasp_generator::GraspGenerator grasp_generator( base_link_, PLANNING_GROUP_NAME, rviz_tools_, rviz_verbose);
+    block_grasp_generator::BlockGraspGenerator grasp_generator(rviz_tools_);
 
     // Pick grasp
     std::vector<manipulation_msgs::Grasp> possible_grasps;
-    grasp_generator.generateGrasps( start_block_pose, possible_grasps );
+    grasp_generator.generateGrasps( start_block_pose, grasp_data_, possible_grasps );
 
     // Filter grasp poses
     //block_grasp_generator::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...

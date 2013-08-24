@@ -2,27 +2,21 @@
 
 <!-- Robot Description format of CLAM arm
 Dave Coleman - davetcoleman@gmail.com
-12/20/2012
+10/23/13
 
 Documentation:
 
 URDF
 http://www.ros.org/wiki/urdf/XML
 
-Joint Safety Limits
-http://www.ros.org/wiki/pr2_controller_manager/safety_limits
-
 XARCO - Macro Language
 http://www.ros.org/wiki/xacro
 
-Gazebo Modeling
-http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
-
 -->
-<robot name="clam">
+<robot name="clam" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- Include materials -->
-  <include filename="$(find clam_description)/urdf/materials.urdf.xacro" />
+  <xacro:include filename="$(find clam_description)/urdf/materials.urdf.xacro" />
 
   <!-- Constants -->
   <property name="M_SCALE" value="0.001 0.001 0.001"/>
@@ -61,8 +55,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="tabletop_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/White</material>
   </gazebo>
 
   <!-- BASE LINK -->
@@ -92,8 +85,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="base_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="shoulder_pan_joint" type="revolute">
@@ -131,8 +123,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="shoulder_pan_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Orange</material>
   </gazebo>
 
   <joint name="shoulder_pitch_joint" type="revolute">
@@ -171,8 +162,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="shoulder_pitch_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="elbow_roll_joint" type="revolute">
@@ -211,8 +201,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="elbow_roll_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Black</material>
   </gazebo>
 
   <joint name="elbow_pitch_joint" type="revolute">
@@ -252,8 +241,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="elbow_pitch_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Orange</material>
   </gazebo>
 
   <joint name="wrist_roll_joint" type="revolute">
@@ -292,8 +280,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="wrist_roll_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Black</material>
   </gazebo>
 
   <joint name="wrist_pitch_joint" type="revolute">
@@ -332,8 +319,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="wrist_pitch_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="gripper_roll_joint" type="revolute">
@@ -372,8 +358,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="gripper_roll_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Orange</material>
   </gazebo>
 
   <joint name="gripper_finger_joint" type="revolute">
@@ -405,8 +390,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="l_gripper_aft_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="r_gripper_aft_joint" type="revolute">
@@ -439,8 +423,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="r_gripper_aft_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="l_gripper_fwd_joint" type="revolute">
@@ -473,8 +456,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="l_gripper_fwd_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="r_gripper_fwd_joint" type="revolute">
@@ -507,8 +489,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="r_gripper_fwd_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <joint name="gripper_finger_pincher_joint" type="revolute">
@@ -541,8 +522,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="l_gripper_pincher_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Black</material>
   </gazebo>
 
   <joint name="r_gripper_aft_pincher_joint" type="revolute">
@@ -576,12 +556,88 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="r_gripper_pincher_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Black</material>
   </gazebo>
 
+  <!-- Transmissions for ROS Control -->
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="shoulder_pan_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
 
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="shoulder_pitch_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
 
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elbow_roll_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elbow_pitch_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wrist_roll_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wrist_pitch_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gripper_roll_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gripper_finger_joint"/>
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- ros_control plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/clam</robotNamespace>
+    </plugin>
+  </gazebo>
 
 
 
@@ -617,8 +673,7 @@ http://www.ros.org/wiki/simulator_gazebo/Tutorials/SpawningObjectInSimulation
   </link>
 
   <gazebo reference="gripper_fake_tip_link">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
+    <material>Gazebo/Grey</material>
   </gazebo-->
 
 </robot>

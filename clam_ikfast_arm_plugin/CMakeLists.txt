@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(clam_moveit_ikfast_plugin)
+project(clam_ikfast_arm_plugin)
 
 find_package(Eigen REQUIRED)
 include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
@@ -37,7 +37,7 @@ install(DIRECTORY include/ DESTINATION include)
 
 install(
   FILES
-  clam_moveit_ikfast_plugin_description.xml
+  clam_arm_moveit_ikfast_plugin_description.xml
   DESTINATION
   ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
