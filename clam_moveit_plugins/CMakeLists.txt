@@ -41,13 +41,13 @@ catkin_package(
 #  tf_conversions
 #  eigen_conversions
 #  control_msgs
-#  clam_msgs
+  clam_msgs
 #  dynamixel_hardware_interface
   )
 
 # Enable gdb to show line numbers
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
+#set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(clam_moveit_controller_manager/include)
 
@@ -55,7 +55,7 @@ add_subdirectory(clam_moveit_controller_manager)
 
 install(
   FILES
-  clam_moveit_controller_manager_plugin_description.xml
+    clam_moveit_controller_manager_plugin_description.xml
   DESTINATION
-  ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  )
+    ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

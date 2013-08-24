@@ -196,14 +196,17 @@ public:
     ROS_INFO("[calibrate] Got image info!");
   }
   
+  /* \\ what is this function for?
   void pointcloudCallback(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& msg)
   {
     sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
-    pcl::toROSMsg (*msg, *image_msg);
+    //    pcl::toROSMsg (*msg, *image_msg);
+    pcl_conversions::fromPCL(*msg, *image_msg);
   
     imageCallback(image_msg);
   }
-  
+  */
+
   void imageCallback(const sensor_msgs::ImageConstPtr& image_msg)
   {
     try

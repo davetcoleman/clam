@@ -43,7 +43,7 @@
 
 #include <tf/transform_listener.h>
 
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
@@ -246,7 +246,7 @@ public:
     // Transform to whatever frame we're working in, probably the arm's base frame, ie "base_link"
     ROS_INFO_STREAM_NAMED("perception","Waiting for transform...");
     ros::spinOnce();
-    tf_listener_.waitForTransform(base_link, cloud.header.frame_id, cloud.header.stamp, ros::Duration(2.0));
+    tf_listener_.waitForTransform(base_link, cloud.header.frame_id, pointcloud_msg->header.stamp, ros::Duration(2.0));
 
     if(!pcl_ros::transformPointCloud(base_link, cloud, *cloud_transformed, tf_listener_))
     {
@@ -431,8 +431,10 @@ public:
     try
     {
       sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
-      //      pcl::toROSMsg (*pointcloud_msg, *image_msg);
-      pcl::toROSMsg (*cloud_transformed, *image_msg);
+      //const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr  cloud_transformed,
+      sensor_msgs::PointCloud2 temp_cloud;
+      pcl::toROSMsg(*cloud_transformed, temp_cloud);
+      pcl::toROSMsg (temp_cloud, *image_msg);
       cv_bridge::CvImagePtr input_bridge = cv_bridge::toCvCopy(image_msg, "rgb8");
       full_input_image = input_bridge->image;
     }
@@ -669,8 +671,8 @@ public:
           const cv::Point mini_center = cv::Point( mini_width/2, mini_height/2 );
 
           // Find contours
-          vector<vector<cv::Point> > contours;
-          vector<cv::Vec4i> hierarchy;
+          std::vector<std::vector<cv::Point> > contours;
+          std::vector<cv::Vec4i> hierarchy;
           cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
           ROS_INFO_STREAM_NAMED("perception","Contours");
 

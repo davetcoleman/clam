@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(clam_msgs)
 
+# List message types we depend on in our messages
 set(MSG_DEPS
   std_msgs
   actionlib_msgs
