@@ -39,11 +39,12 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <actionlib/server/simple_action_server.h>
+#include <geometry_msgs/PoseArray.h>
 #include <clam_msgs/BlockPerceptionAction.h>
 
 #include <tf/transform_listener.h>
 
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
