@@ -67,8 +67,8 @@
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
 // Grasp generation
-#include <block_grasp_generator/grasp_generator.h>
-#include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
+#include <moveit_simple_grasps/grasp_generator.h>
+#include <moveit_simple_grasps/robot_viz_tools.h> // simple tool for showing grasps
 
 namespace clam_block_manipulation
 {
@@ -111,7 +111,7 @@ private:
   std::string base_link_;
 
   // class for publishing stuff to rviz
-  block_grasp_generator::RobotVizToolsPtr rviz_tools_;
+  moveit_simple_grasps::RobotVizToolsPtr rviz_tools_;
 
 public:
 
@@ -177,7 +177,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
+    rviz_tools_.reset(new moveit_simple_grasps::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -305,7 +305,7 @@ public:
     // Generate graps
     ROS_INFO_STREAM_NAMED("pick_place","Generating grasps for pick and place");
     bool rviz_verbose = true;
-    block_grasp_generator::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_, rviz_verbose,
+    moveit_simple_grasps::GraspGenerator grasp_generator( planning_scene_monitor_, base_link_, rviz_verbose,
                                                            PLANNING_GROUP_NAME);
 
     // Pick grasp
@@ -314,7 +314,7 @@ public:
 
     manipulation_msgs::Grasp pick_grasp;
     // Filter grasp poses
-    //block_grasp_generator::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
+    //moveit_simple_grasps::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
     //if( !grasp_generator.filterGrasps( possible_grasps ) )
     //return false;
     //grasp_generator.chooseBestGrasp( possible_grasps, pick_grasp );

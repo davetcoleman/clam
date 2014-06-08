@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(clam_ikfast_arm_plugin)
 
-find_package(Eigen REQUIRED)
-include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
-
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   pluginlib

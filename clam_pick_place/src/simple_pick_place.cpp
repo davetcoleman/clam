@@ -48,8 +48,8 @@
 #include <shape_tools/solid_primitive_dims.h>
 
 // Grasp generation
-#include <block_grasp_generator/block_grasp_generator.h>
-#include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
+#include <moveit_simple_grasps/moveit_simple_grasps.h>
+#include <moveit_simple_grasps/robot_viz_tools.h> // simple tool for showing grasps
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
@@ -62,17 +62,17 @@ static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
 // class for publishing stuff to rviz
-block_grasp_generator::RobotVizToolsPtr rviz_tools_;
+moveit_simple_grasps::RobotVizToolsPtr rviz_tools_;
 
 // grasp generator
-block_grasp_generator::BlockGraspGeneratorPtr block_grasp_generator_;
+moveit_simple_grasps::BlockGraspGeneratorPtr moveit_simple_grasps_;
 
 // publishers
 ros::Publisher pub_co_;
 ros::Publisher pub_aco_;
 
 // data for generating grasps
-block_grasp_generator::RobotGraspData grasp_data_;
+moveit_simple_grasps::RobotGraspData grasp_data_;
 
 // our interface with MoveIt
 boost::scoped_ptr<move_group_interface::MoveGroup> group_;
@@ -164,7 +164,7 @@ bool pick(const geometry_msgs::Pose& block_pose, std::string block_name)
   std::vector<manipulation_msgs::Grasp> grasps;
 
   // Pick grasp
-  block_grasp_generator_->generateGrasps( block_pose, grasp_data_, grasps );
+  moveit_simple_grasps_->generateGrasps( block_pose, grasp_data_, grasps );
 
   // Prevent collision with table
   group_->setSupportSurfaceName("tabletop_link");
@@ -190,7 +190,7 @@ bool place(const MetaBlock block)
   pose_stamped.header.stamp = ros::Time::now();
 
   // Generate grasps
-  block_grasp_generator_->generateGrasps( block.second, grasp_data_, grasps );
+  moveit_simple_grasps_->generateGrasps( block.second, grasp_data_, grasps );
 
   // Convert 'grasps' to place_locations format
   for (std::size_t i = 0; i < grasps.size(); ++i)
@@ -303,13 +303,13 @@ int main(int argc, char **argv)
 
   // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
-  rviz_tools_.reset(new block_grasp_generator::RobotVizTools( RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME,
+  rviz_tools_.reset(new moveit_simple_grasps::RobotVizTools( RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME,
                                                               BASE_LINK));
 
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
   loadRobotGraspData(); // Load robot specific data
-  block_grasp_generator_.reset(new block_grasp_generator::BlockGraspGenerator(rviz_tools_));
+  moveit_simple_grasps_.reset(new moveit_simple_grasps::BlockGraspGenerator(rviz_tools_));
 
   // ---------------------------------------------------------------------------------------------
   // Create MoveGroup

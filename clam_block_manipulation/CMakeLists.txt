@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(clam_block_manipulation)
 
-find_package(Eigen REQUIRED)
-find_package(Boost REQUIRED thread date_time system filesystem program_options python)
-
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED
   roscpp
@@ -20,11 +17,13 @@ find_package(catkin REQUIRED
   moveit_core
   tf
   tf_conversions
-  block_grasp_generator
+  moveit_simple_grasps
+  cmake_modules
 )
 
 find_package(OpenCV REQUIRED)
-
+find_package(Eigen REQUIRED)
+find_package(Boost REQUIRED thread date_time system filesystem program_options python)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -42,7 +41,7 @@ catkin_package(
     moveit_core
     tf
     tf_conversions
-    block_grasp_generator
+    moveit_simple_grasps
 #  INCLUDE_DIRS include
 )
 
@@ -52,7 +51,6 @@ catkin_package(
 
 ## Build 
 include_directories(
-  include 
   ${catkin_INCLUDE_DIRS}
 )
 link_directories(${catkin_LIBRARY_DIRS})

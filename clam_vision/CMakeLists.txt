@@ -13,9 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_geometry
   tf
   visualization_msgs
+  cmake_modules
   )
-include_directories(${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -24,17 +23,8 @@ find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and scripts declared therein get installed
-# catkin_python_setup()
+include_directories(${catkin_INCLUDE_DIRS})
 
-###################################################
-## Declare things to be passed to other projects ##
-###################################################
-
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   #INCLUDE_DIRS include
   CATKIN_DEPENDS
@@ -44,7 +34,6 @@ catkin_package(
   image_transport
   cv_bridge
   image_geometry
-  eigen
   tf
   visualization_msgs
   )

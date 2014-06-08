@@ -51,8 +51,8 @@
 #include <clam_msgs/ClamArmAction.h>
 
 // Grasp generation
-#include <block_grasp_generator/block_grasp_generator.h>
-#include <block_grasp_generator/robot_viz_tools.h> // simple tool for showing grasps
+#include <moveit_simple_grasps/moveit_simple_grasps.h>
+#include <moveit_simple_grasps/robot_viz_tools.h> // simple tool for showing grasps
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -105,7 +105,7 @@ private:
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // data for generating grasps
-  block_grasp_generator::RobotGraspData grasp_data_;
+  moveit_simple_grasps::RobotGraspData grasp_data_;
 
   // Parameters
   std::string base_link_;
@@ -118,7 +118,7 @@ private:
   std::vector<geometry_msgs::Pose> marker_poses_;
 
   // class for publishing stuff to rviz
-  block_grasp_generator::RobotVizToolsPtr rviz_tools_;
+  moveit_simple_grasps::RobotVizToolsPtr rviz_tools_;
 
 public:
 
@@ -166,7 +166,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new block_grasp_generator::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
+    rviz_tools_.reset(new moveit_simple_grasps::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -248,7 +248,7 @@ public:
     grasp_data_.angle_resolution_ = 16;
 
     // Debug
-    block_grasp_generator::BlockGraspGenerator::printBlockGraspData(grasp_data_);
+    moveit_simple_grasps::BlockGraspGenerator::printBlockGraspData(grasp_data_);
   }
 
   // Action server sends goals here
@@ -374,14 +374,14 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place_moveit","Generating grasps for pick and place");
 
     bool rviz_verbose = true;
-    block_grasp_generator::BlockGraspGenerator grasp_generator(rviz_tools_);
+    moveit_simple_grasps::BlockGraspGenerator grasp_generator(rviz_tools_);
 
     // Pick grasp
     std::vector<manipulation_msgs::Grasp> possible_grasps;
     grasp_generator.generateGrasps( start_block_pose, grasp_data_, possible_grasps );
 
     // Filter grasp poses
-    //block_grasp_generator::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
+    //moveit_simple_grasps::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
     //if( !grasp_generator.filterGrasps( possible_grasps ) )
     //return false;
 

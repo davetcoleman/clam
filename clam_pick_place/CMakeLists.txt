@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_core 
   moveit_ros_planning 
   moveit_ros_planning_interface 
-  block_grasp_generator
+  moveit_simple_grasps
   clam_msgs
 )
 find_package(Eigen REQUIRED)
