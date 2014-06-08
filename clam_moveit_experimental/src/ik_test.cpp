@@ -46,7 +46,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <manipulation_msgs/Grasp.h>
+#include <moveit_msgs/Grasp.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -274,7 +274,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Generate grasps
-    std::vector<manipulation_msgs::Grasp> possible_grasps;     // List of possible block grasps
+    std::vector<moveit_msgs::Grasp> possible_grasps;     // List of possible block grasps
     generateGrasps( block_pose, possible_grasps );
 
     // Visualize results
@@ -297,7 +297,7 @@ public:
 
 
     /*
-      std::vector<manipulation_msgs::Grasp> single_grasp;
+      std::vector<moveit_msgs::Grasp> single_grasp;
 
       // Loop through and plan for each individual grasp
       for( int i = 3; i < possible_grasps.size(); ++i)
@@ -332,7 +332,7 @@ public:
   }
 
   // Create all possible grasp positions for a block
-  void generateGrasps(geometry_msgs::Pose& block_pose, std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  void generateGrasps(geometry_msgs::Pose& block_pose, std::vector<moveit_msgs::Grasp>& possible_grasps)
   {
     // ---------------------------------------------------------------------------------------------
     // Calculate grasps in two axis
@@ -347,7 +347,7 @@ public:
 
 
   // Create grasp that lowers a little from zero position
-  bool generateSimpleGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  bool generateSimpleGrasp(std::vector<moveit_msgs::Grasp>& possible_grasps)
 
   {
     // Create re-usable blank pose
@@ -377,7 +377,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Create a Grasp message
-    manipulation_msgs::Grasp new_grasp;
+    moveit_msgs::Grasp new_grasp;
     new_grasp.grasp_pose = grasp_pose;
 
     // ---------------------------------------------------------------------------------------------
@@ -389,15 +389,15 @@ public:
 
 
   // Create grasp positions in one axis
-  bool generateAxisGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
+  bool generateAxisGrasps(std::vector<moveit_msgs::Grasp>& possible_grasps, grasp_axis_t axis,
                           grasp_direction_t direction )
   {
 
     // ---------------------------------------------------------------------------------------------
-    // manipulation_msgs:Grasp parameters
+    // moveit_msgs:Grasp parameters
 
     // Create re-usable approach motion
-    manipulation_msgs::GripperTranslation gripper_approach;
+    moveit_msgs::GripperTranslation gripper_approach;
     gripper_approach.direction.header.stamp = ros::Time::now();
     gripper_approach.direction.header.frame_id = base_link_;
     gripper_approach.direction.vector.x = 1;
@@ -409,7 +409,7 @@ public:
     gripper_approach.min_distance = .025; // half of the desired? Untested.
 
     // Create re-usable retreat motion
-    manipulation_msgs::GripperTranslation gripper_retreat;
+    moveit_msgs::GripperTranslation gripper_retreat;
     gripper_retreat.direction.header.stamp = ros::Time::now();
     gripper_retreat.direction.header.frame_id = base_link_;
     gripper_retreat.direction.vector.x = 0;
@@ -495,7 +495,7 @@ public:
 
       // ---------------------------------------------------------------------------------------------
       // Create a Grasp message
-      manipulation_msgs::Grasp new_grasp;
+      moveit_msgs::Grasp new_grasp;
 
       // A name for this grasp
       static int grasp_id = 0;
@@ -548,10 +548,10 @@ public:
     return true;
   }
 
-  void filterNthGrasp(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  void filterNthGrasp(std::vector<moveit_msgs::Grasp>& possible_grasps)
   {
     // Only choose the 4th grasp
-    std::vector<manipulation_msgs::Grasp> single_grasp;
+    std::vector<moveit_msgs::Grasp> single_grasp;
     single_grasp.push_back(possible_grasps[4]);
     possible_grasps = single_grasp;
 
@@ -559,7 +559,7 @@ public:
   }
 
   // Choose the 1st grasp that is kinematically feasible
-  bool filterGrasps(std::vector<manipulation_msgs::Grasp>& possible_grasps)
+  bool filterGrasps(std::vector<moveit_msgs::Grasp>& possible_grasps)
   {
     // -----------------------------------------------------------------------------------------------
     // Error check
@@ -584,10 +584,10 @@ public:
     // -----------------------------------------------------------------------------------------------
     // Loop through poses and find first one that has solution
 
-    std::vector<manipulation_msgs::Grasp> feasible_grasp;
+    std::vector<moveit_msgs::Grasp> feasible_grasp;
 
     int num_ik_solutions = 0;
-    for (std::vector<manipulation_msgs::Grasp>::iterator grasp_it = possible_grasps.begin();
+    for (std::vector<moveit_msgs::Grasp>::iterator grasp_it = possible_grasps.begin();
          grasp_it!=possible_grasps.end(); ++grasp_it)
     {
 
@@ -730,7 +730,7 @@ public:
     ROS_INFO_STREAM_NAMED("ik_test","Collision object published for removal");
   }
 
-  void executeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+  void executeGrasps(const std::vector<moveit_msgs::Grasp>& possible_grasps,
                      const geometry_msgs::Pose& block_pose)
   {
     ROS_INFO_STREAM_NAMED("ik_test","Creating Pickup Goal");
@@ -848,13 +848,13 @@ public:
   }
 
   // Show all grasps in Rviz
-  void visualizeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+  void visualizeGrasps(const std::vector<moveit_msgs::Grasp>& possible_grasps,
                        const geometry_msgs::Pose& block_pose)
   {
     ROS_INFO_STREAM_NAMED("ik_test","Visualizing all generating grasp poses on topic " << MARKER_TOPIC);
     ros::Rate rate(1.0);
 
-    for(std::vector<manipulation_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
+    for(std::vector<moveit_msgs::Grasp>::const_iterator grasp_it = possible_grasps.begin();
         grasp_it < possible_grasps.end(); ++grasp_it)
     {
       ROS_DEBUG_STREAM_NAMED("ik_test","Visualizing grasp pose");

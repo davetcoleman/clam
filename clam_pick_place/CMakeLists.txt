@@ -20,6 +20,7 @@ catkin_package(
   CATKIN_DEPENDS 
     moveit_core
     moveit_ros_planning_interface
+    moveit_simple_grasps
 )
 
 # Enable gdb to show line numbers

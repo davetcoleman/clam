@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(clam_block_manipulation)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED
+find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   actionlib 
@@ -14,7 +14,6 @@ find_package(catkin REQUIRED
   eigen_conversions 
   moveit_ros_planning 
   moveit_ros_planning_interface
-  moveit_core
   tf
   tf_conversions
   moveit_simple_grasps
@@ -38,7 +37,6 @@ catkin_package(
     eigen_conversions 
     moveit_ros_planning 
     moveit_ros_planning_interface
-    moveit_core
     tf
     tf_conversions
     moveit_simple_grasps

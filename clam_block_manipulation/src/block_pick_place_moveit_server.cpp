@@ -42,7 +42,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <manipulation_msgs/Grasp.h>
+#include <moveit_msgs/Grasp.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -248,7 +248,7 @@ public:
     grasp_data_.angle_resolution_ = 16;
 
     // Debug
-    moveit_simple_grasps::BlockGraspGenerator::printBlockGraspData(grasp_data_);
+    moveit_simple_grasps::SimpleGrasps::printBlockGraspData(grasp_data_);
   }
 
   // Action server sends goals here
@@ -374,10 +374,10 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place_moveit","Generating grasps for pick and place");
 
     bool rviz_verbose = true;
-    moveit_simple_grasps::BlockGraspGenerator grasp_generator(rviz_tools_);
+    moveit_simple_grasps::SimpleGrasps grasp_generator(rviz_tools_);
 
     // Pick grasp
-    std::vector<manipulation_msgs::Grasp> possible_grasps;
+    std::vector<moveit_msgs::Grasp> possible_grasps;
     grasp_generator.generateGrasps( start_block_pose, grasp_data_, possible_grasps );
 
     // Filter grasp poses
@@ -465,7 +465,7 @@ public:
     ROS_INFO_STREAM_NAMED("pick_place_moveit","Collision object published for removal");
   }
 
-  bool executeGrasps(const std::vector<manipulation_msgs::Grasp>& possible_grasps,
+  bool executeGrasps(const std::vector<moveit_msgs::Grasp>& possible_grasps,
                      const geometry_msgs::Pose& block_pose)
   {
     ROS_INFO_STREAM_NAMED("pick_place_moveit","Creating Pickup Goal");

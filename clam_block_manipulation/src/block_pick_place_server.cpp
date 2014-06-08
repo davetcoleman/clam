@@ -309,10 +309,10 @@ public:
                                                            PLANNING_GROUP_NAME);
 
     // Pick grasp
-    std::vector<manipulation_msgs::Grasp> possible_grasps;
+    std::vector<moveit_msgs::Grasp> possible_grasps;
     grasp_generator.generateGrasps( start_block_pose, possible_grasps );
 
-    manipulation_msgs::Grasp pick_grasp;
+    moveit_msgs::Grasp pick_grasp;
     // Filter grasp poses
     //moveit_simple_grasps::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...
     //if( !grasp_generator.filterGrasps( possible_grasps ) )
@@ -333,7 +333,7 @@ public:
     possible_grasps.clear();
     grasp_generator.generateGrasps( end_block_pose, possible_grasps );
 
-    manipulation_msgs::Grasp place_grasp;
+    moveit_msgs::Grasp place_grasp;
     grasp_generator.chooseBestGrasp( possible_grasps, place_grasp );
     geometry_msgs::Pose place_pose = place_grasp.grasp_pose.pose;
 

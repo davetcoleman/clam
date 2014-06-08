@@ -22,11 +22,11 @@
   <build_depend>pcl_ros</build_depend>
   <build_depend>moveit_ros_planning</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
-  <build_depend>moveit_core</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>moveit_simple_grasps</build_depend>
+  <build_depend>cmake_modules</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>eigen_conversions</run_depend>
@@ -38,7 +38,6 @@
   <run_depend>pcl_ros</run_depend>
   <run_depend>moveit_ros_planning</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
-  <run_depend>moveit_core</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>

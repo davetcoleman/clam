@@ -48,8 +48,8 @@
 #include <shape_tools/solid_primitive_dims.h>
 
 // Grasp generation
-#include <moveit_simple_grasps/moveit_simple_grasps.h>
-#include <moveit_simple_grasps/robot_viz_tools.h> // simple tool for showing grasps
+#include <moveit_simple_grasps/simple_grasps.h>
+#include <moveit_visual_tools/visual_tools.h> // simple tool for showing grasps
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
@@ -62,17 +62,17 @@ static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
 // class for publishing stuff to rviz
-moveit_simple_grasps::RobotVizToolsPtr rviz_tools_;
+moveit_visual_tools::VisualToolsPtr rviz_tools_;
 
 // grasp generator
-moveit_simple_grasps::BlockGraspGeneratorPtr moveit_simple_grasps_;
+moveit_simple_grasps::SimpleGraspsPtr moveit_simple_grasps_;
 
 // publishers
 ros::Publisher pub_co_;
 ros::Publisher pub_aco_;
 
 // data for generating grasps
-moveit_simple_grasps::RobotGraspData grasp_data_;
+moveit_simple_grasps::GraspData grasp_data_;
 
 // our interface with MoveIt
 boost::scoped_ptr<move_group_interface::MoveGroup> group_;
@@ -80,41 +80,6 @@ boost::scoped_ptr<move_group_interface::MoveGroup> group_;
 // block description
 typedef std::pair<std::string,geometry_msgs::Pose> MetaBlock;
 
-
-void loadRobotGraspData()
-{
-  // -------------------------------
-  // Create pre-grasp posture
-  grasp_data_.pre_grasp_posture_.header.frame_id = BASE_LINK;
-  grasp_data_.pre_grasp_posture_.header.stamp = ros::Time::now();
-  // Name of joints:
-  grasp_data_.pre_grasp_posture_.name.resize(1);
-  grasp_data_.pre_grasp_posture_.name[0] = EE_JOINT;
-  // Position of joints
-  grasp_data_.pre_grasp_posture_.position.resize(1);
-  grasp_data_.pre_grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_OPEN;
-
-  // -------------------------------
-  // Create grasp posture
-  grasp_data_.grasp_posture_.header.frame_id = BASE_LINK;
-  grasp_data_.grasp_posture_.header.stamp = ros::Time::now();
-  // Name of joints:
-  grasp_data_.grasp_posture_.name.resize(1);
-  grasp_data_.grasp_posture_.name[0] = EE_JOINT;
-  // Position of joints
-  grasp_data_.grasp_posture_.position.resize(1);
-  grasp_data_.grasp_posture_.position[0] = clam_msgs::ClamGripperCommandGoal::GRIPPER_CLOSE;
-
-  // -------------------------------
-  // Links
-  grasp_data_.base_link_ = BASE_LINK;
-  grasp_data_.ee_parent_link_ = EE_PARENT_LINK;
-
-  // -------------------------------
-  // Nums
-  grasp_data_.approach_retreat_desired_dist_ = 0.05;
-  grasp_data_.approach_retreat_min_dist_ = 0.025;
-}
 
 double fRand(double fMin, double fMax)
 {
@@ -161,10 +126,10 @@ bool pick(const geometry_msgs::Pose& block_pose, std::string block_name)
 {
   ROS_WARN_STREAM_NAMED("","picking block "<< block_name);
 
-  std::vector<manipulation_msgs::Grasp> grasps;
+  std::vector<moveit_msgs::Grasp> grasps;
 
   // Pick grasp
-  moveit_simple_grasps_->generateGrasps( block_pose, grasp_data_, grasps );
+  moveit_simple_grasps_->generateBlockGrasps( block_pose, grasp_data_, grasps );
 
   // Prevent collision with table
   group_->setSupportSurfaceName("tabletop_link");
@@ -181,8 +146,8 @@ bool place(const MetaBlock block)
 {
   ROS_WARN_STREAM_NAMED("","placing block "<< block.first);
 
-  std::vector<manipulation_msgs::PlaceLocation> place_locations;
-  std::vector<manipulation_msgs::Grasp> grasps;
+  std::vector<moveit_msgs::PlaceLocation> place_locations;
+  std::vector<moveit_msgs::Grasp> grasps;
 
   // Re-usable datastruct
   geometry_msgs::PoseStamped pose_stamped;
@@ -190,13 +155,13 @@ bool place(const MetaBlock block)
   pose_stamped.header.stamp = ros::Time::now();
 
   // Generate grasps
-  moveit_simple_grasps_->generateGrasps( block.second, grasp_data_, grasps );
+  moveit_simple_grasps_->generateBlockGrasps( block.second, grasp_data_, grasps );
 
   // Convert 'grasps' to place_locations format
   for (std::size_t i = 0; i < grasps.size(); ++i)
   {
     // Create new place location
-    manipulation_msgs::PlaceLocation place_loc;
+    moveit_msgs::PlaceLocation place_loc;
 
     // Pose
     pose_stamped.pose = grasps[i].grasp_pose.pose;
@@ -206,9 +171,9 @@ bool place(const MetaBlock block)
     rviz_tools_->publishArrow(pose_stamped.pose);
 
     // Approach & Retreat
-    place_loc.approach = grasps[i].approach;
+    place_loc.pre_place_approach = grasps[i].pre_grasp_approach;
     //ROS_WARN_STREAM_NAMED("","is the same? \n" << place_loc.approach);
-    place_loc.retreat = grasps[i].retreat;
+    place_loc.post_place_retreat = grasps[i].post_grasp_retreat;
 
     // Post place posture - use same as pre-grasp posture (the OPEN command_
     place_loc.post_place_posture = grasp_data_.pre_grasp_posture_;
@@ -303,13 +268,12 @@ int main(int argc, char **argv)
 
   // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
-  rviz_tools_.reset(new moveit_simple_grasps::RobotVizTools( RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME,
-                                                              BASE_LINK));
+  rviz_tools_.reset(new moveit_visual_tools::VisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
+                                                              
 
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
-  loadRobotGraspData(); // Load robot specific data
-  moveit_simple_grasps_.reset(new moveit_simple_grasps::BlockGraspGenerator(rviz_tools_));
+  moveit_simple_grasps_.reset(new moveit_simple_grasps::SimpleGrasps(rviz_tools_));
 
   // ---------------------------------------------------------------------------------------------
   // Create MoveGroup
@@ -441,7 +405,7 @@ pub_co_.publish(co);
 */
 
 /*
-  manipulation_msgs::GripperTranslation gripper_approach;
+  moveit_msgs::GripperTranslation gripper_approach;
   gripper_approach.direction.header.frame_id = BASE_LINK;
   gripper_approach.direction.header.stamp = ros::Time::now();
   gripper_approach.direction.vector.z = -1.0;
