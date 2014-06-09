@@ -1,27 +1,28 @@
 # Find the Python libraries and headers
-FIND_PACKAGE (PythonLibs)
+find_package (PythonLibs)
 if(NOT PYTHON_LIBRARIES)
-    MESSAGE (STATUS "Python libaries not found. Cannot build Python bindings for Flexiport.")
-endif(NOT PYTHON_LIBRARIES)
+    message (STATUS "Python libaries not found. Cannot build Python bindings for Flexiport.")
+endif()
 
 # Find Boost::Python
-FIND_PACKAGE (Boost)
+find_package (Boost)
 if(Boost_FOUND)
-    SET (boostPythonLib boost_python)
-    INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
-    LINK_DIRECTORIES (${Boost_LIBRARY_DIRS})
+    set (boostPythonLib boost_python)
+    include_directories (${Boost_INCLUDE_DIRS})
+    link_directories (${Boost_LIBRARY_DIRS})
 else(Boost_FOUND)
-    MESSAGE (STATUS
+    message (STATUS
              "Boost libraries were not found. Cannot build Python bindings for Flexiport.")
-endif(Boost_FOUND)
+endif()
 
 if(PYTHON_LIBRARIES AND Boost_FOUND)
-    MESSAGE (STATUS "Dynamixel Python bindings will be built.")
-    SET (srcs dynamixel_io.cpp)
-    SET (pyModuleTarget dynamixeliopy)
+    message (STATUS "Dynamixel Python bindings will be built.")
+    set (srcs dynamixel_io.cpp)
+    set (pyModuleTarget dynamixeliopy)
 
     INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/include/dynamixel_hardware_interface ${PYTHON_INCLUDE_PATH})
+    #include_directories (${PYTHON_INCLUDE_PATH})
     add_library(${pyModuleTarget} MODULE ${srcs})
-    TARGET_LINK_LIBRARIES (${pyModuleTarget} dynamixel_hardware_interface ${boostPythonLib} ${PYTHON_LIBRARIES})
-    SET_TARGET_PROPERTIES (${pyModuleTarget} PROPERTIES PREFIX "" OUTPUT_NAME "dynamixel_io" COMPILE_FLAGS -fPIC)
-endif(PYTHON_LIBRARIES AND Boost_FOUND)
+    target_link_libraries (${pyModuleTarget} dynamixel_hardware_interface ${boostPythonLib} ${PYTHON_LIBRARIES})
+    set_target_properties (${pyModuleTarget} PROPERTIES PREFIX "" OUTPUT_NAME "dynamixel_io" COMPILE_FLAGS -fPIC)
+endif()

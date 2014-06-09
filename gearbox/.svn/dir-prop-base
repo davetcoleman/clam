@@ -1,9 +1,0 @@
-K 10
-svn:ignore
-V 35
-build
-.project
-.cproject
-.settings
-
-END

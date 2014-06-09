@@ -68,4 +68,15 @@ if (build)
 	if (FLEXIPORT_BUILD_BINDINGS)
 		add_subdirectory (python)
 	endif (FLEXIPORT_BUILD_BINDINGS)
+
+
+
+
+	MESSAGE( STATUS "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DAVE")
+	MESSAGE( STATUS "lib name:         " ${libName} )
+	MESSAGE( STATUS "install to:         " ${CMAKE_INSTALL_PREFIX} )
+
+	# added by DTC
+	#install(TARGETS ${libName} LIBRARY DESTINATION "/usr/lib")
+
 endif (build)

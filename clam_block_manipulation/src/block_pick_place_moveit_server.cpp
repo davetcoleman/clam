@@ -51,8 +51,8 @@
 #include <clam_msgs/ClamArmAction.h>
 
 // Grasp generation
-#include <moveit_simple_grasps/moveit_simple_grasps.h>
-#include <moveit_simple_grasps/robot_viz_tools.h> // simple tool for showing grasps
+#include <moveit_simple_grasps/simple_grasps.h>
+#include <moveit_visual_tools/visual_tools.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -105,7 +105,7 @@ private:
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // data for generating grasps
-  moveit_simple_grasps::RobotGraspData grasp_data_;
+  moveit_simple_grasps::GraspData grasp_data_;
 
   // Parameters
   std::string base_link_;
@@ -118,7 +118,7 @@ private:
   std::vector<geometry_msgs::Pose> marker_poses_;
 
   // class for publishing stuff to rviz
-  moveit_simple_grasps::RobotVizToolsPtr rviz_tools_;
+  moveit_visual_tools::VisualToolsPtr rviz_tools_;
 
 public:
 
@@ -166,7 +166,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new moveit_simple_grasps::RobotVizTools(RVIZ_MARKER_TOPIC, EE_GROUP, PLANNING_GROUP_NAME, base_link_, planning_scene_monitor_));
+    rviz_tools_.reset(new moveit_visual_tools::VisualTools(base_link_, RVIZ_MARKER_TOPIC));
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks
@@ -186,7 +186,10 @@ public:
     while(!clam_arm_client_.getState().isDone() && ros::ok())
       ros::Duration(0.1).sleep();
 
-    loadRobotGraspData();
+    
+    // Load grasp generator
+    if (!grasp_data_.loadRobotGraspData(nh_, "clam_arm"))
+      ros::shutdown();
 
     // ---------------------------------------------------------------------------------------------
     // Send fake command
@@ -196,59 +199,6 @@ public:
   // Destructor
   ~PickPlaceMoveItServer()
   {
-  }
-
-  void loadRobotGraspData()
-  {
-    // \todo fill this all out for ClamArm
-
-    // -------------------------------
-    // Create pre-grasp posture (Gripper open)
-    grasp_data_.pre_grasp_posture_.header.frame_id = "";
-    grasp_data_.pre_grasp_posture_.header.stamp = ros::Time::now();
-    // Name of joints:
-    grasp_data_.pre_grasp_posture_.name.resize(1);
-    grasp_data_.pre_grasp_posture_.name[0] = "";
-    // Position of joints
-    grasp_data_.pre_grasp_posture_.position.resize(1);
-    grasp_data_.pre_grasp_posture_.position[0] = 1;
-
-    // -------------------------------
-    // Create grasp posture (Gripper closed)
-    grasp_data_.grasp_posture_.header.frame_id = "";
-    grasp_data_.grasp_posture_.header.stamp = ros::Time::now();
-    // Name of joints:
-    grasp_data_.grasp_posture_.name.resize(1);
-    grasp_data_.grasp_posture_.name[0] = "";
-    // Position of joints
-    grasp_data_.grasp_posture_.position.resize(1);
-    grasp_data_.grasp_posture_.position[0] = 0;
-
-    // -------------------------------
-    // Links
-    grasp_data_.base_link_ = "";
-    grasp_data_.ee_parent_link_ = "";
-
-    // -------------------------------
-    // Nums
-    /* Clam
-       grasp_data_.approach_retreat_desired_dist_ = 0.05;
-       grasp_data_.approach_retreat_min_dist_ = 0.025;
-    */
-    grasp_data_.approach_retreat_desired_dist_ = 0.3; // 0.1;
-    grasp_data_.approach_retreat_min_dist_ = 0.06; // 0.001;
-
-
-    // distance from center point of object to end effector
-    grasp_data_.grasp_depth_ = 0.06; // 0.1;
-
-    grasp_data_.block_size_ = 0.04;
-
-    // generate grasps at PI/angle_resolution increments
-    grasp_data_.angle_resolution_ = 16;
-
-    // Debug
-    moveit_simple_grasps::SimpleGrasps::printBlockGraspData(grasp_data_);
   }
 
   // Action server sends goals here
@@ -366,8 +316,8 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Visualize the two blocks
-    rviz_tools_->publishBlock(start_block_pose, BLOCK_SIZE, true);
-    rviz_tools_->publishBlock(end_block_pose, BLOCK_SIZE, false);
+    rviz_tools_->publishBlock(start_block_pose);
+    rviz_tools_->publishBlock(end_block_pose);
 
     // ---------------------------------------------------------------------------------------------
     // Generate graps
@@ -378,7 +328,7 @@ public:
 
     // Pick grasp
     std::vector<moveit_msgs::Grasp> possible_grasps;
-    grasp_generator.generateGrasps( start_block_pose, grasp_data_, possible_grasps );
+    grasp_generator.generateBlockGrasps( start_block_pose, grasp_data_, possible_grasps );
 
     // Filter grasp poses
     //moveit_simple_grasps::GraspFilter grasp_filter( planning_scene_monitor_->getPlanningScene()->getCurrentState() ...

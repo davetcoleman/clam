@@ -1,1 +1,0 @@
-ACTION=="add|change", KERNEL=="ttyACM*", ATTRS{idVendor}=="15d1", PROGRAM="/usr/local/bin/hokuyo_aist_getid -o type=serial,timeout=1,device=%N", SYMLINK+="hokuyo_%c"

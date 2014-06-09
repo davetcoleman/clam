@@ -13,7 +13,12 @@ find_package(catkin REQUIRED COMPONENTS
   control_msgs 
   trajectory_msgs 
   diagnostic_updater 
+  diagnostic_msgs
+  message_generation
   std_srvs
+  std_msgs
+  genmsg
+  rospy
 )
 
 ## Declare ROS messages and services
@@ -39,21 +44,30 @@ add_service_files(DIRECTORY srv FILES
 generate_messages(DEPENDENCIES std_msgs)
 
 ## Declare a catkin package
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS
+    message_runtime
+    std_msgs
+    
+)
 
 ## Build 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${flexiport_INCLUDE_DIRS})
 
 # Add additional libraries
 add_library(${PROJECT_NAME} src/dynamixel_io.cpp src/serial_proxy.cpp)
 target_link_libraries(${PROJECT_NAME} flexiport)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${flexiport_LIBRARIES} ${gearbox_LIBRARIES})
+
+
 # Wait for messages to be ready
 add_dependencies(${PROJECT_NAME} dynamixel_hardware_interface_gencpp) # This line is needed to ensure that messages are done being built before this is built
 
 # Add Boost
-find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost REQUIRED COMPONENTS thread python)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+
 
 
 ## Link the executable against catkin - order matters:
@@ -84,21 +98,22 @@ target_link_libraries(dynamixel_io ${PROJECT_NAME})
 option (DYNAMIXEL_BUILD_BINDINGS "Build the Python bindings for Dynamixel Driver" ON)
 if (DYNAMIXEL_BUILD_BINDINGS)
     add_subdirectory (python)
-endif (DYNAMIXEL_BUILD_BINDINGS)
+endif()
 
+# Install libraries
+install(TARGETS ${PROJECT_NAME} dynamixel_controllers
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
-#--------------------------------------------------
+# Install executables
+install(TARGETS
+  controller_manager
+  dynamixel_io
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
-
-#common commands for building c++ executables and libraries
-
-
-
-
-
-
-
+install(
+  FILES
+    controller_plugins.xml
+  DESTINATION
+    ${CATKIN_PACKAGE_SHARE_DESTINATION})
