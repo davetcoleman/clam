@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface 
   moveit_simple_grasps
   clam_msgs
+  cmake_modules
 )
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED system thread)
