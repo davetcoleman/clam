@@ -1,0 +1,11 @@
+<launch>
+
+  <arg name="debug" default="true"/>
+  <rosparam command="load" file="$(find clam_pick_place)/config/clam_grasp_data.yaml"/>
+
+  <group>
+    <node name="$(anon simple_pick_place)" type="simple_pick_place" pkg="clam_pick_place">
+    </node>   
+  </group>
+
+</launch>
