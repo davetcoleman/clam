@@ -37,6 +37,7 @@
  * \author  Dave Coleman
  */
 
+#include <ros/ros.h>
 // MoveIt blocks
 #include <moveit_simple_grasps/moveit_blocks.h>
 
