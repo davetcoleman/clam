@@ -45,6 +45,7 @@
 
 #include "flexiport_types.h"
 #include "timeout.h"
+#include <sys/types.h>
 
 /** @ingroup gbx_library_flexiport
 @{

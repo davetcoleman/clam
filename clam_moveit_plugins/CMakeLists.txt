@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(clam_moveit_plugins)
 
-find_package(Eigen REQUIRED)
-include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
-
 find_package(Boost REQUIRED thread)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -18,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   kdl_parser
   tf
   tf_conversions
-  eigen_conversions
   control_msgs
   clam_msgs
   dynamixel_hardware_interface
@@ -31,18 +27,7 @@ catkin_package(
   LIBRARIES
   clam_moveit_controller_manager
   DEPENDS
-# TESTING...
-#  moveit_core
-#  pluginlib
-#  actionlib
-#  roscpp
-#  urdf
-#  kdl_parser
-#  tf_conversions
-#  eigen_conversions
-#  control_msgs
   clam_msgs
-#  dynamixel_hardware_interface
   )
 
 # Enable gdb to show line numbers

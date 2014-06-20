@@ -38,6 +38,7 @@
 
 #include "timeout.h"
 #include "flexiport_types.h"
+#include <sys/types.h>
 
 namespace flexiport
 {
