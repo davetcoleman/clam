@@ -1,4 +1,6 @@
 # A copy of this file goes into /etc/udev/rules.d/
 # So that the usb to serial drivers are mapped reliably
-SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",ATTRS{interface}=="FT232R USB UART",SYMLINK+="dynamixel_rs485"
-SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",ATTRS{interface}=="AX12",SYMLINK+="dynamixel_ttl"
+#SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",ATTRS{interface}=="FT232R USB UART",SYMLINK+="dynamixel_rs485"
+#SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",ATTRS{interface}=="AX12",SYMLINK+="dynamixel_ttl"
+SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",KERNEL=ttyUSB0,SYMLINK+="dynamixel_rs485",MODE=777
+SUBSYSTEMS=="usb",DRIVERS=="ftdi_sio",KERNEL=ttyUSB1,SYMLINK+="dynamixel_ttl",MODE=777
