@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2013, CU Boulder
+ *  Copyright (c) 2014, CU Boulder
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -62,14 +62,10 @@ static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
 // class for publishing stuff to rviz
-moveit_visual_tools::VisualToolsPtr rviz_tools_;
+moveit_visual_tools::VisualToolsPtr visual_tools_;
 
 // grasp generator
 moveit_simple_grasps::SimpleGraspsPtr moveit_simple_grasps_;
-
-// publishers
-ros::Publisher pub_co_;
-ros::Publisher pub_aco_;
 
 // data for generating grasps
 moveit_simple_grasps::GraspData grasp_data_;
@@ -104,6 +100,7 @@ void generateRandomBlock(geometry_msgs::Pose& block_pose)
   block_pose.orientation.w = quat.w();
 }
 
+/*
 void publishCollisionBlock(geometry_msgs::Pose block_pose, std::string block_name)
 {
   moveit_msgs::CollisionObject co;
@@ -121,25 +118,30 @@ void publishCollisionBlock(geometry_msgs::Pose block_pose, std::string block_nam
   co.primitive_poses[0] = block_pose;
   pub_co_.publish(co);
 }
+*/
 
 bool pick(const geometry_msgs::Pose& block_pose, std::string block_name)
 {
   ROS_WARN_STREAM_NAMED("","picking block "<< block_name);
 
-  std::vector<moveit_msgs::Grasp> grasps;
+  std::vector<moveit_msgs::Grasp> possible_grasps;
 
   // Pick grasp
-  moveit_simple_grasps_->generateBlockGrasps( block_pose, grasp_data_, grasps );
+  moveit_simple_grasps_->generateBlockGrasps( block_pose, grasp_data_, possible_grasps );
+
+  // Visualize them
+  visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
+  //visual_tools_->publishGrasps(possible_grasps, grasp_data_.ee_parent_link_);
 
   // Prevent collision with table
   group_->setSupportSurfaceName("tabletop_link");
 
-  //ROS_WARN_STREAM_NAMED("","testing grasp 1:\n" << grasps[0]);
+  //ROS_WARN_STREAM_NAMED("","testing grasp 1:\n" << possible_grasps[0]);
 
-  //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << grasps[0]);
-  //ROS_INFO_STREAM_NAMED("","\n\n\nGrasp 10\n" << grasps[10]);
+  //ROS_INFO_STREAM_NAMED("","Grasp 0\n" << possible_grasps[0]);
+  //ROS_INFO_STREAM_NAMED("","\n\n\nGrasp 10\n" << possible_grasps[10]);
 
-  return group_->pick(block_name, grasps);
+  return group_->pick(block_name, possible_grasps);
 }
 
 bool place(const MetaBlock block)
@@ -147,7 +149,7 @@ bool place(const MetaBlock block)
   ROS_WARN_STREAM_NAMED("","placing block "<< block.first);
 
   std::vector<moveit_msgs::PlaceLocation> place_locations;
-  std::vector<moveit_msgs::Grasp> grasps;
+  std::vector<moveit_msgs::Grasp> possible_grasps;
 
   // Re-usable datastruct
   geometry_msgs::PoseStamped pose_stamped;
@@ -155,25 +157,29 @@ bool place(const MetaBlock block)
   pose_stamped.header.stamp = ros::Time::now();
 
   // Generate grasps
-  moveit_simple_grasps_->generateBlockGrasps( block.second, grasp_data_, grasps );
+  moveit_simple_grasps_->generateBlockGrasps( block.second, grasp_data_, possible_grasps );
+
+  // Visualize them
+  visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
+  //visual_tools_->publishGrasps(possible_grasps, grasp_data_.ee_parent_link_);
 
   // Convert 'grasps' to place_locations format
-  for (std::size_t i = 0; i < grasps.size(); ++i)
+  for (std::size_t i = 0; i < possible_grasps.size(); ++i)
   {
     // Create new place location
     moveit_msgs::PlaceLocation place_loc;
 
     // Pose
-    pose_stamped.pose = grasps[i].grasp_pose.pose;
+    pose_stamped.pose = possible_grasps[i].grasp_pose.pose;
     place_loc.place_pose = pose_stamped;
 
     // Publish to Rviz
-    rviz_tools_->publishArrow(pose_stamped.pose);
+    visual_tools_->publishArrow(pose_stamped.pose);
 
     // Approach & Retreat
-    place_loc.pre_place_approach = grasps[i].pre_grasp_approach;
+    place_loc.pre_place_approach = possible_grasps[i].pre_grasp_approach;
     //ROS_WARN_STREAM_NAMED("","is the same? \n" << place_loc.approach);
-    place_loc.post_place_retreat = grasps[i].post_grasp_retreat;
+    place_loc.post_place_retreat = possible_grasps[i].post_grasp_retreat;
 
     // Post place posture - use same as pre-grasp posture (the OPEN command_
     place_loc.post_place_posture = grasp_data_.pre_grasp_posture_;
@@ -188,34 +194,6 @@ bool place(const MetaBlock block)
   group_->setPlannerId("RRTConnectkConfigDefault");
 
   return group_->place(block.first, place_locations);
-}
-
-void cleanupACO()
-{
-  // Clean up old attached collision object
-  moveit_msgs::AttachedCollisionObject aco;
-  aco.object.header.stamp = ros::Time::now();
-  aco.object.header.frame_id = BASE_LINK;
-  aco.object.operation = moveit_msgs::CollisionObject::REMOVE;
-  aco.link_name = EE_PARENT_LINK;
-  ros::WallDuration(0.5).sleep();
-  pub_aco_.publish(aco);
-  ros::WallDuration(0.5).sleep();
-  pub_aco_.publish(aco);
-
-}
-void cleanupCO(std::string name)
-{
-  // Clean up old collision objects
-  moveit_msgs::CollisionObject co;
-  co.header.stamp = ros::Time::now();
-  co.header.frame_id = BASE_LINK;
-  co.id = name;
-  co.operation = moveit_msgs::CollisionObject::REMOVE;
-  ros::WallDuration(0.5).sleep();
-  pub_co_.publish(co);
-  ros::WallDuration(0.5).sleep();
-  pub_co_.publish(co);
 }
 
 void getGoalBlocks(std::vector<MetaBlock>& block_locations)
@@ -256,35 +234,35 @@ void getGoalBlocks(std::vector<MetaBlock>& block_locations)
 
 int main(int argc, char **argv)
 {
+  ROS_INFO_STREAM_NAMED("main","Starting clam pick place");
   ros::init (argc, argv, "clamarm_pick_place");
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-  ros::NodeHandle nh;
-  pub_co_ = nh.advertise<moveit_msgs::CollisionObject>("collision_object", 10);
-  pub_aco_ = nh.advertise<moveit_msgs::AttachedCollisionObject>("/attached_collision_object", 10);
-
-  ros::Duration(1.0).sleep();
-
   // ---------------------------------------------------------------------------------------------
-  // Load the Robot Viz Tools for publishing to Rviz
-  rviz_tools_.reset(new moveit_visual_tools::VisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
-
+  // Load grasp data specific to our robot
+  ros::NodeHandle nh("~");
   if(!grasp_data_.loadRobotGraspData(nh, EE_GROUP))
   {
       ROS_ERROR_STREAM_NAMED("simple_pick_place", "Cannot load end_effector data");
       return 1;
   }
+
+  // ---------------------------------------------------------------------------------------------
+  // Load the Robot Viz Tools for publishing to Rviz
+  visual_tools_.reset(new moveit_visual_tools::VisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
+  visual_tools_->loadEEMarker(grasp_data_.ee_group_, PLANNING_GROUP_NAME);
+
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
-  moveit_simple_grasps_.reset(new moveit_simple_grasps::SimpleGrasps(rviz_tools_));
+  moveit_simple_grasps_.reset(new moveit_simple_grasps::SimpleGrasps(visual_tools_));
 
   // ---------------------------------------------------------------------------------------------
   // Create MoveGroup
   group_.reset(new move_group_interface::MoveGroup(PLANNING_GROUP_NAME));
   group_->setPlanningTime(30.0);
 
-  ros::Duration(1.0).sleep();
+  ros::Duration(0.5).sleep();
 
   // --------------------------------------------------------------------------------------------------------
   // Start pick and place loop
@@ -296,11 +274,7 @@ int main(int argc, char **argv)
   getGoalBlocks(goal_block_locations);
 
   // Remvoed attached objects
-  cleanupACO();
-  cleanupCO("Block1");
-  cleanupCO("Block2");
-  cleanupCO("Block3");
-  cleanupCO("Block4");
+  visual_tools_->removeAllCollisionObjects();
 
   int goal_id = 0;
   while(true && ros::ok())
@@ -310,7 +284,7 @@ int main(int argc, char **argv)
     {
       generateRandomBlock(start_block_pose);
 
-      publishCollisionBlock(start_block_pose, goal_block_locations[goal_id].first);
+      visual_tools_->publishCollisionBlock(start_block_pose, goal_block_locations[goal_id].first, BLOCK_SIZE);
 
       ROS_INFO_STREAM_NAMED("simple_pick_place","Published collision object");
 
@@ -319,7 +293,7 @@ int main(int argc, char **argv)
       if( !pick(start_block_pose, goal_block_locations[goal_id].first) )
       {
         ROS_ERROR_STREAM_NAMED("simple_pick_place","Pick failed. Retrying.");
-        cleanupCO(goal_block_locations[goal_id].first);
+        visual_tools_->cleanupCO(goal_block_locations[goal_id].first);
       }
       else
       {
@@ -361,69 +335,3 @@ int main(int argc, char **argv)
   ros::shutdown();
   return 0;
 }
-
-
-
-
-
-
-/*
-// remove pole
-co.id = "pole";
-co.operation = moveit_msgs::CollisionObject::REMOVE;
-pub_co_.publish(co);
-
-// add pole
-co.operation = moveit_msgs::CollisionObject::ADD;
-co.primitives.resize(1);
-co.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-co.primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.3;
-co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.1;
-co.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1.0;
-co.primitive_poses.resize(1);
-co.primitive_poses[0].position.x = 0.7;
-co.primitive_poses[0].position.y = -0.4;
-co.primitive_poses[0].position.z = 0.85;
-co.primitive_poses[0].orientation.w = 1.0;
-pub_co_.publish(co);
-*/
-
-
-// add path constraints
-/*
-  moveit_msgs::Constraints constr;
-  constr.orientation_constraints.resize(1);
-  moveit_msgs::OrientationConstraint &ocm = constr.orientation_constraints[0];
-  ocm.link_name = "r_wrist_roll_link";
-  ocm.header.frame_id = p.header.frame_id;
-  ocm.orientation.x = 0.0;
-  ocm.orientation.y = 0.0;
-  ocm.orientation.z = 0.0;
-  ocm.orientation.w = 1.0;
-  ocm.absolute_x_axis_tolerance = 0.2;
-  ocm.absolute_y_axis_tolerance = 0.2;
-  ocm.absolute_z_axis_tolerance = M_PI;
-  ocm.weight = 1.0;
-  group.setPathConstraints(constr);
-*/
-
-/*
-  moveit_msgs::GripperTranslation gripper_approach;
-  gripper_approach.direction.header.frame_id = BASE_LINK;
-  gripper_approach.direction.header.stamp = ros::Time::now();
-  gripper_approach.direction.vector.z = -1.0;
-  gripper_approach.min_distance = 0.025;
-  gripper_approach.desired_distance = 0.050;
-  ROS_WARN_STREAM_NAMED("","is the same? \n" << gripper_approach);
-
-  ros::shutdown();
-  exit(-12);
-
-  // Retreat
-  place_loc.retreat.direction.header.frame_id = BASE_LINK;
-  place_loc.retreat.direction.header.stamp = ros::Time::now();
-  place_loc.retreat.direction.vector.z = 1.0;
-  place_loc.retreat.min_distance = 0.025;
-  place_loc.retreat.desired_distance = 0.050;
-*/

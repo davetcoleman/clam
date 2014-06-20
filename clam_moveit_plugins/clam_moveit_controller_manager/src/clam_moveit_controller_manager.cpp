@@ -55,7 +55,7 @@ static const double DEFAULT_MAX_GRIPPER_EFFORT = 10000.0;
 
   // ------------------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
-  // New Class
+  // Controller Handle
   // ------------------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------
   template<typename T>
@@ -138,7 +138,7 @@ static const double DEFAULT_MAX_GRIPPER_EFFORT = 10000.0;
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-// New Class
+// Gripper
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 class ClamGripperControllerHandle : public ActionBasedControllerHandle<clam_msgs::ClamGripperCommandAction>
@@ -160,9 +160,10 @@ public:
       return false;
     }
 
-    if (trajectory.joint_trajectory.points.size() != 1)
+    if (trajectory.joint_trajectory.points.size() > 2)
     {
       ROS_ERROR("The ClamArm gripper controller expects a joint trajectory with one point only, but %u provided)", (unsigned int)trajectory.joint_trajectory.points.size());
+      ROS_INFO_STREAM_NAMED("sendTrajectory","Message: " << trajectory);
       return false;
     }
 
@@ -174,7 +175,12 @@ public:
 
     clam_msgs::ClamGripperCommandGoal goal;
     goal.max_effort = DEFAULT_MAX_GRIPPER_EFFORT;
-    goal.position = trajectory.joint_trajectory.points[0].positions[0];
+
+    // New gripper trajectories have two points now, for some reason
+    if (trajectory.joint_trajectory.points.size() == 1)
+      goal.position = trajectory.joint_trajectory.points[0].positions[0];
+    else 
+      goal.position = trajectory.joint_trajectory.points[1].positions[0];
 
     /*
       if (trajectory.joint_trajectory.points[0].positions[0] > 0.5)
@@ -236,7 +242,7 @@ private:
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-// New Class
+// Joint Trajectory
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 class ClamFollowJointTrajectoryControllerHandle : public ActionBasedControllerHandle<control_msgs::FollowJointTrajectoryAction>
@@ -292,7 +298,7 @@ protected:
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-// New Class
+// Manager
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 class ClamMoveItControllerManager : public moveit_controller_manager::MoveItControllerManager
