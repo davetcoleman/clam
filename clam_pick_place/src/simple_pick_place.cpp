@@ -269,8 +269,12 @@ int main(int argc, char **argv)
   // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
   rviz_tools_.reset(new moveit_visual_tools::VisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
-                                                              
 
+  if(!grasp_data_.loadRobotGraspData(nh, EE_GROUP))
+  {
+      ROS_ERROR_STREAM_NAMED("simple_pick_place", "Cannot load end_effector data");
+      return 1;
+  }
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
   moveit_simple_grasps_.reset(new moveit_simple_grasps::SimpleGrasps(rviz_tools_));
