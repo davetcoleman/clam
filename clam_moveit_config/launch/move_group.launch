@@ -15,7 +15,7 @@
   <arg name="jiggle_fraction" default="0.05" />
   <arg name="publish_monitored_planning_scene" default="true"/>
 
-  <include ns="move_group" file="$(find clam_moveit_config)/launch/planning_pipeline.launch">
+  <include ns="move_group" file="$(find clam_moveit_config)/launch/planning_pipeline.launch.xml">
     <arg name="pipeline" value="ompl" />
   </include>
 
