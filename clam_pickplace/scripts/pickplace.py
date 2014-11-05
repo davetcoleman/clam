@@ -1,6 +1,6 @@
 import sys, rospy
 from moveit_commander import RobotCommander, PlanningSceneInterface, roscpp_initialize, roscpp_shutdown
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PlaceLocation
 
 class ClamPickPlace
     robot = RobotCommander()
@@ -19,7 +19,10 @@ class ClamPickPlace
 
     def pick(self):
         rospy.sleep(2) # bug why sleep?
-        robot().arm.pick("part")
+        robot.arm.pick("part")
+    
+    def place(self, loc):
+        robot.arm.place("part", loc)
         
 if __name__ == '__main__':
     roscpp_initialize(sys.argv)
