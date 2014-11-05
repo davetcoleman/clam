@@ -1,9 +1,6 @@
-import sys,Canvas rospy
+import sys, rospy
 from moveit_commander import RobotCommander, PlanningSceneInterface, roscpp_initialize, roscpp_shutdown
 from geometry_msgs.msg import PoseStamped
-
-
-
 
 class ClamPickPlace
     robot = RobotCommander()
