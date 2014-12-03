@@ -14,11 +14,12 @@
     </group>
     <group name="gripper_group">
         <link name="gripper_finger_link" />
-	<link name="gripper_roll_link" />
-	<link name="l_gripper_fwd_link" />
-	<link name="r_gripper_aft_link" />
-	<link name="r_gripper_fwd_link" />
-	<link name="r_gripper_pincher_link" />
+        <link name="gripper_roll_link" />
+        <link name="l_gripper_fwd_link" />
+        <link name="r_gripper_aft_link" />
+        <link name="r_gripper_fwd_link" />
+        <link name="r_gripper_pincher_link" />
+        <link name="l_gripper_pincher_link" />
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="cobra" group="arm">
@@ -52,7 +53,6 @@
     <disable_collisions link1="base_link" link2="r_gripper_fwd_link" reason="Never" />
     <disable_collisions link1="base_link" link2="r_gripper_pincher_link" reason="Never" />
     <disable_collisions link1="base_link" link2="shoulder_pan_link" reason="Adjacent" />
-    <disable_collisions link1="base_link" link2="tabletop_link" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="base_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="elbow_pitch_link" link2="elbow_roll_link" reason="Adjacent" />
@@ -74,7 +74,6 @@
     <disable_collisions link1="elbow_roll_link" link2="r_gripper_pincher_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="shoulder_pan_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="shoulder_pitch_link" reason="Adjacent" />
-    <disable_collisions link1="elbow_roll_link" link2="tabletop_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="elbow_roll_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="gripper_finger_link" link2="gripper_roll_link" reason="Adjacent" />
@@ -125,10 +124,8 @@
     <disable_collisions link1="r_gripper_pincher_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="r_gripper_pincher_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="shoulder_pan_link" link2="shoulder_pitch_link" reason="Adjacent" />
-    <disable_collisions link1="shoulder_pan_link" link2="tabletop_link" reason="Never" />
     <disable_collisions link1="shoulder_pan_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="shoulder_pan_link" link2="wrist_roll_link" reason="Never" />
-    <disable_collisions link1="shoulder_pitch_link" link2="tabletop_link" reason="Never" />
     <disable_collisions link1="shoulder_pitch_link" link2="wrist_pitch_link" reason="Never" />
     <disable_collisions link1="shoulder_pitch_link" link2="wrist_roll_link" reason="Never" />
     <disable_collisions link1="wrist_pitch_link" link2="wrist_roll_link" reason="Adjacent" />

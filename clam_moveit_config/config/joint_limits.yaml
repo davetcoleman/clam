@@ -1,41 +1,69 @@
+# joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
+# Specific joint properties can be changed with the keys [max_position, min_position, max_velocity, max_acceleration]
+# Joint limits can be turned off with [has_velocity_limits, has_acceleration_limits]
 joint_limits:
   elbow_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   elbow_roll_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   gripper_finger_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
+  gripper_finger_pincher_joint:
+    has_velocity_limits: true
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   gripper_roll_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
+  l_gripper_fwd_joint:
+    has_velocity_limits: true
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
+  r_gripper_aft_joint:
+    has_velocity_limits: true
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
+  r_gripper_aft_pincher_joint:
+    has_velocity_limits: true
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
+  r_gripper_fwd_joint:
+    has_velocity_limits: true
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   shoulder_pan_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   shoulder_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   wrist_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
   wrist_roll_joint:
     has_velocity_limits: true
-    max_velocity: 1.0
-    has_acceleration_limits: true
-    max_acceleration: 1.0
+    max_velocity: 1
+    has_acceleration_limits: false
+    max_acceleration: 0
