@@ -49,7 +49,7 @@
 
 // Grasp generation
 #include <moveit_simple_grasps/simple_grasps.h>
-#include <moveit_visual_tools/visual_tools.h> // simple tool for showing grasps
+#include <moveit_visual_tools/moveit_visual_tools.h> // simple tool for showing grasps
 
 static const std::string ROBOT_DESCRIPTION="robot_description";
 static const std::string RVIZ_MARKER_TOPIC = "/end_effector_marker";
@@ -62,7 +62,7 @@ static const std::string BLOCK_NAME = "block";
 static const double BLOCK_SIZE = 0.04;
 
 // class for publishing stuff to rviz
-moveit_visual_tools::VisualToolsPtr visual_tools_;
+moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 
 // grasp generator
 moveit_simple_grasps::SimpleGraspsPtr moveit_simple_grasps_;
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 
   // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
-  visual_tools_.reset(new moveit_visual_tools::VisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
+  visual_tools_.reset(new moveit_visual_tools::MoveItVisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
   visual_tools_->loadEEMarker(grasp_data_.ee_group_, PLANNING_GROUP_NAME);
 
   // ---------------------------------------------------------------------------------------------
