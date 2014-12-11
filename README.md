@@ -1,9 +1,15 @@
-ClamArm Manipulator
-==========
-* Author: Dave Coleman <davetcoleman.com>
-* Website: [correll.cs.colorado.edu/clam](http://correll.cs.colorado.edu/clam)
-* License: GNU General Public License, version 3 (GPL-3.0)
-* Inception Date: 12/27/2011
+# ClamArm Manipulator
+
+### Author
+Dave Coleman <dav.ee>
+
+### Contributors
+
+Nathan Bellow
+
+## License
+
+GNU General Public License, version 3 (GPL-3.0)
 
 ## MAINTENANCE
 
