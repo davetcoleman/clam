@@ -52,7 +52,7 @@
 
 // Grasp generation
 #include <moveit_simple_grasps/simple_grasps.h>
-#include <moveit_visual_tools/visual_tools.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -118,7 +118,7 @@ private:
   std::vector<geometry_msgs::Pose> marker_poses_;
 
   // class for publishing stuff to rviz
-  moveit_visual_tools::VisualToolsPtr rviz_tools_;
+  moveit_visual_tools::MoveItVisualToolsPtr rviz_tools_;
 
 public:
 
@@ -166,7 +166,7 @@ public:
 
     // ---------------------------------------------------------------------------------------------
     // Load the Robot Viz Tools for publishing to Rviz
-    rviz_tools_.reset(new moveit_visual_tools::VisualTools(base_link_, RVIZ_MARKER_TOPIC));
+    rviz_tools_.reset(new moveit_visual_tools::MoveItVisualTools(base_link_, RVIZ_MARKER_TOPIC));
 
     // ---------------------------------------------------------------------------------------------
     // Register the goal and preempt callbacks

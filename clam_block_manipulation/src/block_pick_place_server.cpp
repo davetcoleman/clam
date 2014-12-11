@@ -111,7 +111,7 @@ private:
   std::string base_link_;
 
   // class for publishing stuff to rviz
-  moveit_visual_tools::VisualToolsPtr rviz_tools_;
+  moveit_visual_tools::MoveItVisualToolsPtr rviz_tools_;
 
 public:
 
