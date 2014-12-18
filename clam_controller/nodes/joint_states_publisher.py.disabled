@@ -46,7 +46,7 @@ class JointStatesPublisher():
                'wrist_roll_controller',
                'wrist_pitch_controller',
                'gripper_roll_controller',
-               'l_gripper_aft_controller')
+               'gripper_finger_controller')
                             
         self.joint_states = {}
                              
