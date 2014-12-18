@@ -562,7 +562,9 @@ http://www.ros.org/wiki/xacro
   <!-- Transmissions for ROS Control -->
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="shoulder_pan_joint"/>
+    <joint name="shoulder_pan_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -571,7 +573,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="shoulder_pitch_joint"/>
+    <joint name="shoulder_pitch_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -580,7 +584,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="elbow_roll_joint"/>
+    <joint name="elbow_roll_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -589,7 +595,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="elbow_pitch_joint"/>
+    <joint name="elbow_pitch_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -598,7 +606,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="wrist_roll_joint"/>
+    <joint name="wrist_roll_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -607,7 +617,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="wrist_pitch_joint"/>
+    <joint name="wrist_pitch_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -616,7 +628,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="gripper_roll_joint"/>
+    <joint name="gripper_roll_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
@@ -625,7 +639,9 @@ http://www.ros.org/wiki/xacro
 
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="gripper_finger_joint"/>
+    <joint name="gripper_finger_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
     <actuator name="motor1">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
