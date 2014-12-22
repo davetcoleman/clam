@@ -90,9 +90,9 @@ static const double END_EFFECTOR_VELOCITY = 0.6;
 static const double END_EFFECTOR_MEDIUM_VELOCITY = 0.4;
 static const double END_EFFECTOR_SLOW_VELOCITY = 0.1;
 static const double END_EFFECTOR_LOAD_SETPOINT = -0.35; // when less than this number, stop closing. original value: -0.3
-static const std::string EE_VELOCITY_SRV_NAME = "/l_gripper_aft_controller/set_velocity";
-static const std::string EE_STATE_MSG_NAME = "/l_gripper_aft_controller/state";
-static const std::string EE_POSITION_MSG_NAME = "/l_gripper_aft_controller/command";
+static const std::string EE_VELOCITY_SRV_NAME = "/gripper_finger_controller/set_velocity";
+static const std::string EE_STATE_MSG_NAME = "/gripper_finger_controller/state";
+static const std::string EE_POSITION_MSG_NAME = "/gripper_finger_controller/command";
 
 // Constants for MoveIt
 static const std::string GROUP_NAME = "arm";

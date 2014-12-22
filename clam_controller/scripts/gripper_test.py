@@ -29,7 +29,7 @@ if __name__ == '__main__':
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
-    pub = rospy.Publisher('l_gripper_aft_controller/command', Float64);
+    pub = rospy.Publisher('gripper_finger_controller/command', Float64);
     rospy.init_node('pose_gripper_close', anonymous=True)
     time.sleep(1)
     print "Testing gripper"

@@ -14,7 +14,7 @@ joint_names = ('shoulder_pan_controller',
                'wrist_roll_controller',
                'wrist_pitch_controller',
                'gripper_roll_controller',
-               'l_gripper_aft_controller')
+               'gripper_finger_controller')
                
 joint_commands = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 

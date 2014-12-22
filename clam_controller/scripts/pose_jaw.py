@@ -8,7 +8,7 @@ import rospy
 from std_msgs.msg import Float64
 
 if __name__ == '__main__':
-    pub = rospy.Publisher('l_gripper_aft_controller/command', Float64);
+    pub = rospy.Publisher('gripper_finger_controller/command', Float64);
     rospy.init_node('pose_jaw', anonymous=True)
 
     command = -1.0
