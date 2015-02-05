@@ -122,7 +122,7 @@ public:
 
       joints.push_back("shoulder_pan_controller");
       joints.push_back("gripper_roll_controller");
-      joints.push_back("l_gripper_aft_controller");
+      joints.push_back("gripper_finger_controller");
       joints.push_back("shoulder_pitch_controller");
       joints.push_back("elbow_roll_controller");
       joints.push_back("elbow_pitch_controller");
