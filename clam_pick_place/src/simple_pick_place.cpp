@@ -129,8 +129,11 @@ bool pick(const geometry_msgs::Pose& block_pose, std::string block_name)
   // Pick grasp
   moveit_simple_grasps_->generateBlockGrasps( block_pose, grasp_data_, possible_grasps );
 
+  const moveit::core::JointModelGroup* ee_jmg
+    = visual_tools_->getSharedRobotState()->getRobotModel()->getJointModelGroup(grasp_data_.ee_group_);
+
   // Visualize them
-  visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
+  visual_tools_->publishAnimatedGrasps(possible_grasps, ee_jmg);
   //visual_tools_->publishGrasps(possible_grasps, grasp_data_.ee_parent_link_);
 
   // Prevent collision with table
@@ -159,8 +162,11 @@ bool place(const MetaBlock block)
   // Generate grasps
   moveit_simple_grasps_->generateBlockGrasps( block.second, grasp_data_, possible_grasps );
 
+  const moveit::core::JointModelGroup* ee_jmg
+    = visual_tools_->getSharedRobotState()->getRobotModel()->getJointModelGroup(grasp_data_.ee_group_);
+
   // Visualize them
-  visual_tools_->publishAnimatedGrasps(possible_grasps, grasp_data_.ee_parent_link_);
+  visual_tools_->publishAnimatedGrasps(possible_grasps, ee_jmg);
   //visual_tools_->publishGrasps(possible_grasps, grasp_data_.ee_parent_link_);
 
   // Convert 'grasps' to place_locations format
@@ -251,7 +257,6 @@ int main(int argc, char **argv)
   // ---------------------------------------------------------------------------------------------
   // Load the Robot Viz Tools for publishing to Rviz
   visual_tools_.reset(new moveit_visual_tools::MoveItVisualTools( BASE_LINK, RVIZ_MARKER_TOPIC));
-  visual_tools_->loadEEMarker(grasp_data_.ee_group_, PLANNING_GROUP_NAME);
 
   // ---------------------------------------------------------------------------------------------
   // Load grasp generator
