@@ -145,6 +145,7 @@ inline std::string getMotorModelName(int model_number)
     else if (model_number == 64) { return "RX-64"; }
     else if (model_number == 107) { return "EX-106"; }
     else if (model_number == 29) { return "MX-28"; }
+    else if (model_number == 320) { return "MX-106"; }
 
     return "";
 }
@@ -264,7 +265,17 @@ inline double getMotorModelParams(int model_number, DynamixelParams param)
             case VELOCITY_PER_VOLT:  { return (54.0 * RPM_TO_RADSEC) / 12.0; }
         }
     }
-
+    else if (model_number == 320)
+    {
+        switch (param)
+        {
+            case ENCODER_RESOLUTION: { return 4096.0; }
+            case RANGE_DEGREES:      { return 360.0; }
+            case TORQUE_PER_VOLT:    { return (24.0 * KGCM_TO_NM) / 12.0; }
+            case VELOCITY_PER_VOLT:  { return (54.0 * RPM_TO_RADSEC) / 12.0; }
+        }
+    }
+	
     return -1;
 }
 
