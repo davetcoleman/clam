@@ -26,4 +26,4 @@ Runs on ROS Hydro and Indigo
 
 ## BUILD AND RUN
 
-See [Documentation](http://correll.cs.colorado.edu/clam/?page_id=28)
+Our server crashed and the [Documentation](http://correll.cs.colorado.edu/clam/?page_id=28) is no longer available. I tried to reference them from Google's cache but this is all I was able to get - see ``/docs`` folder.
